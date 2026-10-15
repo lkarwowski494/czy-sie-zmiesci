@@ -10,114 +10,25 @@ import {
 import { packItemsInTrunk } from '../../src/domain/geometry/extremePoints';
 import { calculatePayloadDMC } from '../../src/domain/physics/payloadDMC';
 import { calculateCenterOfGravity } from '../../src/domain/physics/centerOfGravity';
-import { CargoItem, TrunkGeometry } from '../../src/domain/geometry/types';
 import { TrunkVisualizer } from '../../src/components/TrunkVisualizer';
-
-const SAMPLE_VEHICLES = [
-  {
-    id: 'skoda_octavia',
-    name: 'Skoda Octavia IV Combi',
-    trunk: {
-      lengthFloorMm: 1050,
-      lengthRoofMm: 750,
-      widthMinMm: 1010,
-      widthMaxMm: 1150,
-      heightRoofMm: 820,
-      heightShelfMm: 500,
-      apertureWidthMm: 1020,
-      apertureHeightMm: 780,
-      thresholdHeightMm: 60,
-    } as TrunkGeometry,
-    specs: {
-      curbWeightKg: 1395,
-      grossVehicleWeightKg: 1955,
-      maxRoofLoadKg: 75,
-    },
-  },
-  {
-    id: 'vw_passat',
-    name: 'VW Passat Variant B8',
-    trunk: {
-      lengthFloorMm: 1150,
-      lengthRoofMm: 850,
-      widthMinMm: 1005,
-      widthMaxMm: 1180,
-      heightRoofMm: 800,
-      heightShelfMm: 480,
-      apertureWidthMm: 1050,
-      apertureHeightMm: 760,
-      thresholdHeightMm: 40,
-    } as TrunkGeometry,
-    specs: {
-      curbWeightKg: 1470,
-      grossVehicleWeightKg: 2080,
-      maxRoofLoadKg: 100,
-    },
-  },
-];
-
-const AVAILABLE_ITEMS: CargoItem[] = [
-  {
-    id: 'item_1',
-    name: 'Walizka duża 100L',
-    dimensionsMm: { lengthMm: 750, widthMm: 500, heightMm: 300 },
-    weightKg: 22,
-    rotationConstraint: 'XYZ',
-    isFragile: false,
-    isSoft: false,
-    allowStacking: true,
-  },
-  {
-    id: 'item_2',
-    name: 'Walizka kabinowa 40L',
-    dimensionsMm: { lengthMm: 550, widthMm: 400, heightMm: 200 },
-    weightKg: 10,
-    rotationConstraint: 'XYZ',
-    isFragile: false,
-    isSoft: false,
-    allowStacking: true,
-  },
-  {
-    id: 'item_3',
-    name: 'Wózek dziecięcy gondola',
-    dimensionsMm: { lengthMm: 900, widthMm: 600, heightMm: 450 },
-    weightKg: 14,
-    rotationConstraint: 'Z_ONLY',
-    isFragile: false,
-    isSoft: false,
-    allowStacking: false,
-  },
-  {
-    id: 'item_4',
-    name: 'Zastawa porcelanowa (Kruche)',
-    dimensionsMm: { lengthMm: 400, widthMm: 300, heightMm: 250 },
-    weightKg: 8,
-    rotationConstraint: 'Z_ONLY',
-    isFragile: true,
-    isSoft: false,
-    allowStacking: false,
-  },
-  {
-    id: 'item_5',
-    name: 'Karton przeprowadzkowy 60L',
-    dimensionsMm: { lengthMm: 600, widthMm: 400, heightMm: 400 },
-    weightKg: 18,
-    rotationConstraint: 'XYZ',
-    isFragile: false,
-    isSoft: false,
-    allowStacking: true,
-  },
-];
+import { POPULAR_VEHICLES_PRESETS, VehiclePreset } from '../../src/data/presets/vehicles';
+import { CARGO_ITEMS_PRESETS, ExtendedCargoItemPreset } from '../../src/data/presets/cargoItems';
 
 export default function SimulatorScreen() {
-  const [selectedVehicleIdx, setSelectedVehicleIdx] = useState(0);
-  const [selectedItemIds, setSelectedItemIds] = useState<string[]>(['item_1', 'item_2', 'item_3']);
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string>(POPULAR_VEHICLES_PRESETS[0].id);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([
+    'luggage-medium-checkin',
+    'luggage-cabin-standard',
+    'box-m',
+  ]);
   const [passengersCount, setPassengersCount] = useState(2);
+  const [cargoFilter, setCargoFilter] = useState<'wszystkie' | 'karton' | 'walizka' | 'mebel_ikea' | 'agd' | 'sport'>('wszystkie');
 
-  const vehicle = SAMPLE_VEHICLES[selectedVehicleIdx];
+  const vehicle: VehiclePreset =
+    POPULAR_VEHICLES_PRESETS.find((v) => v.id === selectedVehicleId) ?? POPULAR_VEHICLES_PRESETS[0];
 
   const activeItems = useMemo(() => {
-    return AVAILABLE_ITEMS.filter(i => selectedItemIds.includes(i.id));
+    return CARGO_ITEMS_PRESETS.filter((i) => selectedItemIds.includes(i.id));
   }, [selectedItemIds]);
 
   const packingResult = useMemo(() => {
@@ -130,76 +41,135 @@ export default function SimulatorScreen() {
 
   const cogResult = useMemo(() => {
     const weightMap: Record<string, number> = {};
-    activeItems.forEach(i => {
+    activeItems.forEach((i) => {
       weightMap[i.id] = i.weightKg;
     });
     return calculateCenterOfGravity(packingResult.placements, weightMap, vehicle.trunk);
   }, [packingResult.placements, activeItems, vehicle.trunk]);
 
   const toggleItem = (id: string) => {
-    setSelectedItemIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setSelectedItemIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
+
+  const handleSelectQuickPreset = (presetType: 'wakacje' | 'ikea' | 'przeprowadzka') => {
+    switch (presetType) {
+      case 'wakacje':
+        setSelectedItemIds([
+          'luggage-large-checkin',
+          'luggage-medium-checkin',
+          'luggage-cabin-standard',
+          'box-m',
+        ]);
+        setPassengersCount(3);
+        break;
+      case 'ikea':
+        setSelectedItemIds(['ikea-billy-bookcase', 'ikea-kallax-4x4', 'ikea-lack-coffee-table']);
+        setPassengersCount(1);
+        break;
+      case 'przeprowadzka':
+        setSelectedItemIds([
+          'appliance-washing-machine',
+          'box-l',
+          'box-m',
+          'box-s',
+        ]);
+        setPassengersCount(1);
+        break;
+    }
+  };
+
+  const filteredItems = CARGO_ITEMS_PRESETS.filter((item) => {
+    if (cargoFilter === 'wszystkie') return true;
+    return item.category === cargoFilter;
+  });
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Nagłówek */}
         <View style={styles.header}>
           <Text style={styles.title}>Symulator Załadunku 3D</Text>
-          <Text style={styles.subtitle}>Deterministyczny algorytm Extreme Points (RD-02)</Text>
+          <Text style={styles.subtitle}>Deterministyczny algorytm Extreme Points & Rzuty 2.5D (RD-02)</Text>
         </View>
 
-        {/* Wybór Samochodu */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Wybierz Samochód</Text>
-          <View style={styles.selectorRow}>
-            {SAMPLE_VEHICLES.map((v, idx) => (
-              <TouchableOpacity
-                key={v.id}
-                style={[
-                  styles.selectorButton,
-                  selectedVehicleIdx === idx && styles.selectorButtonActive,
-                ]}
-                onPress={() => setSelectedVehicleIdx(idx)}
-              >
-                <Text
-                  style={[
-                    styles.selectorButtonText,
-                    selectedVehicleIdx === idx && styles.selectorButtonTextActive,
-                  ]}
-                >
-                  {v.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        {/* Szybkie Szablony */}
+        <View style={styles.quickPresetsCard}>
+          <Text style={styles.quickPresetsLabel}>⚡ Szybki Scenariusz:</Text>
+          <View style={styles.quickPresetsRow}>
+            <TouchableOpacity
+              style={styles.quickBtn}
+              onPress={() => handleSelectQuickPreset('wakacje')}
+            >
+              <Text style={styles.quickBtnText}>🏖️ Wakacje (4 walizki)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickBtn}
+              onPress={() => handleSelectQuickPreset('ikea')}
+            >
+              <Text style={styles.quickBtnText}>🛋️ Zakupy IKEA</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.quickBtn}
+              onPress={() => handleSelectQuickPreset('przeprowadzka')}
+            >
+              <Text style={styles.quickBtnText}>📦 AGD + Kartony</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Wybór Bagaży */}
+        {/* Wybór Pojazdu */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Przedmioty do zapakowania</Text>
-          {AVAILABLE_ITEMS.map(item => {
-            const isSelected = selectedItemIds.includes(item.id);
-            return (
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>🚗 Wybierz Samochód</Text>
+            <Text style={styles.vdaBadge}>{vehicle.vdaVolumeLiters} L (VDA)</Text>
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.vehicleScroll}>
+            {POPULAR_VEHICLES_PRESETS.map((v) => {
+              const isActive = v.id === vehicle.id;
+              return (
+                <TouchableOpacity
+                  key={v.id}
+                  style={[styles.vehicleChip, isActive && styles.vehicleChipActive]}
+                  onPress={() => setSelectedVehicleId(v.id)}
+                >
+                  <Text style={[styles.vehicleChipMake, isActive && styles.vehicleChipMakeActive]}>
+                    {v.make}
+                  </Text>
+                  <Text style={[styles.vehicleChipModel, isActive && styles.vehicleChipModelActive]}>
+                    {v.model}
+                  </Text>
+                  <Text style={styles.vehicleChipDim}>
+                    {Math.round(v.trunk.lengthFloorMm / 10)} × {Math.round(v.trunk.widthMinMm / 10)} cm
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Liczba Pasażerów */}
+          <View style={styles.passengersRow}>
+            <Text style={styles.passengersLabel}>
+              👥 Pasażerowie (poza kierowcą): <Text style={styles.bold}>{passengersCount}</Text>
+            </Text>
+            <View style={styles.stepperContainer}>
               <TouchableOpacity
-                key={item.id}
-                style={[styles.itemRow, isSelected && styles.itemRowSelected]}
-                onPress={() => toggleItem(item.id)}
+                style={styles.stepperBtn}
+                onPress={() => setPassengersCount((c) => Math.max(0, c - 1))}
               >
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>
-                    {item.name} {item.isFragile && '⚠️ Kruche'}
-                  </Text>
-                  <Text style={styles.itemDims}>
-                    {item.dimensionsMm.lengthMm / 10} × {item.dimensionsMm.widthMm / 10} ×{' '}
-                    {item.dimensionsMm.heightMm / 10} cm • {item.weightKg} kg
-                  </Text>
-                </View>
-                <Text style={styles.checkboxText}>{isSelected ? '✅' : '⬜'}</Text>
+                <Text style={styles.stepperBtnText}>−</Text>
               </TouchableOpacity>
-            );
-          })}
+              <Text style={styles.stepperVal}>{passengersCount}</Text>
+              <TouchableOpacity
+                style={styles.stepperBtn}
+                onPress={() => setPassengersCount((c) => Math.min(4, c + 1))}
+              >
+                <Text style={styles.stepperBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
         {/* Główny Wynik: Czy się zmieści? */}
@@ -213,8 +183,9 @@ export default function SimulatorScreen() {
             {packingResult.isFullyPacked ? '✅ WSZYSTKO SIĘ MIEŚCI!' : '⚠️ CZĘŚĆ PRZEDMIOTÓW NIE WEJDZIE'}
           </Text>
           <Text style={styles.resultSummary}>
-            Zapakowano {packingResult.placements.length} z {activeItems.length} przedmiotów
+            Zapakowano {packingResult.placements.length} z {activeItems.length} przedmiotów do bagażnika {vehicle.make} {vehicle.model}
           </Text>
+
           <View style={styles.metricGrid}>
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Wykorzystanie</Text>
@@ -236,6 +207,16 @@ export default function SimulatorScreen() {
               </Text>
             </View>
           </View>
+
+          {payloadResult.warnings.length > 0 && (
+            <View style={styles.dmcWarningBox}>
+              {payloadResult.warnings.map((w, idx) => (
+                <Text key={idx} style={styles.dmcWarningText}>
+                  • {w}
+                </Text>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Interaktywny Schemat Przestrzenny Bagażnika 2.5D / 2D */}
@@ -244,8 +225,8 @@ export default function SimulatorScreen() {
             <Text style={styles.cardTitle}>🧊 Schemat Załadunku (Rzut 2.5D / 2D)</Text>
             <TrunkVisualizer
               trunk={vehicle.trunk}
-              items={packingResult.placements.map(p => {
-                const itm = activeItems.find(i => i.id === p.itemId);
+              items={packingResult.placements.map((p) => {
+                const itm = activeItems.find((i) => i.id === p.itemId);
                 return {
                   itemId: p.itemId,
                   name: itm?.name ?? 'Ładunek',
@@ -254,17 +235,71 @@ export default function SimulatorScreen() {
                   sequenceOrder: p.sequenceOrder,
                 };
               })}
-              vehicleName={vehicle.name}
+              vehicleName={`${vehicle.make} ${vehicle.model}`}
             />
           </View>
         )}
+
+        {/* Filtry i Wybór Ładunków */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📦 Przedmioty do zapakowania ({selectedItemIds.length} zaznaczonych)</Text>
+
+          {/* Filtry kategorii */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+            {(['wszystkie', 'walizka', 'karton', 'mebel_ikea', 'agd', 'sport'] as const).map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[styles.filterChip, cargoFilter === cat && styles.filterChipActive]}
+                onPress={() => setCargoFilter(cat)}
+              >
+                <Text style={[styles.filterChipText, cargoFilter === cat && styles.filterChipTextActive]}>
+                  {cat === 'wszystkie'
+                    ? 'Wszystkie'
+                    : cat === 'walizka'
+                    ? '🧳 Walizki'
+                    : cat === 'karton'
+                    ? '📦 Kartony'
+                    : cat === 'mebel_ikea'
+                    ? '🛋️ Meble IKEA'
+                    : cat === 'agd'
+                    ? '⚡ AGD/RTV'
+                    : '🚲 Sport'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {filteredItems.map((item) => {
+            const isSelected = selectedItemIds.includes(item.id);
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.itemRow, isSelected && styles.itemRowSelected]}
+                onPress={() => toggleItem(item.id)}
+              >
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemName}>
+                    {item.name} {item.isFragile && '⚠️ Kruche'}{' '}
+                    {item.rotationConstraint === 'Z_ONLY' && '↕️ Tylko pion'}
+                  </Text>
+                  <Text style={styles.itemDims}>
+                    {Math.round(item.dimensionsMm.lengthMm / 10)} ×{' '}
+                    {Math.round(item.dimensionsMm.widthMm / 10)} ×{' '}
+                    {Math.round(item.dimensionsMm.heightMm / 10)} cm • {item.weightKg} kg
+                  </Text>
+                </View>
+                <Text style={styles.checkboxText}>{isSelected ? '✅' : '⬜'}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* Instrukcja Krok po Kroku (Kolejność wkładania) */}
         {packingResult.placements.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>📋 Kolejność Załadunku (Krok po Kroku)</Text>
-            {packingResult.placements.map(p => {
-              const itm = activeItems.find(i => i.id === p.itemId);
+            {packingResult.placements.map((p) => {
+              const itm = activeItems.find((i) => i.id === p.itemId);
               return (
                 <View key={p.itemId} style={styles.stepRow}>
                   <View style={styles.stepBadge}>
@@ -273,8 +308,10 @@ export default function SimulatorScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={styles.stepTitle}>{itm?.name}</Text>
                     <Text style={styles.stepSub}>
-                      Pozycja: X={Math.round(p.positionMm.xMm / 10)} cm, Y=
-                      {Math.round(p.positionMm.yMm / 10)} cm, Z={Math.round(p.positionMm.zMm / 10)} cm
+                      Wymiary: {Math.round(p.orientedDimensionsMm.lengthMm / 10)} × {Math.round(p.orientedDimensionsMm.widthMm / 10)} × {Math.round(p.orientedDimensionsMm.heightMm / 10)} cm
+                    </Text>
+                    <Text style={styles.stepPos}>
+                      Pozycja X/Y/Z: {Math.round(p.positionMm.xMm / 10)} / {Math.round(p.positionMm.yMm / 10)} / {Math.round(p.positionMm.zMm / 10)} cm
                     </Text>
                   </View>
                 </View>
@@ -288,8 +325,15 @@ export default function SimulatorScreen() {
           <Text style={styles.cardTitle}>⚖️ Balans i Środek Ciężkości (RD-20)</Text>
           <Text style={styles.bodyText}>
             Symetria poprzeczna:{' '}
-            <Text style={{ fontWeight: '700', color: cogResult.isLateralSymmetric ? '#34D399' : '#F87171' }}>
-              {cogResult.isLateralSymmetric ? 'Idealna (Równy rozkład masy)' : `Asymetria (${cogResult.lateralOffsetMm} mm)`}
+            <Text
+              style={{
+                fontWeight: '700',
+                color: cogResult.isLateralSymmetric ? '#34D399' : '#F87171',
+              }}
+            >
+              {cogResult.isLateralSymmetric
+                ? 'Idealna (Równomierny rozkład)'
+                : `Asymetria (${cogResult.lateralOffsetMm} mm)`}
             </Text>
           </Text>
           {cogResult.warnings.map((w: string, i: number) => (
@@ -325,6 +369,38 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     marginTop: 2,
   },
+  quickPresetsCard: {
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  quickPresetsLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  quickPresetsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  quickBtn: {
+    backgroundColor: '#0F172A',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  quickBtnText: {
+    color: '#38BDF8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   card: {
     backgroundColor: '#1E293B',
     borderRadius: 12,
@@ -333,35 +409,187 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#334155',
   },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#F8FAFC',
+  },
+  vdaBadge: {
+    backgroundColor: '#0284C7',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 11,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  vehicleScroll: {
+    flexDirection: 'row',
+    marginBottom: 14,
+  },
+  vehicleChip: {
+    backgroundColor: '#0F172A',
+    padding: 10,
+    borderRadius: 10,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+    minWidth: 130,
+  },
+  vehicleChipActive: {
+    borderColor: '#38BDF8',
+    backgroundColor: '#0C4A6E',
+  },
+  vehicleChipMake: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  vehicleChipMakeActive: {
+    color: '#BAE6FD',
+  },
+  vehicleChipModel: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  vehicleChipModelActive: {
+    color: '#FFFFFF',
+  },
+  vehicleChipDim: {
+    color: '#64748B',
+    fontSize: 10,
+    marginTop: 4,
+  },
+  passengersRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#334155',
+  },
+  passengersLabel: {
+    color: '#CBD5E1',
+    fontSize: 13,
+  },
+  bold: {
+    fontWeight: '700',
+    color: '#F8FAFC',
+  },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepperBtn: {
+    backgroundColor: '#334155',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnText: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  stepperVal: {
+    color: '#F8FAFC',
+    fontSize: 15,
+    fontWeight: '700',
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  cardSuccess: {
+    borderColor: '#059669',
+    backgroundColor: '#064E3B',
+  },
+  cardWarning: {
+    borderColor: '#D97706',
+    backgroundColor: '#78350F',
+  },
+  resultBadge: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  resultSummary: {
+    fontSize: 13,
+    color: '#E2E8F0',
     marginBottom: 12,
   },
-  selectorRow: {
+  metricGrid: {
     flexDirection: 'row',
     gap: 8,
   },
-  selectorButton: {
+  metricBox: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    padding: 10,
     borderRadius: 8,
-    backgroundColor: '#334155',
     alignItems: 'center',
   },
-  selectorButtonActive: {
-    backgroundColor: '#0284C7',
-  },
-  selectorButtonText: {
+  metricLabel: {
+    fontSize: 11,
     color: '#CBD5E1',
-    fontWeight: '600',
-    fontSize: 12,
+    marginBottom: 4,
   },
-  selectorButtonTextActive: {
+  metricValue: {
+    fontSize: 16,
+    fontWeight: '800',
     color: '#FFFFFF',
-    fontWeight: '700',
+  },
+  safeText: {
+    color: '#34D399',
+  },
+  alertText: {
+    color: '#F87171',
+  },
+  dmcWarningBox: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.2)',
+  },
+  dmcWarningText: {
+    color: '#FDE68A',
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  filterChip: {
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  filterChipActive: {
+    borderColor: '#0284C7',
+    backgroundColor: '#0369A1',
+  },
+  filterChipText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterChipTextActive: {
+    color: '#FFFFFF',
   },
   itemRow: {
     flexDirection: 'row',
@@ -388,91 +616,53 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkboxText: {
-    fontSize: 18,
-    marginLeft: 8,
-  },
-  cardSuccess: {
-    borderColor: '#059669',
-    backgroundColor: 'rgba(5, 150, 105, 0.15)',
-  },
-  cardWarning: {
-    borderColor: '#D97706',
-    backgroundColor: 'rgba(217, 119, 6, 0.15)',
-  },
-  resultBadge: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#F8FAFC',
-  },
-  resultSummary: {
-    fontSize: 13,
-    color: '#CBD5E1',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  metricGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  metricBox: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 3,
-    alignItems: 'center',
-  },
-  metricLabel: {
-    fontSize: 11,
-    color: '#94A3B8',
-  },
-  metricValue: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#F8FAFC',
-    marginTop: 2,
-  },
-  safeText: {
-    color: '#34D399',
-  },
-  alertText: {
-    color: '#F87171',
+    fontSize: 16,
+    marginLeft: 10,
   },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
   },
   stepBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
     backgroundColor: '#0284C7',
-    justifyContent: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     marginRight: 12,
   },
   stepBadgeText: {
-    color: '#FFF',
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '800',
     fontSize: 12,
   },
   stepTitle: {
     color: '#F8FAFC',
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
   },
   stepSub: {
     color: '#94A3B8',
     fontSize: 11,
+    marginTop: 1,
+  },
+  stepPos: {
+    color: '#38BDF8',
+    fontSize: 11,
+    marginTop: 1,
   },
   bodyText: {
     color: '#CBD5E1',
     fontSize: 13,
+    marginBottom: 6,
   },
   warningText: {
     color: '#FBBF24',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
   },
 });
