@@ -15,6 +15,7 @@
     "test:bench": "jest src/tests/benchmarks",
     "test:contracts": "jest src/tests/contracts",
     "test:resilience": "jest src/tests/resilience",
+    "test:guards": "jest src/tests/guards",
     "test:coverage": "jest --coverage",
     "verify": "npm run typecheck && npm run test:coverage"
   },

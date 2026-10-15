@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 21 zestawów testów (112 testów)
+# Uruchomienie wszystkich 22 zestawów testów (119 testów)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
@@ -170,6 +170,9 @@ npm run test:domain
 
 # Testy warstwy usług aplikacyjnych (PackSession, Relocation, RoomFitting, GarageSafety)
 npm run test:services
+
+# Strażnicy architektury i bezpieczeństwa (Warstwa 3: 100% Offline-First, Zero UI w domenie, ACID)
+npm run test:guards
 
 # Benchmarki wydajnościowe i determinizm (Warstwa 7: < 15 ms dla 10 brył, determinizm bitowy)
 npm run test:bench

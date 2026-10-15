@@ -46,6 +46,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="garage"
+        options={{
+          title: 'Garaż & Hak',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏢</Text>,
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: 'Ustawienia',
