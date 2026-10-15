@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 25 zestawów testów (134 testy)
+# Uruchomienie wszystkich 26 zestawów testów (139 testów)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików

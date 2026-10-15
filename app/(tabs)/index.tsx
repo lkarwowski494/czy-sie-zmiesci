@@ -11,6 +11,7 @@ import { packItemsInTrunk } from '../../src/domain/geometry/extremePoints';
 import { calculatePayloadDMC } from '../../src/domain/physics/payloadDMC';
 import { calculateCenterOfGravity } from '../../src/domain/physics/centerOfGravity';
 import { CargoItem, TrunkGeometry } from '../../src/domain/geometry/types';
+import { TrunkVisualizer } from '../../src/components/TrunkVisualizer';
 
 const SAMPLE_VEHICLES = [
   {
@@ -236,6 +237,27 @@ export default function SimulatorScreen() {
             </View>
           </View>
         </View>
+
+        {/* Interaktywny Schemat Przestrzenny Bagażnika 2.5D / 2D */}
+        {packingResult.placements.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>🧊 Schemat Załadunku (Rzut 2.5D / 2D)</Text>
+            <TrunkVisualizer
+              trunk={vehicle.trunk}
+              items={packingResult.placements.map(p => {
+                const itm = activeItems.find(i => i.id === p.itemId);
+                return {
+                  itemId: p.itemId,
+                  name: itm?.name ?? 'Ładunek',
+                  positionMm: p.positionMm,
+                  dimensionsMm: p.orientedDimensionsMm,
+                  sequenceOrder: p.sequenceOrder,
+                };
+              })}
+              vehicleName={vehicle.name}
+            />
+          </View>
+        )}
 
         {/* Instrukcja Krok po Kroku (Kolejność wkładania) */}
         {packingResult.placements.length > 0 && (
