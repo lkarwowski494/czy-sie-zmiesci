@@ -1,0 +1,39 @@
+{
+  "name": "czy-sie-zmiesci",
+  "version": "0.1.0",
+  "main": "expo-router/entry",
+  "private": true,
+  "description": "Czy się zmieści? (FitCheck) — Apps4Brew",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:fast": "jest --onlyChanged",
+    "test:domain": "jest src/domain",
+    "test:coverage": "jest --coverage",
+    "verify": "npm run typecheck && npm run test:coverage"
+  },
+  "dependencies": {
+    "expo": "~57.0.26",
+    "expo-constants": "~57.0.20",
+    "expo-haptics": "^57.0.3",
+    "expo-linking": "~57.0.11",
+    "expo-router": "~57.0.24",
+    "expo-sqlite": "~57.0.3",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@types/jest": "^29.5.14",
+    "@types/react": "~19.2.10",
+    "babel-preset-expo": "~57.0.0",
+    "fast-check": "^4.10.2",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.5.4"
+  }
+}
