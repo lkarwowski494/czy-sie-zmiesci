@@ -1,0 +1,14 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 1: Wybór auta kombi, załadunek mebla i weryfikacja stabilności 3D
+- launchApp
+- assertVisible: "Czy się zmieści?"
+- tapOn: "Katalog"
+- assertVisible: "Geometria Bagażników"
+- tapOn: "Škoda Octavia IV Combi"
+- assertVisible: "640"
+- tapOn: "Symulator 3D"
+- assertVisible: "Symulator Załadunku 3D"
+- tapOn: "Paczka meblowa IKEA (200 cm)"
+- assertVisible: "ZMIEŚCI SIĘ ✅"
+- assertVisible: "Wykorzystanie przestrzeni"

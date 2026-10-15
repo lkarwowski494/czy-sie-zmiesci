@@ -1,0 +1,9 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 2: Weryfikacja przesyłki w Paczkomacie InPost
+- launchApp
+- tapOn: "Katalog"
+- assertVisible: "Weryfikator Paczkomatów InPost"
+- eraseText: 10
+- inputText: "40"
+- assertVisible: "Pasuje do Gabarytu"

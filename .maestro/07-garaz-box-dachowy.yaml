@@ -1,0 +1,12 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 7: Sprawdzenie skrajni bramy garażowej, uniesionej klapy i wjazdu ze znakiem B-16
+- launchApp
+- tapOn: "Garaż & Hak"
+- assertVisible: "Garaż & Hak Holowniczy"
+- assertVisible: "Skrajnia Bramy & Klapa Bagażnika"
+- assertVisible: "Box Dachowy vs Parking Podziemny"
+- assertVisible: "Wysokość całkowita"
+- assertVisible: "Platforma na Hak & Rowery"
+- tapOn: "S = 100 kg"
+- assertVisible: "W NORMIE"

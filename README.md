@@ -62,7 +62,7 @@ Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4B
    - Kolizja uniesionej klapy bagażnika w górę z sufitem garażu lub prowadnicami otwartej bramy segmentowej.
    - Sumator całkowitej wysokości auta z boxem dachowym lub rowerami vs znaki B-16 na parkingach podziemnych (1.9 m, 2.0 m, 2.1 m).
 9. **🚲 Haki Holownicze, Nośność S i Rowery (`TowbarPhysicsScreen`):**
-   - Automatyczny bilans nacisku pionowego na kulę haka holowniczego ($S$, standard 50/75/100 kg) dla platform rowerowych z e-bike'ami.
+   - Automatyczny bilans nacisku pionowego na kulę haka holowniczego ($S$, standard 50/75/100 kg) dla platform rowerowych (Thule, Atera, Westfalia) z e-bike'ami.
    - Weryfikacja dopuszczalnego zwisu ładunków długich poza obrys auta (art. 61 ust. 6 PoRD: max 0.5 m z przodu, 2.0 m z tyłu).
 10. **📬 Paczkomaty i Macierze Sizerów Lotniczych (`ParcelLockersScreen`):**
     - Gabaryty skrytek InPost (A, B, C), DPD Pickup, Orlen Paczka z marginesem rygla zamka (10 mm) i wybrzuszenia taśmy.
@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 23 zestawów testów (124 testy)
+# Uruchomienie wszystkich 25 zestawów testów (134 testy)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików

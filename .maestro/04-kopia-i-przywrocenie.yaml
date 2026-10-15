@@ -1,0 +1,9 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 4: Eksport i import kopii zapasowej JSON Schema v2
+- launchApp
+- tapOn: "Ustawienia"
+- assertVisible: "Prywatność & Kopia Danych"
+- assertVisible: "Kopia Danych (JSON v2)"
+- tapOn: "Eksportuj Kopię (JSON v2)"
+- assertVisible: "Sukces"
