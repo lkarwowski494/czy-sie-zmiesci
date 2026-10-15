@@ -17,6 +17,22 @@ Aplikacja z rodziny **Apps4Brew** rozwiązująca problem załadunku przedmiotów
 
 ---
 
+## 🧪 9 Warstw Weryfikacji Jakości (Testing Rigor w Standardzie Organizer)
+
+Wzorem repozytorium [`lkarwowski494/organizer`](https://github.com/lkarwowski494/organizer), w projekcie wdrożono bezwzględną procedurę weryfikacji jakości we wszystkich wymiarach:
+
+1. **Czysta Logika Domenowa:** 100% pokrycia linii i gałęzi dla modułów geometrii 3D, punktów ekstremalnych, fizyki CoG i przelicznika VDA (`src/domain`).
+2. **Testy Mutacyjne (Stryker Mutation Testing):** Wymóg $\ge 90\%$ zabitych mutantów kodu w warstwie obliczeniowej.
+3. **Testy Własnościowe (Property-Based z `fast-check`):** Weryfikacja niezmienników matematycznych (brak przenikania brył, zachowanie kubatury, stabilność CoG) na tysiącach losowych instancji.
+4. **Niezależne Korpusy Referencyjne:** Porównywanie wyników z niezależnym solverem referencyjnym (Python 3D-BPP), danymi pomiarowymi ADAC oraz oficjalnymi macierzami sizerów (InPost, Ryanair, Wizz Air).
+5. **Baza Danych i SQLite WAL:** Sprawdzanie atomowości transakcji, odporności na nagłe ubicie procesu, migracji schematu oraz spójności kopii zapasowej JSON.
+6. **Macierz Scenariuszy UI (RNTL):** Testy każdego ekranu, suwaka i jednostki we wszystkich stanach skrajnych.
+7. **E2E i Regresja Wizualna (Maestro na symulatorze iOS):** Automatyzacja pełnych ścieżek użytkownika z weryfikacją `pixelmatch`.
+8. **Dostępność i Kontrakty HIG (WCAG AAA & VoiceOver):** Pola dotyku min. $44 \times 44\text{ pt}$, audiodeskrypcja sceny 3D dla czytnika ekranu, Dynamic Type.
+9. **Strażnicy Architektury i Wzorców:** Testy-strażnicy pilnujące obecności przycisków „Anuluj” w nagłówkach okien modalnych, ochrony przed znakami towarowymi firm trzecich oraz obecności disclaimera prawnego.
+
+---
+
 ## Dokumentacja Biznesowa i Techniczna (BRD 0.1)
 
 Kompletna dokumentacja wymagań biznesowych znajduje się w katalogu [`czy_sie_zmiesci_brd/`](./czy_sie_zmiesci_brd/):
@@ -43,3 +59,4 @@ Kompletna dokumentacja wymagań biznesowych znajduje się w katalogu [`czy_sie_z
 * [D1 Wymagania niefunkcjonalne (NFR) i wytyczne Apple](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D1%20·%20rozdz.%209–10%20wymagania%20niefunkcjonalne%20(NFR)%20i%20zgodność%20z%20Apple.md)
 * [D2 Architektura i model danych SQLite (DDL)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D2%20·%20rozdz.%2011–12%20architektura,%20model%20danych%20SQLite%20i%20przenośność.md)
 * [D3 Rejestr ryzyk (RYZ-01…RYZ-45) i pytania otwarte](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D3%20·%20rozdz.%2014,%2016%20rejestr%20ryzyk%20(RYZ-01…RYZ-45)%20i%20otwarte%20pytania.md)
+* [D4 Wielowarstwowa strategia testów (9 warstw jakości w standardzie Organizer)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
