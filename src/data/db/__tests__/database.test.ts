@@ -214,4 +214,14 @@ describe('DatabaseService & SQLite Transactions (Warstwa 5: Baza danych i JSON r
     expect(res.success).toBe(false);
     expect(res.error).toContain('Nieprawidłowy format');
   });
+
+  it('provides initialized singleton through getDatabaseService()', () => {
+    // Dynamic import to test factory
+    const { getDatabaseService } = require('../index');
+    const instance1 = getDatabaseService();
+    const instance2 = getDatabaseService();
+    expect(instance1).toBe(instance2);
+    expect(instance1.getAllVehicles().length).toBeGreaterThan(0);
+  });
 });
+
