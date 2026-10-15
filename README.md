@@ -156,10 +156,10 @@ Wymagane środowisko: Node.js 20+ oraz npm.
 # Instalacja zależności
 npm install
 
-# Pełna weryfikacja projektu (typy, lint, testy z pokryciem 100%, strażnicy architektury)
-npm run check
+# Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
+npm run verify
 
-# Uruchomienie testów jednostkowych i integracyjnych Jest
+# Uruchomienie wszystkich 21 zestawów testów (112 testów)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
@@ -168,11 +168,17 @@ npm run test:fast
 # Testy czystej logiki domenowej (geometria 3D, Moving Sofa, wnęki, hak S)
 npm run test:domain
 
-# Uruchomienie testów mutacyjnych Stryker
-npm run test:mutation
+# Testy warstwy usług aplikacyjnych (PackSession, Relocation, RoomFitting, GarageSafety)
+npm run test:services
 
-# Uruchomienie testów własnościowych fast-check
-npm run test:property
+# Benchmarki wydajnościowe i determinizm (Warstwa 7: < 15 ms dla 10 brył, determinizm bitowy)
+npm run test:bench
+
+# Kontrakty i zgodność ze standardami (Warstwa 8: VDA 238-100, InPost A/B/C, IATA, PoRD)
+npm run test:contracts
+
+# Testy odporności, degradacji i fuzzing (Warstwa 9: skrajne wymiary, 0mm, ujemne wartości)
+npm run test:resilience
 
 # Uruchomienie aplikacji w środowisku deweloperskim Expo
 npm run start

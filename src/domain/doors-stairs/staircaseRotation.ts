@@ -37,19 +37,24 @@ export function evaluateStaircaseLandingTurn(
   const effectiveFlightWidth = landingSpecs.flightWidthMm - handrailDeduction;
   const effectiveLandingDepth = landingSpecs.landingDepthMm;
 
-  const L = itemDimensionsMm.lengthMm;
-  const W = itemDimensionsMm.widthMm;
+  // Naturalna orientacja w osi korytarza: dłuższy wymiar poziomy stanowi długość (L),
+  // a krótszy wymiar szerokość (W) w przekroju poprzecznym
+  const L = Math.max(itemDimensionsMm.lengthMm, itemDimensionsMm.widthMm);
+  const W = Math.min(itemDimensionsMm.lengthMm, itemDimensionsMm.widthMm);
   const H = itemDimensionsMm.heightMm;
 
-  // Sprawdzenie, czy mebel w ogóle mieści się w biegu schodów
+  // Sprawdzenie, czy mebel w ogóle mieści się w biegu schodów i pod sufitem
   const smallestCrossSection = Math.min(W, H);
-  if (smallestCrossSection > effectiveFlightWidth - 2 * STAIRCASE_SAFETY_MARGIN_MM) {
+  if (
+    smallestCrossSection > effectiveFlightWidth - 2 * STAIRCASE_SAFETY_MARGIN_MM ||
+    smallestCrossSection > landingSpecs.ceilingHeightMm - STAIRCASE_SAFETY_MARGIN_MM
+  ) {
     return {
       canTurnHorizontally: false,
       canTurnWithVerticalTilt: false,
       canPass: false,
-      bottleneckDescription: 'Mebel jest zbyt szeroki na sam bieg schodowy',
-      warnings: ['Szerokość mebla przekracza szerokość biegu schodów z uwzględnieniem poręczy i rąk'],
+      bottleneckDescription: 'Mebel jest zbyt szeroki na sam bieg schodowy lub sufit jest zbyt niski',
+      warnings: ['Szerokość lub wysokość mebla przekracza skrajnię klatki schodowej / sufitu'],
       recommendations: ['Wymagany demontaż poręczy lub transport zewnętrzny (balkon/okno)'],
     };
   }

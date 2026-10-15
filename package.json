@@ -11,6 +11,10 @@
     "test": "jest",
     "test:fast": "jest --onlyChanged",
     "test:domain": "jest src/domain",
+    "test:services": "jest src/services",
+    "test:bench": "jest src/tests/benchmarks",
+    "test:contracts": "jest src/tests/contracts",
+    "test:resilience": "jest src/tests/resilience",
     "test:coverage": "jest --coverage",
     "verify": "npm run typecheck && npm run test:coverage"
   },

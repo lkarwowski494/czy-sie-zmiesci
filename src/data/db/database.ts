@@ -130,13 +130,25 @@ export class DatabaseService {
     return this.driver.getAllSync('SELECT * FROM vehicles ORDER BY make ASC, model ASC');
   }
 
+  public getVehicle(id: string): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM vehicles WHERE id = ?', [id]);
+  }
+
   public getVehicleSpaces(vehicleId: string): Record<string, unknown>[] {
     return this.driver.getAllSync('SELECT * FROM vehicle_spaces WHERE vehicle_id = ?', [vehicleId]);
+  }
+
+  public getSpace(id: string): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM vehicle_spaces WHERE id = ?', [id]);
   }
 
   // --- Przedmioty Ładunku ---
   public getCargoItems(): Record<string, unknown>[] {
     return this.driver.getAllSync('SELECT * FROM cargo_items ORDER BY category ASC, name ASC');
+  }
+
+  public getCargoItem(id: string): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM cargo_items WHERE id = ?', [id]);
   }
 
   public insertCustomCargoItem(item: {
@@ -194,6 +206,67 @@ export class DatabaseService {
 
   public deletePackSession(id: string): void {
     this.driver.runSync('DELETE FROM pack_sessions WHERE id = ?', [id]);
+  }
+
+  public updateSessionStatus(
+    sessionId: string,
+    totalWeightKg: number,
+    packingEfficiencyPct: number,
+    isValid: boolean
+  ): void {
+    this.driver.runSync(
+      `UPDATE pack_sessions SET total_weight_kg = ?, packing_efficiency_pct = ?, is_valid = ?, updated_at = ? WHERE id = ?`,
+      [totalWeightKg, packingEfficiencyPct, isValid ? 1 : 0, Date.now(), sessionId]
+    );
+  }
+
+  public getSessionItems(sessionId: string): Record<string, unknown>[] {
+    return this.driver.getAllSync(
+      'SELECT * FROM pack_session_items WHERE session_id = ? ORDER BY sequence_order ASC',
+      [sessionId]
+    );
+  }
+
+  public clearSessionItems(sessionId: string): void {
+    this.driver.runSync('DELETE FROM pack_session_items WHERE session_id = ?', [sessionId]);
+  }
+
+  public insertSessionItem(item: {
+    id: string;
+    session_id: string;
+    cargo_item_id: string;
+    pos_x_cm: number;
+    pos_y_cm: number;
+    pos_z_cm: number;
+    dim_x_cm: number;
+    dim_y_cm: number;
+    dim_z_cm: number;
+    sequence_order: number;
+    is_packed?: boolean;
+  }): void {
+    this.driver.runSync(
+      `INSERT INTO pack_session_items (id, session_id, cargo_item_id, pos_x_cm, pos_y_cm, pos_z_cm, dim_x_cm, dim_y_cm, dim_z_cm, sequence_order, is_packed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        item.id,
+        item.session_id,
+        item.cargo_item_id,
+        item.pos_x_cm,
+        item.pos_y_cm,
+        item.pos_z_cm,
+        item.dim_x_cm,
+        item.dim_y_cm,
+        item.dim_z_cm,
+        item.sequence_order,
+        item.is_packed ? 1 : 0,
+      ]
+    );
+  }
+
+  public toggleSessionItemPacked(itemId: string, isPacked: boolean): void {
+    this.driver.runSync('UPDATE pack_session_items SET is_packed = ? WHERE id = ?', [
+      isPacked ? 1 : 0,
+      itemId,
+    ]);
   }
 
   // --- Projekty Przeprowadzek ---

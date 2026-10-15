@@ -50,7 +50,7 @@ export function evaluateNicheFit(
     ? 2 * nicheSpecs.skirtingBoardThicknessMm
     : 0;
 
-  const effectiveWidthAtFloor = nicheSpecs.widthBottomMm - skirtingDeduction;
+  const effectiveWidthAtFloor = Math.max(0, nicheSpecs.widthBottomMm - skirtingDeduction);
 
   // Efektywna głębokość z uwzględnieniem kaloryfera i parapetu
   let effectiveDepth = nicheSpecs.depthMm;
