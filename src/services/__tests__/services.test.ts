@@ -103,6 +103,12 @@ describe('Application Services Integration (Warstwa 4: Integracja logiki bizneso
       expect(phase4!.items.length).toBe(1);
 
       expect(plan.recommendations.length).toBeGreaterThan(0);
+
+      const manifest = relocationService.generateMarkdownManifest(plan);
+      expect(manifest).toContain('# 🚚 Plan Przeprowadzki');
+      expect(manifest).toContain('reloc_warsaw');
+      expect(manifest).toContain('Faza 1: Ciężkie AGD');
+      expect(manifest).toContain('Karton „Pierwsza Noc”');
     });
   });
 

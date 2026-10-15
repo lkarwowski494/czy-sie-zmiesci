@@ -147,4 +147,45 @@ export class RelocationService {
       recommendations,
     };
   }
+
+  /**
+   * Generuje czytelny raport tekstowy w formacie Markdown (do druku, schowka lub eksportu pliku)
+   */
+  public generateMarkdownManifest(plan: PhasedLoadingPlanResult): string {
+    const lines: string[] = [
+      `# 🚚 Plan Przeprowadzki i Sekwencja Załadunku (FitCheck Manifest)`,
+      `**Projekt:** ${plan.projectId}`,
+      `**Szacowana kubatura całkowita:** ${plan.volumeEstimation.estimatedVolumeM3} m³ (${plan.volumeEstimation.estimatedWeightKg} kg)`,
+      `**Rekomendowana flota:** ${plan.volumeEstimation.fleetDescription}`,
+      `**Rekomendowany boks self-storage:** min. ${plan.volumeEstimation.recommendedSelfStorageAreaM2} m²`,
+      `**Łączna liczba zinwentaryzowanych pozycji:** ${plan.totalInventoryItemsCount} szt. (${plan.totalInventoryWeightKg} kg)`,
+      '',
+      '---',
+      '## 📋 Sekwencja Załadunku (Zasada 4 Fazy)',
+      '',
+    ];
+
+    for (const phase of plan.phases) {
+      lines.push(`### ${phase.phaseTitle}`);
+      lines.push(`*Liczba przedmiotów: ${phase.items.length}, masa fazy: ${phase.totalWeightKg} kg*`);
+      if (phase.items.length === 0) {
+        lines.push('- *Brak przypisanych pozycji w tej fazie*');
+      } else {
+        for (const item of phase.items) {
+          lines.push(
+            `- **${item['name']}** (${item['length_cm']}×${item['width_cm']}×${item['height_cm']} cm, ${item['weight_kg']} kg)`
+          );
+        }
+      }
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('## 💡 Rekomendacje Bezpieczeństwa Logistycznego:');
+    for (const rec of plan.recommendations) {
+      lines.push(`- ${rec}`);
+    }
+
+    return lines.join('\n');
+  }
 }
