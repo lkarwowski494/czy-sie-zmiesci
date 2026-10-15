@@ -1,4 +1,4 @@
-# Czy się zmieści? (FitCheck) 📦🚗📐
+# Czy się zmieści? (FitCheck) 📦🚗🛋️📐
 
 [![iOS](https://img.shields.io/badge/iOS-18.0%2B-black?style=flat&logo=apple)](https://www.apple.com/ios/)
 [![watchOS](https://img.shields.io/badge/watchOS-11.0%2B-black?style=flat&logo=apple)](https://www.apple.com/watchos/)
@@ -11,55 +11,68 @@
 [![Tests](https://img.shields.io/badge/Tests-9_Quality_Layers-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
-> **„Nigdy więcej zastanawiania się pod marketem, czy kanapa wejdzie do auta — precyzyjny asystent pakowania 3D, weryfikacja DMC i gabarytów offline, zawsze pod ręką na iPhone i Apple Watch.”**
+> **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
 
-Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4Brew**, rozwiązująca problem załadunku przedmiotów do samochodów osobowych, automatów paczkowych, wind i luku bagażowego samolotów. Zbudowana w architekturze **100% Offline-First** na bazie silnika SQLite, łączy zaawansowany solver trójwymiarowego upakowania prostopadłościanów (*3D Bin Packing Problem* z uwzględnieniem skosów szyb i nadkoli), kontrolę bezpieczeństwa drogowego (DMC i nacisk na osie) oraz asystenta sekwencji pakowania na zegarek Apple Watch.
+Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4Brew**, będąca kompleksową odpowiedzią na wszelkie dylematy wymiarowe i przestrzenne życia codziennego. Zbudowana w architekturze **100% Offline-First** na bazie silnika SQLite, łączy zaawansowany deterministyczny solver 3D Bin Packing, kinematykę wnoszenia mebli (*Moving Sofa Problem* w 3D), analizę tolerancji budowlano-montażowych (listwy przypodłogowe, grzejniki, ościeżnice z klamkami, luzy wentylacyjne AGD), kontrolę bezpieczeństwa drogowego (DMC, nacisk pionowy haka $S$, skrajnie wjazdowe garaży) oraz asystenta sekwencji pakowania na Apple Watch.
 
 ---
 
 ## 🌟 Główne Zasady Produktowe
 
-- **100% Offline-First (Lokalne SQLite WAL, DEC-01, DEC-07):** Wszystkie ekrany czytają i modyfikują stan w lokalnej bazie SQLite (`expo-sqlite`, `WAL mode`). Aplikacja działa bezbłędnie w podziemnym parkingu, magazynie meblowym, lesie czy na płycie lotniska bez dostępu do Internetu. Czas renderowania widoku wynosi $< 16\,\text{ms}$, a silnik pakowania nie wykonuje żadnych zewnętrznych zapytań HTTP.
-- **Prywatność i Suwerenność Danych („Data Not Collected”, DEC-02, DEC-29):** Brak kont, brak rejestracji, zerowe logowanie tożsamości. Wszystkie dane o pojazdach użytkownika, ładunkach i pomiarach pozostają wyłącznie w pamięci telefonu. Kompletna kopia bazy w formacie JSON/CSV dostępna za darmo (0 zł) w 1 kliknięcie.
-- **Fizyka i Deterministyczny Silnik 3D (Extreme Points + Guillotine, DEC-05, DEC-30, BR-PAK):** Deterministyczny algorytm w czystym TypeScript (`src/domain/geometry/`), rozwiązujący załadunek do 50 brył w czasie $< 200\,\text{ms}$. Solver uwzględnia realne ograniczenia bagażnika: kąt nachylenia oparć tylnej kanapy i tylnej szyby, przewężenia nadkoli oraz minimalne światło otworu załadunkowego klapy.
-- **Bezpieczeństwo i Przepisy Ruchu Drogowego (DMC & CoG, DEC-13, RD-17…RD-23, BR-MAS):** Automatyczny bilans masy ładunku i pasażerów w odniesieniu do dopuszczalnej ładowności (pole F.2 dowodu rejestracyjnego). Aplikacja oblicza środek ciężkości (Center of Gravity — CoG), ostrzega przed destabilizacją pojazdu, przeciążeniem tylnej osi oraz zasłonięciem pola widzenia wstecznego (art. 61 ust. 2 pkt 3 ustawy Prawo o Ruchu Drogowym).
-- **Asystent Apple Watch dla Wolnych Rąk (watchOS 11, DEC-03, DEC-31):** Niezależny asystent pakowania na nadgarstek. Gdy użytkownik trzyma w rękach ciężki karton lub pralkę, Apple Watch prezentuje krok po kroku numer paczki, miejsce położenia i orientację, umożliwiając haptyczne odhaczenie załadunku stuknięciem lub obrotem Cyfrowej Koronki (*Digital Crown*).
-- **Szkoła Pakowania & Edukacja Fizyki Ładunku (BR-EDU, DEC-14):** Baza wiedzy wyjaśniająca mechanikę zderzeń drogowych (niezabezpieczona walizka o masie 15 kg przy zderzeniu z prędkością 50 km/h osiąga siłę uderzenia do 450–750 kg), zasady mocowania ładunku pasami transportowymi, dociążanie osi oraz procedury transportu gabarytów.
-- **Pojedyncze Źródło Prawdy (Single Source of Truth, DEC-35):** Wszelkie wymiary sizerów lotniczych (Ryanair, Wizz Air, LOT), gabaryty skrytek paczkomatowych (InPost A/B/C) oraz limity geometryczne zdefiniowane są w centralnym module `src/config/`, podlegając ścisłym testom kontraktowym.
+- **100% Offline-First (Lokalne SQLite WAL, DEC-01, DEC-07):** Wszystkie kalkulacje, symulacje 3D i rzuty techniczne realizowane są natychmiastowo na telefonie. Aplikacja działa bezbłędnie w podziemnym parkingu, magazynie samoobsługowym, lesie czy na płycie lotniska bez dostępu do Internetu. Czas odpowiedzi interfejsu wynosi $< 16\,\text{ms}$, a silnik nie wysyła zapytań do zewnętrznych chmur.
+- **Prywatność i Suwerenność Danych („Data Not Collected”, DEC-02, DEC-29):** Brak kont, brak rejestracji, zerowe logowanie tożsamości. Wszelkie dane o mieszkaniach użytkownika, planach przeprowadzek, posiadanych pojazdach i wymiarach pozostają wyłącznie w pamięci telefonu. Kompletna kopia bazy w czytelnym formacie JSON dostępna za darmo (0 zł) w 1 kliknięcie.
+- **Prawda Geometryczna i Kinematyczna ponad Uproszczeniami (DEC-05, DEC-30, DEC-42):** Koniec z mylącym litrażem VDA i suchymi prostopadłościanami. Solver uwzględnia realne skosy szyb i kanap, przewężenia nadkoli, światło otworu załadunkowego, klamki w ościeżnicach, grubość otwartego skrzydła drzwiowego, promienie skrętu na spocznikach schodów oraz trójwymiarową przekątną kabin wind.
+- **Tolerancje Montażowe i Bezpieczeństwo AGD (DEC-43, DEC-44, DEC-58):** Automatyczne uwzględnianie rzeczywistych realiów wykończeniowych: dylatacje listew przypodłogowych ($-40\,\text{mm}$ przy podłodze), odstępy wentylacyjne skraplaczy lodówek (min. $50\,\text{mm}$ z tyłu), minimalny kąt otwarcia drzwi chłodziarki ($115^\circ$ na wysunięcie szuflad) oraz naddatki hydrauliczne pralek ($+80\,\text{mm}$ na wąż i syfon).
+- **Bezpieczeństwo Drogowe, Nośność Haka i DMC (DEC-13, DEC-46, DEC-47, RD-17…RD-45):** Weryfikacja Dopuszczalnej Masy Całkowitej (DMC), nacisku na osie, dopuszczalnego obciążenia dachu oraz nacisku pionowego na kulę haka holowniczego ($S$, kluczowego przy transporcie ciężkich rowerów elektrycznych e-bike), wraz z kontrolą przepisowych zwisów ładunku (art. 61 PoRD).
+- **Asystent Apple Watch dla Wolnych Rąk (watchOS 11, DEC-03, DEC-31):** Autonomiczny asystent pakowania i wnoszenia na nadgarstek. Przy zajętych rękach użytkownik widzi numer paczki/mebla, docelowy pokój i orientację, odhaczając postęp stuknięciem lub obrotem Cyfrowej Koronki (*Digital Crown*).
+- **Szkoła Pakowania & Edukacja Fizyki Ładunku (BR-EDU, DEC-14):** Moduł edukacyjny wyjaśniający fizykę zderzeń drogowych (niezabezpieczony bagaż o masie 15 kg przy zderzeniu z prędkością 50 km/h osiąga siłę uderzenia do 750 kg), zasady kotwiczenia pasami transportowymi, procedury wnoszenia monolitów wg norm BHP oraz zasady transportu urządzeń chłodniczych.
 
 ---
 
-## 📱 Moduły i Ekrany
+## 📱 Moduły i Ekrany (Kompletny Pakiet 12 Obszarów)
 
 1. **📦 Kalkulator i Symulator Pakowania 3D (`PackSimulatorScreen`):**
-   - Przestrzenna wizualizacja załadunku w czasie rzeczywistym z płynną orbitą kamery (360°), zoomem i przekrojami rentgenowskimi (*X-Ray*).
-   - Generowanie optymalnej kolejności wkładania paczek (od ściany grodziowej do progu bagażnika) z numeracją kroków.
-   - Kolorystyczne kodowanie stabilności (zielony = podparty z 3 stron, żółty = wolnostojący, czerwony = ryzyko zsunięcia).
-2. **🚗 Baza Pojazdów i Przestrzeni Ładunkowych (`VehicleSelectorScreen`):**
-   - Ponad 350 fabrycznych modeli aut (hatchback, kombi, sedan, SUV, van) ze szczegółowymi wymiarami geometrycznymi i normą VDA (kostki 200×100×50 mm).
-   - Tryby konfiguracji wnętrza: 5 miejsc (z półką / roletą), 5 miejsc (do dachu z siatką), 2 miejsca (złożona kanapa) oraz płaska podłoga.
-   - Własny kreator przestrzeni ładunkowych: box dachowy, bagażnik rowerowy, przyczepka towarowa, winda osobowa, bagażnik busa.
+   - Przestrzenna wizualizacja załadunku w czasie rzeczywistym z orbitą kamery (360°), zoomem i przekrojami rentgenowskimi (*X-Ray*).
+   - Generowanie optymalnej kolejności wkładania paczek z kolorystycznym kodowaniem stabilności (zielony = stabilny, żółty = wolnostojący, czerwony = ryzyko zsunięcia/kolizja).
+2. **🚗 Baza Pojazdów i Kreator Przestrzeni (`VehicleSelectorScreen`):**
+   - Ponad 350 modeli aut z precyzyjną geometrią (długość podłogi, szerokość między nadkolami, skos szyby, próg).
+   - Własny kreator przestrzeni: box dachowy, bagażnik rowerowy, przyczepka towarowa, winda, paka busa dostawczego.
 3. **🛋️ Katalog Mebli, AGD, Kartonów i Walizek (`FurnitureCatalogScreen`):**
-   - Baza gotowych brył najpopularniejszych mebli w paczkach płaskich (systemy PAX, BILLY, KALLAX), standardowe kartony przeprowadzkowe (S/M/L/XL).
-   - Sprzęt AGD i elektronika z restrykcjami pionu (pralka automatyczna: zakaz transportu poziomego ze względu na bęben; telewizory OLED: wyłącznie transport pionowy).
-4. **📬 Paczkomaty i Skrytki Kurierskie (`ParcelLockersScreen`):**
-   - Automaty paczkowe: InPost (Gabaryt A: $8\times38\times64\,\text{cm}$, B: $19\times38\times64\,\text{cm}$, C: $41\times38\times64\,\text{cm}$), DPD Pickup, Orlen Paczka, DHL POP BOX.
-   - Automatyczny bufor bezpieczeństwa (5 mm luzu) kompensujący odkształcenia kartonu i taśmy pakowej.
-5. **✈️ Bagaż Lotniczy i Macierze Sizerów (`AviationBaggageScreen`):**
-   - Rygorystyczne macierze wymiarów bagażu podręcznego i rejestrowanego dla 25 linii lotniczych (Ryanair, Wizz Air, PLL LOT, Lufthansa, KLM, EasyJet).
-   - Weryfikacja elementów wystających (kółka, uchwyty, kieszenie boczne) pod kątem wpasowania w fizyczny sizer na lotnisku.
-6. **⚖️ Kalkulator Masy, Nacisków i DMC (`WeightSafetyScreen`):**
-   - Interaktywny kalkulator sumarycznej masy ładunku, pasażerów i akcesoriów dachowych.
-   - Wskaźnik przeciążenia osi tylnej z alarmem graficznym i ostrzeżeniem prawnym o mandacie i utracie dowodu rejestracyjnego przy przekroczeniu DMC.
-7. **📏 Miarka Manualna i Asystent Wymiarowania (`ManualMeasureScreen`):**
-   - Błyskawiczny kalkulator trzech wymiarów ($D \times S \times W$) w centymetrach oraz calach z autodetekcją objętości w litrach.
-   - Historia ostatnich pomiarów, etykietowanie własnymi nazwami i transfer 1 kliknięciem do aktywnej sesji załadunku.
-8. **🎓 Szkoła Pakowania & Edukacja Bezpieczeństwa (`PackingSchoolScreen`):**
-   - 8 profesjonalnych procedur merytorycznych: punkty kotwiczenia pasów w bagażniku, blokada oparcia tylnej kanapy pasami bezpieczeństwa przy braku pasażerów, przewóz choinki, nart i rowerów.
-   - Interaktywne kalkulatory siły uderzeniowej przy gwałtownym hamowaniu.
-9. **⚙️ Ustawienia, Kopia Zapasowa i Eksport (`SettingsScreen`):**
-   - 100% lokalny backup bazy SQLite do pliku JSON z kontrolą sumaryczną i mechanizmem bezpiecznego odzyskiwania.
-   - Konfiguracja haptyki zegarka i telefonu, wybór motywu (Dark Mode zoptymalizowany pod ekrany OLED) oraz audyt zerowych uprawnień sieciowych.
+   - Baza gotowych brył mebli w paczkach płaskich (systemy IKEA PAX, BILLY, KALLAX) i kartonów przeprowadzkowych (S/M/L/XL).
+   - Sprzęt AGD/RTV z restrykcjami pionu (pralki automatyczne, telewizory OLED, lodówki z agregatem).
+4. **🚚 Logistyka Przeprowadzek i Dobór Floty (`RelocationPlannerScreen`):**
+   - Inwentaryzacja mebli z podziałem na pokoje (Salon, Kuchnia, Sypialnia) i sumator całkowitej kubatury ($m^3$) oraz wagi.
+   - Algorytm doboru wielkości auta dostawczego kat. B (blaszaki L1H1, L2H2, L3H2, L4H3 lub kontener 20 $m^3$ z windą załadowczą).
+   - Kolejkowanie załadunku wg Zasady 4 Fazy (gródź $\rightarrow$ meble skrzyniowe $\rightarrow$ wypełnienia $\rightarrow$ Karton Pierwszej Nocy przy klapie).
+5. **🚪 Przejścia, Schody i Ościeżnice (`AccessClearanceScreen`):**
+   - Weryfikacja przejścia przez otwór drzwiowy z uwzględnieniem klamki ($-6\,\text{cm}$) i kąta otwarcia skrzydła (90° vs 180°).
+   - Symulator wnoszenia po zabiegowej klatce schodowej i spocznikach (kinematyka *Moving Sofa Problem* w 3D z luzem 5 cm na dłonie tragarzy).
+   - Obliczanie trójwymiarowej przekątnej windy osobowej i towarowej $\sqrt{D^2+S^2+W^2}$ dla długich blatów i materacy.
+6. **📐 Wnęki Ścienne, Skosy i Ergonomia Mebli (`RoomFittingScreen`):**
+   - Kreator wnęki z automatycznym odliczeniem listew przypodłogowych ($-4\,\text{cm}$ przy posadzce) i detekcją kolizji z grzejnikami/parapetami.
+   - Sprawdzanie stref funkcjonalnych mebli: promień otwarcia drzwi szafy uchylnej (70 cm), wysuw szuflad łóżka/komody (90 cm ze stojącym człowiekiem), odległość krzesła od stołu (75 cm / 100 cm).
+   - Modelowanie skosów poddasza z wyznaczaniem linii wysokości stojącej 190 cm i użytkowej 140 cm.
+7. **❄️ Wymiarowanie Montażowe i Wentylacja AGD (`ApplianceClearanceScreen`):**
+   - Sprawdzanie dylatacji wentylacyjnej lodówek wolnostojących (min. 5 cm z tyłu na odprowadzenie ciepła skraplacza).
+   - Weryfikacja kąta otwarcia drzwi chłodziarki przy ścianie (wymóg min. $115^\circ$ na wysunięcie szuflad zamrażalnika).
+   - Głębokość instalacyjna pralki i suszarki w szafie (automatyczny naddatek $+80\,\text{mm}$ na wąż dopływowy AquaStop i syfon).
+8. **🏢 Garaże, Wjazdy i Skrajnie Parkingowe (`GarageClearanceScreen`):**
+   - Weryfikacja szerokości wjazdu z rozłożonymi i złożonymi lusterkami bocznymi (szerokość z dowodu $+20–28\,\text{cm}$).
+   - Kontrola strefy wysiadania kierowcy (min. 65 cm wolnej przestrzeni od ściany lub słupa konstrukcyjnego).
+   - Kolizja uniesionej klapy bagażnika w górę z sufitem garażu lub prowadnicami otwartej bramy segmentowej.
+   - Sumator całkowitej wysokości auta z boxem dachowym lub rowerami vs znaki B-16 na parkingach podziemnych (1.9 m, 2.0 m, 2.1 m).
+9. **🚲 Haki Holownicze, Nośność S i Rowery (`TowbarPhysicsScreen`):**
+   - Automatyczny bilans nacisku pionowego na kulę haka holowniczego ($S$, standard 50/75/100 kg) dla platform rowerowych z e-bike'ami.
+   - Weryfikacja dopuszczalnego zwisu ładunków długich poza obrys auta (art. 61 ust. 6 PoRD: max 0.5 m z przodu, 2.0 m z tyłu).
+10. **📬 Paczkomaty i Macierze Sizerów Lotniczych (`ParcelLockersScreen`):**
+    - Gabaryty skrytek InPost (A, B, C), DPD Pickup, Orlen Paczka z marginesem rygla zamka (10 mm) i wybrzuszenia taśmy.
+    - Sizer lotniczy dla 25 linii (Ryanair, Wizz Air, LOT, Lufthansa, EasyJet) z weryfikacją wystających kółek i uchwytów.
+11. **⚖️ Kalkulator Masy, Nacisków i Podłogi (`WeightSafetyScreen`):**
+    - Bilans masy ładunku, pasażerów i akcesoriów w odniesieniu do DMC (pole F.2 dowodu).
+    - Ostrzeżenie przed przeciążeniem punktowym podwójnej podłogi bagażnika (max 120–150 kg) przy transporcie materiałów budowlanych.
+12. **🎓 Szkoła Pakowania & Asystent Apple Watch (`PackingSchoolScreen`):**
+    - Baza wiedzy o mocowaniu pasami, dociążaniu osi, przewozie zwierząt (klatki kennelowe dopasowane do szyby) i procedurach BHP wnoszenia.
+    - Interaktywny asystent watchOS 11 z odhaczaniem kolejności pakowania ruchem nadgarstka i Cyfrową Koronką.
 
 ---
 
@@ -68,49 +81,54 @@ Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4B
 ```mermaid
 flowchart LR
     subgraph UI ["📱 Interfejs Użytkownika (React Native / Expo 57)"]
-        Simulator["📦 Symulator 3D (SceneKit / Metal)"]
-        VehicleSel["🚗 Wybór Pojazdu & Wymiarów"]
-        Catalog["🛋️ Katalog Mebli & AGD"]
-        Lockers["📬 Paczkomaty & Sizing Lotniczy"]
-        MassCalc["⚖️ Bilans Masy & DMC"]
+        Simulator["📦 Symulator 3D (SceneKit)"]
+        Relocation["🚚 Planer Przeprowadzki"]
+        Rooms["📐 Wnęki & Drzwi & Schody"]
+        Garage["🏢 Garaże & Skrajnie & Boxy"]
+        Towbar["🚲 Hak Holowniczy & DMC"]
+        Lockers["📬 Paczkomaty & Sizer Lotniczy"]
     end
 
     subgraph Core ["🧠 Warstwa Domenowa (Pure TypeScript)"]
-        Solver["Deterministyczny 3D BPP Solver\n(Extreme Points + Guillotine)"]
-        Physics["Model Fizyki & CoG\n(Rozkład Mas, Nacisk na Osie)"]
-        SizerValidator["Sizer & Tolerance Engine\n(Marginesy Skrytek i Linii Lotniczych)"]
-        StateService["PackingSessionService\n(State Machine)"]
+        Solver3D["Deterministyczny 3D BPP Solver\n(Extreme Points + Guillotine)"]
+        MovingSofa["Moving Sofa 3D Heuristic\n(Schody, Spoczniki, Ościeżnice)"]
+        NicheEngine["Tolerancje Wnęk & AGD\n(Listwy -4cm, Wentylacja 5cm)"]
+        VehiclePhysics["Model Fizyki DMC & Haka S\n(CoG, Nośność Haka, Zwis PoRD)"]
+        StateService["PackingSessionService\n(Transakcyjna Maszyna Stanu)"]
     end
 
     subgraph Storage ["💾 Baza Lokalna (100% Offline-First)"]
-        SQLite[("SQLite WAL (expo-sqlite)\nvehicles, packages, custom_spaces")]
-        Presets[("Katalog Referencyjny\nIKEA, AGD, InPost, Samoloty")]
-        Backups[("Lokalny Eksport\nJSON / CSV 0 zł")]
+        SQLite[("SQLite WAL (expo-sqlite)\n13 tabel relacyjnych")]
+        Presets[("Katalog Referencyjny\nAuta, Meble, AGD, Paczkomaty")]
+        Backups[("Lokalny Eksport\nJSON Schema v2 za 0 zł")]
     end
 
     subgraph WatchOS ["⌚ System Zegarka (watchOS 11)"]
-        WatchApp["Watch Packing Companion\n(Krokowa sekwencja załadunku)"]
-        Crown["Digital Crown & Haptyka Taptic"]
+        WatchApp["Watch Packing Companion\n(Kolejność wkładania i wnoszenia)"]
+        Crown["Digital Crown & Taptic Engine"]
     end
 
-    UI <-->|"Natychmiastowe operacje < 16 ms"| StateService
-    StateService -->|"Zlecenie kalkulacji geometrii"| Solver
-    StateService -->|"Weryfikacja masy i stabilności"| Physics
-    StateService -->|"Sprawdzenie skrytek i sizerów"| SizerValidator
+    UI <-->|"Natychmiastowy zapis i odczyt < 16 ms"| StateService
+    StateService -->|"Obliczenia upakowania 3D"| Solver3D
+    StateService -->|"Analiza wnoszenia mebla"| MovingSofa
+    StateService -->|"Pasowanie wnęk i AGD"| NicheEngine
+    StateService -->|"Bilans mas i haka S"| VehiclePhysics
     StateService <-->|"Transakcje SQLite WAL"| SQLite
     Presets -.->|"Statyczny seed bazy"| SQLite
     SQLite -->|"Kopia bezpieczeństwa"| Backups
     StateService <-->|"WatchConnectivity (Snapshot stanu)"| WatchApp
-    Crown -.->|"Odhaczenie kroku"| WatchApp
+    Crown -.->|"Odhaczenie pozycji"| WatchApp
 ```
 
 | Mechanizm | Implementacja w kodzie | Gwarancja biznesowa |
 |---|---|---|
-| **Silnik Pakowania 3D** | `src/domain/geometry/solver.ts` | Wyznaczenie układu dla 50 brył w czasie $< 200\,\text{ms}$, brak przenikania ($V_i \cap V_j = \emptyset$) |
-| **Model Fizyki i Mas** | `src/domain/physics/centerOfGravity.ts` | Precyzyjna kontrola DMC i wyznaczenie środka ciężkości CoG z dokładnością do 1 cm |
+| **Silnik Pakowania 3D** | `src/domain/geometry/solver.ts` | Rozwiązanie dla 50 brył w czasie $< 200\,\text{ms}$, brak przenikania ($V_i \cap V_j = \emptyset$) |
+| **Wnoszenie Mebli (Moving Sofa)** | `src/domain/doors-stairs/staircase-rotation.ts` | Wykrycie kolizji na spoczniku schodów z uwzględnieniem buforu 5 cm na dłonie tragarza |
+| **Tolerancje Wnęk i AGD** | `src/domain/room-fitting/` | Automatyczne odliczenie listew ($-4\,\text{cm}$) i luzu wentylacyjnego lodówki (min. 5 cm) |
+| **Fizyka Haka i DMC** | `src/domain/garage/towbar-physics.ts` | Wykrycie przeciążenia pionowego kuli haka $S$ z dokładnością do 0.5 kg |
 | **Baza Danych Offline** | `expo-sqlite`, `src/data/db/` | Czas odczytu $< 16\,\text{ms}$, pełna spójność ACID, odporność na nagłe ubicie procesu |
 | **Prywatność Danych** | Zerowe API sieciowe, brak analityki | 100% suwerenność użytkownika, deklaracja *„Data Not Collected”* w App Store |
-| **Integracja Zegarka** | `src/features/watch/` | Samodzielna sekwencja załadunku na nadgarstku przy zajętych obu rękach |
+| **Integracja Zegarka** | `src/features/watch/` | Samodzielna sekwencja załadunku i wnoszenia na nadgarstku przy zajętych obu rękach |
 
 ---
 
@@ -118,18 +136,15 @@ flowchart LR
 
 Wzorem repozytorium [`lkarwowski494/organizer`](https://github.com/lkarwowski494/organizer), w projekcie wdrożono bezwzględną procedurę weryfikacji jakości we wszystkich wymiarach inżynierskich:
 
-1. **Czysta Logika Domenowa (100% Pokrycia Linii i Gałęzi):** Bezwzględny wymóg 100% pokrycia dla modułów geometrii 3D, punktów ekstremalnych, fizyki CoG, przelicznika VDA i tolerancji sizerów (`src/domain/`).
-2. **Testy Mutacyjne (Stryker Mutation Testing):** Wymóg $\ge 90\%$ zabitych mutantów w warstwie obliczeniowej geometrii (`stryker.config.json`), gwarantujący odporność na błędy brzegowe w pętlach i nierównościach geometrycznych.
-3. **Testy Własnościowe (Property-Based z `fast-check`):** Weryfikacja matematycznych niezmienników na generatorach losowych brył:
-   - *Brak przenikania:* Dla każdej pary spakowanych paczek $i \neq j$ przecięcie wnętrz jest puste ($V_i \cap V_j = \emptyset$).
-   - *Zachowanie kubatury:* Sumaryczna objętość ładunku nigdy nie przekracza pojemności bagażnika.
-   - *Niezmiennik masy:* $\sum m_i = M_{\text{total}}$.
-4. **Niezależne Korpusy Referencyjne:** Porównywanie wyników upakowania z niezależnym solverem napisanym w języku Python (`scripts/reference_solver.py`), danymi pomiarowymi ADAC oraz oficjalnymi macierzami sizerów (InPost, Ryanair, Wizz Air).
-5. **Baza Danych i SQLite WAL:** Testy transakcyjności ACID, symulacja awarii i nagłego ubicia procesu, testy migracji schematu w dół i w górę oraz pełny test roundtrip eksportu i importu JSON.
-6. **Macierz Scenariuszy UI (React Native Testing Library):** Weryfikacja każdego ekranu, suwaka, zmiany jednostek (cm $\leftrightarrow$ in, kg $\leftrightarrow$ lb) we wszystkich skrajnych stanach formularza.
-7. **E2E i Regresja Wizualna (Maestro na symulatorze iOS):** Automatyzacja pełnych ścieżek użytkownika (od wyboru auta, przez dodanie mebli IKEA, po symulację 3D) z rygorystycznym porównywaniem zrzutów ekranu (`pixelmatch`).
-8. **Dostępność i Kontrakty Apple HIG (WCAG AAA & VoiceOver):** Minimalne pole dotyku $44 \times 44\,\text{pt}$, audiodeskrypcja sceny 3D dla niewidomych użytkowników VoiceOver, pełna obsługa Dynamic Type XXL.
-9. **Strażnicy Architektury i Bezpieczeństwa (Interaction & Architecture Guards):** Automatyczne testy-strażnicy pilnujące obecności przycisków „Anuluj / Zamknij” w nagłówkach okien modalnych, ochrony przed roszczeniami znaków towarowych firm trzecich oraz obecności disclaimera prawnego o odpowiedzialności kierowcy za załadunek.
+1. **Czysta Logika Domenowa (100% Pokrycia Linii i Gałęzi):** Bezwzględny wymóg 100% pokrycia dla modułów geometrii 3D, punktów ekstremalnych, fizyki CoG, przelicznika VDA, heurystyki wnoszenia mebli Moving Sofa, wnęk ściennych i nośności haka $S$ (`src/domain/`).
+2. **Testy Mutacyjne (Stryker Mutation Testing):** Wymóg $\ge 90\%$ zabitych mutantów w warstwach obliczeniowych (`stryker.config.json`), eliminujący błędy brzegowe w nierównościach geometrycznych i odliczeniach instalacyjnych.
+3. **Testy Własnościowe (Property-Based z `fast-check`):** Weryfikacja matematycznych niezmienników na generatorach losowych brył i układów pomieszczeń (brak przenikania $V_i \cap V_j = \emptyset$, zachowanie kubatury, monotoniczność obciążenia haka holowniczego).
+4. **Niezależne Korpusy Referencyjne:** Porównywanie wyników z niezależnym solverem w języku Python (`scripts/reference_solver.py`), danymi pomiarowymi ADAC, klasycznymi benchmarkami geometrii Moving Sofa, oficjalnymi rysunkami technicznymi AGD (Bosch, Samsung, Whirlpool) oraz macierzami sizerów (InPost, Ryanair, Wizz Air).
+5. **Baza Danych i SQLite WAL:** Testy transakcyjności ACID (13 tabel relacyjnych), symulacja awarii zasilania, testy migracji schematu w dół i w górę oraz pełny test roundtrip eksportu i importu JSON Schema v2.
+6. **Macierz Scenariuszy UI (React Native Testing Library):** Weryfikacja każdego ekranu, suwaka, kalkulatora wnęki, planera przeprowadzki i zmiany jednostek (metryczne $\leftrightarrow$ imperialne) we wszystkich skrajnych stanach.
+7. **E2E i Regresja Wizualna (Maestro na symulatorze iOS):** Automatyzacja 7 kluczowych przepływów użytkownika (załadunek auta, paczkomat, alarm DMC, kopia JSON, plan przeprowadzki M3, pasowanie wnęki z listwami, wjazd do garażu ze skrajnią 2.0 m) z rygorystycznym porównywaniem zrzutów ekranu (`pixelmatch`).
+8. **Dostępność i Kontrakty Apple HIG (WCAG AAA & VoiceOver):** Minimalne pole dotyku $44 \times 44\,\text{pt}$, audiodeskrypcja scen 3D i rzutów wnęk dla niewidomych użytkowników VoiceOver, pełna obsługa Dynamic Type XXL.
+9. **Strażnicy Architektury i Bezpieczeństwa (Interaction & Safety Guards):** Zautomatyzowane testy statyczne pilnujące obecności przycisków „Anuluj” w oknach modalnych, dialogów potwierdzenia `Alert.alert`, braku zastrzeżonych znaków towarowych marek trzecich, obowiązkowych ostrzeżeń prawnych dot. DMC i nośności haka oraz weryfikacji luzów wentylacyjnych AGD.
 
 ---
 
@@ -150,7 +165,7 @@ npm test
 # Szybkie testy jednostkowe tylko dla zmienionych plików
 npm run test:fast
 
-# Testy czystej logiki domenowej (geometria 3D, fizyka, sizer)
+# Testy czystej logiki domenowej (geometria 3D, Moving Sofa, wnęki, hak S)
 npm run test:domain
 
 # Uruchomienie testów mutacyjnych Stryker
@@ -173,45 +188,53 @@ npm run ios
 ```text
 czy-sie-zmiesci/
 ├── src/
-│   ├── domain/                     # Czysty TypeScript: zero zależności od React Native i Expo
+│   ├── domain/                     # Czysty TypeScript: zero zależności od UI i frameworków
 │   │   ├── geometry/               # Algorytmy 3D BPP: punkty ekstremalne, gilotyna, rzuty skosów
-│   │   ├── physics/                # Rozkład masy, środek ciężkości (CoG), limity DMC
+│   │   ├── doors-stairs/           # Kinematyka wnoszenia (Moving Sofa 3D), ościeżnice z klamkami, windy
+│   │   ├── room-fitting/           # Wnęki ścienne, dylatacje listew, luzy wentylacyjne AGD, ergonomia
+│   │   ├── relocation/             # Inwentaryzacja lokalu, estymacja kubatury m3, flota dostawcza
+│   │   ├── garage/                 # Skrajnie bram, strefa wysiadania min. 65 cm, haki S, boxy dachowe
+│   │   ├── physics/                # Rozkład masy, środek ciężkości (CoG), limity DMC, nośność podłogi
 │   │   ├── sizing/                 # Wymiarowanie i tolerancje sizerów (Paczkomaty, linie lotnicze)
-│   │   └── vda/                    # Przelicznik litrażu i kostek normy DIN 70020 / VDA
-│   ├── features/                   # Moduły funkcjonalne i ekrany użytkownika
+│   │   └── vda/                    # Przelicznik litrażu i kostek normy DIN 70020 / ISO 3832
+│   ├── features/                   # Moduły funkcjonalne i ekrany użytkownika (12 modułów)
 │   │   ├── simulator/              # Interaktywny widok załadunku 3D (SceneKit / Metal)
 │   │   ├── vehicles/               # Przeglądarka bazy modeli samochodów i kreator bagażnika
 │   │   ├── catalog/                # Wyszukiwarka paczek meblowych IKEA, AGD i kartonów
+│   │   ├── relocation/             # Planer przeprowadzki, dobór busa i sekwencja załadunku
+│   │   ├── doorways/               # Sprawdzanie ościeżnic drzwi, klatki schodowej i wind
+│   │   ├── room-fitting/           # Wnęki ścienne z listwami, skosy poddasza i ciągi ergonomiczne
+│   │   ├── appliances/             # Weryfikacja wentylacji lodówek i przyłączy pralek
+│   │   ├── garage/                 # Weryfikator wjazdu do garażu ze słupem i skrajni dachowych
+│   │   ├── towbar/                 # Kalkulator nacisku na kulę haka holowniczego dla e-bike'ów
 │   │   ├── lockers/                # Sizer skrytek paczkomatowych i bagażu lotniczego
 │   │   ├── weight/                 # Kalkulator nacisków na osie i ostrzeżenia DMC
-│   │   ├── manual-measure/         # Szybka miarka manualna (D x S x W)
-│   │   ├── school/                 # Szkoła pakowania, zasady mocowania pasów i quizy
 │   │   ├── watch/                  # Komunikacja z Apple Watch (WatchConnectivity, snapshoty)
-│   │   └── settings/               # Kopia zapasowa JSON, motywy, audyt danych
+│   │   └── settings/               # Kopia zapasowa JSON v2, motywy, audyt zerowych uprawnień
 │   ├── data/                       # Warstwa danych lokalnych
-│   │   ├── db/                     # SQLite WAL (expo-sqlite, czyste zapytania SQL, migracje)
-│   │   └── presets/                # Statyczne dane referencyjne (auta, s日常生活, linie lotnicze)
+│   │   ├── db/                     # SQLite WAL (expo-sqlite, czyste SQL, migracje, 13 tabel DDL)
+│   │   └── presets/                # Statyczne dane referencyjne (auta, busy, meble, AGD, linie)
 │   ├── config/                     # Pojedyncze źródło prawdy: limity, marginesy, tolerancje
 │   └── i18n/                       # Tłumaczenia wielojęzyczne (ASO 35 języków)
-├── czy_sie_zmiesci_brd/            # Kompletna dokumentacja biznesowa (23 pliki, 84 znormalizowane strony)
-├── .maestro/                       # Scenariusze testów E2E na symulatorze iOS z pixelmatch
-├── scripts/                        # Skrypty weryfikacji CI, solver referencyjny w Pythonie, audyty licencji
-└── tests/                          # Testy architektury, strażnicy wzorców (close-button, brands-guard)
+├── czy_sie_zmiesci_brd/            # Kompletna dokumentacja biznesowa (27 plików, 118,72 znormalizowanych stron)
+├── .maestro/                       # Scenariusze testów E2E na symulatorze iOS z pixelmatch (01-07)
+├── scripts/                        # Skrypty CI, solver referencyjny w Pythonie, audyty licencji
+└── tests/                          # Testy architektury, strażnicy wzorców (close-button, brands, safety)
 ```
 
 ---
 
-## 📖 Kompletna Dokumentacja Biznesowa (BRD 0.1)
+## 📖 Kompletna Dokumentacja Biznesowa (BRD 0.1 — 27 Modułów)
 
-Szczegółowa, modułowa specyfikacja wymagań biznesowych (23 pliki, 84,10 strony znormalizowanej objętości) znajduje się w katalogu [`czy_sie_zmiesci_brd/`](./czy_sie_zmiesci_brd/):
+Kompletna specyfikacja wymagań biznesowych (27 plików, **118,72 strony znormalizowanej objętości**, 213 698 znaków ze spacjami) znajduje się w katalogu [`czy_sie_zmiesci_brd/`](./czy_sie_zmiesci_brd/):
 
 * [00 START — Streszczenie, warianty MVP, spis treści](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%2000%20START%20—%20streszczenie,%20warianty%20MVP,%20spis%20treści.md)
-* [00b Jedna lista decyzji (DEC-01…DEC-41)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%2000b%20Jedna%20lista%20decyzji%20i%20pytań%20(DEC-01…DEC-41).md)
-* [00c Sprzeczności i errata](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%2000c%20Sprzeczności%20i%20errata.md)
-* [A1 Tożsamość, persony P1–P8, scenariusze SYT-01–15](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A1%20·%20rozdz.%201–3%20(Tożsamość,%20Persony,%20Architektura).md)
+* [00b Jedna lista decyzji (DEC-01…DEC-60)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%2000b%20Jedna%20lista%20decyzji%20i%20pytań%20(DEC-01…DEC-60).md)
+* [00c Sprzeczności i errata (SPRZ-01…SPRZ-12)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%2000c%20Sprzeczności%20i%20errata.md)
+* [A1 Tożsamość, persony P1–P14, scenariusze SYT-01–26](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A1%20·%20rozdz.%201–3%20(Tożsamość,%20Persony,%20Architektura).md)
 * [A2 Rynek, luka konkurencyjna, model przychodu i cennik](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A2%20·%20rozdz.%204–6.1%20(Rynek,%20Model%20przychodu,%20Zakres).md)
 * [A3a Tabela zakresu cz. 1: Pojazdy, bagażniki, katalog mebli](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A3a%20·%20rozdz.%206.2%20tabela%20zakresu%20cz.%201%20(Kalkulator,%20Geometria,%20Baza%20Aut).md)
-* [A3b Tabela zakresu cz. 2: Algorytm 3D, masa, Apple Watch, platforma](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A3b%20·%20rozdz.%206.2%20tabela%20zakresu%20cz.%202%20(Algorytm%203D,%20AR,%20Eksport,%20Platforma).md)
+* [A3b Tabela zakresu cz. 2: Algorytm 3D, masa, Apple Watch, przeprowadzki, wnęki, garaże](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A3b%20·%20rozdz.%206.2%20tabela%20zakresu%20cz.%202%20(Algorytm%203D,%20AR,%20Eksport,%20Platforma).md)
 * [A3c Etapy, nakład pracy agenta, warianty wydań](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A3c%20·%20rozdz.%206.3–6.5%20(Etapy,%20Nakład%20pracy,%20Warianty).md)
 * [A4 KPI bez śledzenia, marketing i ASO (35 języków)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20A4%20·%20rozdz.%2013,%2015%20(KPI%20bez%20śledzenia,%20Marketing,%20ASO).md)
 * [B1 Silnik pakowania 3D (BR-PAK)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B1%20·%20rozdz.%207%20narzędzia%20—%20Silnik%20pakowania%203D%20i%20algorytmy%20geometryczne.md)
@@ -220,13 +243,17 @@ Szczegółowa, modułowa specyfikacja wymagań biznesowych (23 pliki, 84,10 stro
 * [B4 Paczkomaty i linie lotnicze (BR-LOT)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B4%20·%20rozdz.%207%20narzędzia%20—%20Paczkomaty,%20skrytki%20i%20wymogi%20linii%20lotniczych.md)
 * [B5 Pomiary i miarka manualna (BR-POM)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B5%20·%20rozdz.%207%20narzedzia%20—%20Pomiary%20aparatem%20AR%20i%20LiDAR%20oraz%20manualna%20miarka.md)
 * [B6 Kontrola masy i DMC (BR-MAS)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B6%20·%20rozdz.%207%20narzedzia%20—%20Kontrola%20masy,%20DMC,%20rozklad%20naciskow%20i%20bezpieczenstwo.md)
+* [B7 Przeprowadzki, inwentaryzacja lokalu i dobór floty (BR-PRZ)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B7%20·%20rozdz.%207%20narzedzia%20—%20Przeprowadzki,%20logistyka%20lokalu%20i%20dobor%20floty%20(BR-PRZ).md)
+* [B8 Wymiarowanie lokalu, wnęki, schody i ościeżnice (BR-LOK)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B8%20·%20rozdz.%207%20narzedzia%20—%20Wymiarowanie%20lokalu,%20wneki,%20schody%20i%20oscieznice%20(BR-LOK).md)
+* [B9 Garaże, skrajnie dachowe, haki i sprzęt rekreacyjny (BR-GAR)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20B9%20·%20rozdz.%207%20narzedzia%20—%20Garaze,%20skrajnie%20dachowe,%20haki%20i%20sprzet%20rekreacyjny%20(BR-GAR).md)
 * [C1 Szkoła Pakowania i edukacja (BR-EDU)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20C1%20·%20rozdz.%207%20nauka%20—%20Szkoła%20pakowania,%20fizyka%20ładunku%20i%20zasady%20mocowania.md)
 * [C2 Reguły dziedzinowe: Geometria i VDA (RD-01…RD-16)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20C2%20·%20rozdz.%208%20reguły%20dziedzinowe%20—%20RD-01…RD-16%20(geometria%203D,%20VDA,%20skosy).md)
 * [C3 Reguły dziedzinowe: Masa i prawo (RD-17…RD-32)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20C3%20·%20rozdz.%208%20reguły%20dziedzinowe%20—%20RD-17…RD-32%20(rozkład%20masy,%20stabilność,%20ościeżnice).md)
 * [C4 Proces treści merytorycznych i decyzje badacza (D1…D22)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20C4%20·%20rozdz.%208.P%20proces%20treści%20merytorycznych%20i%20decyzje%20badacza%20D1…D22.md)
+* [C5 Reguły dziedzinowe: Wnoszenie, ościeżnice, luzy AGD, hak, garaże (RD-33…RD-55)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20C5%20·%20rozdz.%208%20reguly%20dziedzinowe%20—%20RD-33...RD-55%20(wnoszenie,%20obrot%20w%20oscieznicy,%20luzy%20AGD,%20hak,%20garaze).md)
 * [D1 Wymagania niefunkcjonalne (NFR) i wytyczne Apple](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D1%20·%20rozdz.%209–10%20wymagania%20niefunkcjonalne%20(NFR)%20i%20zgodność%20z%20Apple.md)
-* [D2 Architektura i model danych SQLite (DDL)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D2%20·%20rozdz.%2011–12%20architektura,%20model%20danych%20SQLite%20i%20przenośność.md)
-* [D3 Rejestr ryzyk (RYZ-01…RYZ-45) i pytania otwarte](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D3%20·%20rozdz.%2014,%2016%20rejestr%20ryzyk%20(RYZ-01…RYZ-45)%20i%20otwarte%20pytania.md)
+* [D2 Architektura i model danych SQLite (13 tabel DDL)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D2%20·%20rozdz.%2011–12%20architektura,%20model%20danych%20SQLite%20i%20przenośność.md)
+* [D3 Rejestr ryzyk (RYZ-01…RYZ-60) i pytania otwarte](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D3%20·%20rozdz.%2014,%2016%20rejestr%20ryzyk%20(RYZ-01…RYZ-60)%20i%20otwarte%20pytania.md)
 * [D4 Wielowarstwowa strategia testów (9 warstw jakości w standardzie Organizer)](./czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 
 ---

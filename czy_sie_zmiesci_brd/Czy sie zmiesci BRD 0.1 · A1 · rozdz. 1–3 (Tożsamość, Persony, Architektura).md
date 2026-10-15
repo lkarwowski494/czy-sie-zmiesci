@@ -79,10 +79,29 @@ Analiza ponad 1200 recenzji w kategoriach *Utilities* i *Navigation/Travel* w Ap
 * **P8: Ewa (39 l.) — „Dostępność i Samodzielność (VoiceOver)”**
   * Niewidoma użytkowniczka planująca zakupy sprzętu rehabilitacyjnego.
   * Wymagania: Bezwzględna obsługa etykiet VoiceOver, audiodeskrypcja wymiarów i wyników dopasowania.
+* **P9: Michał i Karolina (32 l. i 30 l.) — „Młoda Para / Kompleksowa Przeprowadzka do M3”**
+  * Cel: Przeprowadzić dobytek z 2-pokojowego mieszkania do stanu deweloperskiego (35 kartonów, stół, narożnik, pralka, łóżko 160x200, TV 65").
+  * Wyzwanie: Czy wynająć vana L2H2 na 2 kursy, czy kontener meblowy z windą (20 m³)? Jak zaplanować sekwencję wnoszenia na 3. piętro bez windy i czy narożnik przejdzie przez ościeżnicę 80 cm?
+* **P10: Natalia (29 l.) — „Aranżacja Kawalerki i Wpasowanie Mebli”**
+  * Cel: Urządzić pokój 18 m²: szafa modułowa we wnęce, łóżko z szufladami, stół jadalniany.
+  * Wyzwanie: Czy listwy przypodłogowe pozwolą wsunąć szafę 150 cm we wnękę 151 cm? Czy szuflady łóżka wysuną się bez kolizji z grzejnikiem i stolikiem? Czy drzwi szafy uchylą się bez blokowania przejścia?
+* **P11: Krzysztof (44 l.) — „Aktywny Rowerzysta i Podróżnik z Boxem”**
+  * Samochód: Kombi z hakiem i belkami dachowymi.
+  * Wyzwanie: Dopuszczalny nacisk pionowy kuli haka $S = 75\text{ kg}$ a platforma (18 kg) + 2 rowery elektryczne (2x 25 kg) = 68 kg (granica bezpieczeństwa). Jaka jest łączna wysokość auta z boxem (wjazd do parkingu podziemnego 2.0 m)?
+* **P12: Dariusz (51 l.) — „Remontowiec i Zakupy Budowlane”**
+  * Samochód: Ford Mondeo kombi.
+  * Cel: Przewiezienie 20 paczek gresu (440 kg), wanny akrylowej 170 cm i profili 3 m.
+  * Wyzwanie: Ochrona podwójnej podłogi bagażnika przed załamaniem od nacisku punktowego oraz kontrola przepisowego zwisu profili poza klapę (art. 61 PoRD).
+* **P13: Zofia (36 l.) — „Właścicielka Psa / Bezpieczny Transport Kennelowy”**
+  * Samochód: Toyota RAV4 (SUV).
+  * Cel: Dopasowanie aluminiowej klatki kennelowej o wysokości 68 cm do mocno ściętej tylnej szyby bagażnika.
+* **P14: Grzegorz (58 l.) — „Kierowca z Ciasnym Garażem i Miejscem ze Słupem”**
+  * Samochód: Nowy SUV o szerokości katalogowej 188 cm (z lusterkami 213 cm).
+  * Wyzwanie: Wjazd przez bramę garażową 220 cm oraz strefa min. 65 cm na otwarcie drzwi kierowcy przy żelbetowym słupie. Sprawdzenie kolizji otwieranej w górę klapy bagażnika z napędem podsufitowym bramy.
 
 ---
 
-### **3.2. Scenariusze Życiowe (SYT-01…SYT-15)**
+### **3.2. Scenariusze Życiowe (SYT-01…SYT-26)**
 
 * **SYT-01:** Zakup mebla modułowego w markecie (3 paczki o różnych wymiarach) – weryfikacja dopasowania w 15 sekund przy użyciu kodu produktu lub wpisania wymiarów z etykiety cenowej.
 * **SYT-02:** Pakowanie wakacyjne 2+2 – symulacja ułożenia 4 twardych walizek kabinowych, 2 toreb miękkich i wózka parasolki.
@@ -99,3 +118,14 @@ Analiza ponad 1200 recenzji w kategoriach *Utilities* i *Navigation/Travel* w Ap
 * **SYT-13:** Szybki pomiar awaryjny – brak miarki fizycznej, pomiar kartonu za pomocą interaktywnej miarki ekranowej lub aparatu.
 * **SYT-14:** Eksport instrukcji pakowania dla małżonka/znajomego – wygenerowanie jednoekranowej grafiki PNG z rzutem 3D i kolejnością wkładania paczek.
 * **SYT-15:** Pakowanie bagażnika z zachowaniem widoczności – automatyczne ograniczenie wysokości załadunku do linii dolnej krawędzi szyb tylnych.
+* **SYT-16:** Planowanie kompleksowej przeprowadzki M3 – inwentaryzacja mebli z podziałem na pokoje, obliczenie łącznej kubatury $m^3$ i dobór wielkości vana (L2H2 vs L3H2) oraz liczby kursów.
+* **SYT-17:** Wnoszenie monolitycznego narożnika przez drzwi 80 cm i spocznik schodów – symulacja obrotu mebla (Moving Sofa Problem) i kolizji z klamką oraz balustradą.
+* **SYT-18:** Pasowanie szafy modułowej we wnękę ścienną – uwzględnienie grubości listew przypodłogowych (-2 cm na stronę) i ewentualnych krzywizn tynku.
+* **SYT-19:** Ergonomia sypialni i ciągi komunikacyjne – weryfikacja kolizji wysuwanych szuflad łóżka ze stolikiem nocnym i grzejnikiem oraz strefy uchylenia drzwi szafy.
+* **SYT-20:** Montaż lodówki we wnęce kuchennej – weryfikacja tylnego odstępu wentylacyjnego skraplacza (min. 5 cm) oraz kąta otwarcia drzwi min. 115° na wyjęcie szuflad zamrażalnika.
+* **SYT-21:** Montaż pralki w szafie gospodarczej – dodanie naddatku instalacyjnego +8 cm na wąż AquaStop i syfon oraz sprawdzenie promienia otwarcia frontu.
+* **SYT-22:** Bagażnik rowerowy na hak a limit nacisku pionowego $S$ – automatyczny bilans masy platformy i rowerów elektrycznych z alarmem przeciążenia kuli haka.
+* **SYT-23:** Wysokość całkowita pojazdu z boxem dachowym lub rowerami a wjazd do parkingu podziemnego (znaki B-16: 1.9 m / 2.0 m / 2.1 m).
+* **SYT-24:** Parkowanie w wąskim garażu ze słupem – weryfikacja szerokości z rozłożonymi i złożonymi lusterkami oraz strefy min. 65 cm na otwarcie drzwi kierowcy.
+* **SYT-25:** Transport klatki kennelowej dla psa – symulacja styku ściętej ściany klatki ze skosem tylnej szyby SUV-a z zachowaniem luzu 3 cm.
+* **SYT-26:** Wynajem komórki w Self-Storage – optymalizacja sztaplowania kartonów w boksie 5 m² z zachowaniem korytarza inspekcyjnego o szerokości 50 cm.

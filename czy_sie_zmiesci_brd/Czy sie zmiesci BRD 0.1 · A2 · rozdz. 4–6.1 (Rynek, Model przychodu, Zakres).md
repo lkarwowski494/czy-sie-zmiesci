@@ -81,7 +81,7 @@ Aplikacja wdraża sprawdzony w projektach Apps4Brew (Oczko, Napar) model **Freem
 
 ## **Rozdział 6.1: Architektura Zakresu i Podział na Moduły**
 
-Zakres funkcjonalny podzielony jest na 7 logicznych filarów:
+Zakres funkcjonalny podzielony jest na 10 logicznych filarów:
 1. **Moduł M1 (Geometria i Przestrzeń):** Definiowanie brył ładunkowych (bagażnik, box dachowy, skrzynia ładunkowa, winda, ościeżnica).
 2. **Moduł M2 (Katalog Pojazdów i Standardów):** Predefiniowane profile aut osobowych, kombi, SUV, paczkomatów i linii lotniczych.
 3. **Moduł M3 (Katalog Ładunku i Mebli):** Baza wymiarów kartonów, walizek, sprzętu AGD i mebli z podziałem na paczki składowe.
@@ -89,3 +89,6 @@ Zakres funkcjonalny podzielony jest na 7 logicznych filarów:
 5. **Moduł M5 (Masa, Bezpieczeństwo i DMC):** Weryfikacja wagowa, rozkład masy w pojeździe, ostrzeżenia o widoczności i prawie drogowym.
 6. **Moduł M6 (Edukacja — Szkoła Pakowania):** Baza wiedzy o zabezpieczaniu ładunku, pasach transportowych, fizyce zderzeń i przepisach prawa.
 7. **Moduł M7 (Integracja Platformowa i Apple Watch):** Obsługa watchOS, Live Activities na ekranie blokady, widżety Smart Stack, eksport i kopia JSON.
+8. **Moduł M8 (Przeprowadzki i Logistyka Lokalu — BR-PRZ):** Inwentaryzacja mebli lokalu, sumaryczna kubatura $m^3$, dobór floty dostawczej kat. B, optymalizacja boksów self-storage ze ścieżką inspekcyjną, kolejkowanie załadunku (Zasada 4 Fazy).
+9. **Moduł M9 (Wymiarowanie Lokalu i Wnęk — BR-LOK):** Analiza przejść przez ościeżnice (klamka, skrzydło 90° vs 180°), wnoszenie po schodach i spocznikach (Moving Sofa), przekątna windy 3D, dylatacje listew przypodłogowych, luzy wentylacyjne lodówek, głębokość montażowa pralek, strefy ergonomiczne.
+10. **Moduł M10 (Garaże, Skrajnie i Sprzęt Rekreacyjny — BR-GAR):** Szerokość auta z lusterkami vs brama garażowa, strefa wysiadania min. 65 cm, kolizja klapy z sufitem/bramą, skrajnie dachowe (1.9m/2.0m/2.1m), bilans pionowy haka holowniczego ($S$), klatki kennelowe dla psów, nacisk punktowy podłogi bagażnika.
