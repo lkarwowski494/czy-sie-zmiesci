@@ -128,7 +128,7 @@ flowchart LR
 | **Fizyka Haka i DMC** | `src/domain/garage/towbar-physics.ts` | Wykrycie przeciążenia pionowego kuli haka $S$ z dokładnością do 0.5 kg |
 | **Baza Danych Offline** | `expo-sqlite`, `src/data/db/` | Czas odczytu $< 16\,\text{ms}$, pełna spójność ACID, odporność na nagłe ubicie procesu |
 | **Prywatność Danych** | Zerowe API sieciowe, brak analityki | 100% suwerenność użytkownika, deklaracja *„Data Not Collected”* w App Store |
-| **Integracja Zegarka** | `src/features/watch/` | Samodzielna sekwencja załadunku i wnoszenia na nadgarstku przy zajętych obu rękach |
+| **Integracja Zegarka** | `src/services/WatchSyncService.ts` | Samodzielna sekwencja załadunku i wnoszenia na nadgarstku przy zajętych obu rękach |
 
 ---
 
@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 22 zestawów testów (119 testów)
+# Uruchomienie wszystkich 23 zestawów testów (124 testy)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
