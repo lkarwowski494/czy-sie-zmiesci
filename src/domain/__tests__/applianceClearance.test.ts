@@ -1,6 +1,7 @@
 import {
   evaluateRefrigeratorFit,
   evaluateWashingMachineInstallation,
+  evaluateCompressorRest,
 } from '../room-fitting/applianceClearance';
 
 describe('ApplianceClearance (RD-37, RD-38, RD-39, SPRZ-09, SPRZ-11)', () => {
@@ -117,4 +118,56 @@ describe('ApplianceClearance (RD-37, RD-38, RD-39, SPRZ-09, SPRZ-11)', () => {
       expect(res.marginMm).toBe(35);
     });
   });
+
+  describe('Compressor Oil Rest Timer (Z-189, DEC-14)', () => {
+    it('requires 24h rest after horizontal transport and warns when power-on is premature', () => {
+      const res = evaluateCompressorRest('HORIZONTAL', 5.5);
+
+      expect(res.requiredRestHours).toBe(24);
+      expect(res.elapsedHours).toBe(5.5);
+      expect(res.remainingHours).toBe(18.5);
+      expect(res.isRestComplete).toBe(false);
+      expect(res.canPowerOnSafely).toBe(false);
+      expect(res.riskDescription).toContain('ZAKAZ WŁĄCZANIA DO PRĄDU');
+      expect(res.riskDescription).toContain('18.5h');
+      expect(res.safetyGuidelines.some(g => g.includes('rurką tłoczną'))).toBe(true);
+    });
+
+    it('approves power-on after required 24h rest is satisfied for horizontal transport', () => {
+      const res = evaluateCompressorRest('HORIZONTAL', 24);
+
+      expect(res.requiredRestHours).toBe(24);
+      expect(res.remainingHours).toBe(0);
+      expect(res.isRestComplete).toBe(true);
+      expect(res.canPowerOnSafely).toBe(true);
+      expect(res.riskDescription).toContain('Bezpieczny rozruch');
+    });
+
+    it('requires 12h rest for tilted transport and approves when elapsed >= 12h', () => {
+      const pending = evaluateCompressorRest('TILTED', 8);
+      expect(pending.requiredRestHours).toBe(12);
+      expect(pending.remainingHours).toBe(4);
+      expect(pending.canPowerOnSafely).toBe(false);
+
+      const ready = evaluateCompressorRest('TILTED', 12.5);
+      expect(ready.remainingHours).toBe(0);
+      expect(ready.canPowerOnSafely).toBe(true);
+    });
+
+    it('requires 2h rest for upright transport and verifies non-horizontal guidelines', () => {
+      const res = evaluateCompressorRest('UPRIGHT', 1.0);
+      expect(res.requiredRestHours).toBe(2);
+      expect(res.remainingHours).toBe(1.0);
+      expect(res.canPowerOnSafely).toBe(false);
+      expect(res.safetyGuidelines.some(g => g.includes('stabilnej pozycji pionowej'))).toBe(true);
+
+      const done = evaluateCompressorRest('UPRIGHT', 2.0);
+      expect(done.canPowerOnSafely).toBe(true);
+    });
+
+    it('throws error when elapsed hours is negative', () => {
+      expect(() => evaluateCompressorRest('HORIZONTAL', -1)).toThrow(/nie może być ujemny/);
+    });
+  });
 });
+

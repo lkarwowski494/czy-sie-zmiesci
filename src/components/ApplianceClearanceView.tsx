@@ -8,6 +8,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-nativ
 import {
   evaluateRefrigeratorFit,
   evaluateWashingMachineInstallation,
+  evaluateCompressorRest,
+  TransportOrientation,
   REFRIGERATOR_REAR_VENT_MM,
   REFRIGERATOR_SIDE_VENT_MM,
   WASHING_MACHINE_PLUMBING_BUFFER_MM,
@@ -15,7 +17,7 @@ import {
 } from '../domain/room-fitting/applianceClearance';
 
 export function ApplianceClearanceView() {
-  const [applianceTab, setApplianceTab] = useState<'fridge' | 'washer'>('fridge');
+  const [applianceTab, setApplianceTab] = useState<'fridge' | 'washer' | 'oil_timer'>('fridge');
 
   // Stan lodówki
   const [fridgeW, setFridgeW] = useState('60'); // cm
@@ -28,6 +30,15 @@ export function ApplianceClearanceView() {
   // Stan pralki
   const [washerD, setWasherD] = useState('55'); // cm (katalogowa)
   const [closetD, setClosetD] = useState('68'); // cm (głębokość szafy)
+
+  // Stan timera odstania sprężarki (Z-189)
+  const [transportOrientation, setTransportOrientation] = useState<TransportOrientation>('HORIZONTAL');
+  const [elapsedHoursStr, setElapsedHoursStr] = useState('4');
+
+  const compressorResult = evaluateCompressorRest(
+    transportOrientation,
+    Math.max(0, parseFloat(elapsedHoursStr) || 0)
+  );
 
   const fridgeResult = evaluateRefrigeratorFit(
     {
@@ -62,7 +73,7 @@ export function ApplianceClearanceView() {
           onPress={() => setApplianceTab('fridge')}
         >
           <Text style={[styles.tabBtnText, applianceTab === 'fridge' && styles.tabBtnTextActive]}>
-            🧊 Wentylacja Lodówki
+            🧊 Wentylacja
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -70,7 +81,15 @@ export function ApplianceClearanceView() {
           onPress={() => setApplianceTab('washer')}
         >
           <Text style={[styles.tabBtnText, applianceTab === 'washer' && styles.tabBtnTextActive]}>
-            🧺 Pralka w Zabudowie
+            🧺 Pralka
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabBtn, applianceTab === 'oil_timer' && styles.tabBtnActive]}
+          onPress={() => setApplianceTab('oil_timer')}
+        >
+          <Text style={[styles.tabBtnText, applianceTab === 'oil_timer' && styles.tabBtnTextActive]}>
+            ⏱️ Olej w Agregacie
           </Text>
         </TouchableOpacity>
       </View>
@@ -190,7 +209,7 @@ export function ApplianceClearanceView() {
             ))}
           </View>
         </View>
-      ) : (
+      ) : applianceTab === 'washer' ? (
         /* PANEL PRALKI */
         <View style={styles.panel}>
           <Text style={styles.infoText}>
@@ -265,6 +284,101 @@ export function ApplianceClearanceView() {
                 • {w}
               </Text>
             ))}
+          </View>
+        </View>
+      ) : (
+        /* PANEL TIMERA ODSTANIA OLEJU SPRĘŻARKI (Z-189, DEC-14) */
+        <View style={styles.panel}>
+          <Text style={styles.infoText}>
+            Weryfikacja wymaganego czasu odstoju oleju po transporcie lodówki przed podłączeniem zasilania 230V:
+          </Text>
+
+          <Text style={styles.inputLabel}>Pozycja lodówki podczas transportu:</Text>
+          <View style={styles.angleRow}>
+            {[
+              { key: 'HORIZONTAL', label: '🛌 Na leżąco (24h)' },
+              { key: 'TILTED', label: '📐 Skos >40° (12h)' },
+              { key: 'UPRIGHT', label: '🧍 Pion (2h)' },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.key}
+                style={[
+                  styles.angleBtn,
+                  transportOrientation === opt.key && styles.angleBtnActive,
+                ]}
+                onPress={() => setTransportOrientation(opt.key as TransportOrientation)}
+              >
+                <Text
+                  style={[
+                    styles.angleBtnText,
+                    transportOrientation === opt.key && styles.angleBtnTextActive,
+                  ]}
+                >
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[styles.row, { marginTop: 10 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.inputLabel}>Czas od postawienia w pionie (godziny):</Text>
+              <TextInput
+                style={styles.input}
+                value={elapsedHoursStr}
+                onChangeText={setElapsedHoursStr}
+                keyboardType="numeric"
+                placeholder="np. 4"
+              />
+            </View>
+          </View>
+
+          <View style={styles.quickPresetRow}>
+            {['1', '2', '6', '12', '18', '24'].map((h) => (
+              <TouchableOpacity
+                key={h}
+                style={[styles.smallChip, elapsedHoursStr === h && styles.smallChipActive]}
+                onPress={() => setElapsedHoursStr(h)}
+              >
+                <Text style={[styles.smallChipText, elapsedHoursStr === h && styles.smallChipTextActive]}>
+                  +{h}h
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Wynik statusu sprężarki */}
+          <View
+            style={[
+              styles.resultBox,
+              compressorResult.canPowerOnSafely ? styles.resultSuccess : styles.resultAlert,
+            ]}
+          >
+            <Text style={styles.resultTitle}>
+              {compressorResult.canPowerOnSafely
+                ? '✅ BEZPIECZNY ROZRUCH AGD'
+                : '❌ ZAKAZ WŁĄCZANIA DO PRĄDU!'}
+            </Text>
+            <Text style={styles.resultSub}>
+              Wymagany czas odstoju: <Text style={{ fontWeight: '800' }}>{compressorResult.requiredRestHours}h</Text> •
+              Upłynęło: <Text style={{ fontWeight: '800' }}>{compressorResult.elapsedHours}h</Text>
+            </Text>
+            {!compressorResult.canPowerOnSafely && (
+              <Text style={[styles.resultSub, { color: '#F87171', fontWeight: '800', marginTop: 4 }]}>
+                ⏳ Pozostało do odczekania: {compressorResult.remainingHours} godz.
+              </Text>
+            )}
+            <Text style={[styles.resultSub, { marginTop: 4 }]}>
+              {compressorResult.riskDescription}
+            </Text>
+
+            <View style={{ marginTop: 8 }}>
+              {compressorResult.safetyGuidelines.map((g, i) => (
+                <Text key={i} style={styles.recText}>
+                  💡 {g}
+                </Text>
+              ))}
+            </View>
           </View>
         </View>
       )}

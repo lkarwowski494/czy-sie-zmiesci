@@ -119,3 +119,66 @@ export function evaluateWashingMachineInstallation(
     warnings,
   };
 }
+
+export type TransportOrientation = 'UPRIGHT' | 'TILTED' | 'HORIZONTAL';
+
+export interface CompressorRestResult {
+  readonly orientation: TransportOrientation;
+  readonly requiredRestHours: number;
+  readonly isRestComplete: boolean;
+  readonly elapsedHours: number;
+  readonly remainingHours: number;
+  readonly canPowerOnSafely: boolean;
+  readonly riskDescription: string;
+  readonly safetyGuidelines: readonly string[];
+}
+
+export const COMPRESSOR_REST_HOURS: Record<TransportOrientation, number> = {
+  UPRIGHT: 2,
+  TILTED: 12,
+  HORIZONTAL: 24,
+};
+
+/**
+ * Ocenia bezpieczny czas odstania oleju w sprężarce lodówki po transporcie (Z-189, DEC-14).
+ */
+export function evaluateCompressorRest(
+  orientation: TransportOrientation,
+  elapsedHours: number
+): CompressorRestResult {
+  if (elapsedHours < 0) {
+    throw new Error('Czas od zakończenia transportu nie może być ujemny');
+  }
+
+  const requiredRestHours = COMPRESSOR_REST_HOURS[orientation];
+  const safeElapsed = Math.round(elapsedHours * 10) / 10;
+  const isRestComplete = safeElapsed >= requiredRestHours;
+  const remainingHours = isRestComplete ? 0 : Math.round((requiredRestHours - safeElapsed) * 10) / 10;
+
+  let riskDescription = '';
+  if (isRestComplete) {
+    riskDescription = 'Bezpieczny rozruch: Olej chłodniczy spłynął do miski sprężarki. Można bezpiecznie włączyć zasilanie.';
+  } else {
+    riskDescription = `ZAKAZ WŁĄCZANIA DO PRĄDU: Pozostało jeszcze ${remainingHours}h odstoju. Załączenie agregatu grozi uderzeniem hydraulicznym i zatarciem tłoka sprężarki.`;
+  }
+
+  const guidelines: string[] = [
+    'Nigdy nie uruchamiaj lodówki natychmiast po transporcie i wniesieniu do mieszkania.',
+    orientation === 'HORIZONTAL'
+      ? 'Przy przewozie na leżąco lodówka powinna spoczywać rurką tłoczną sprężarki skierowaną ku górze.'
+      : 'Utrzymuj urządzenie w stabilnej pozycji pionowej przed podłączeniem wtyczki.',
+    'Po upływie czasu odstoju włącz chłodziarkę i odczekaj min. 2 godziny do osiągnięcia temperatury roboczej przed włożeniem żywności.',
+  ];
+
+  return {
+    orientation,
+    requiredRestHours,
+    isRestComplete,
+    elapsedHours: safeElapsed,
+    remainingHours,
+    canPowerOnSafely: isRestComplete,
+    riskDescription,
+    safetyGuidelines: guidelines,
+  };
+}
+

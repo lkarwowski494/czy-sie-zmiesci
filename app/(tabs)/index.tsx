@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Share,
 } from 'react-native';
 import { packItemsInTrunk } from '../../src/domain/geometry/extremePoints';
 import { calculatePayloadDMC } from '../../src/domain/physics/payloadDMC';
@@ -77,6 +78,42 @@ export default function SimulatorScreen() {
         ]);
         setPassengersCount(1);
         break;
+    }
+  };
+
+  const handleSharePlan = async () => {
+    const lines: string[] = [
+      `📦 PLAN ZAŁADUNKU BAGAŻNIKA — FitCheck Manifest (Z-128, Z-130)`,
+      `Pojazd: ${vehicle.make} ${vehicle.model} (${vehicle.bodyType.toUpperCase()}, VDA: ${vehicle.vdaVolumeLiters}L)`,
+      `Status: ${packingResult.isFullyPacked ? '✅ Wszystkie przedmioty zmieszczone' : '⚠️ Niektóre przedmioty nie zmieściły się'}`,
+      `Masa ładunku: ${packingResult.totalWeightKg} kg (DMC: ${payloadResult.status === 'SAFE' ? 'Bezpieczna' : 'Przeciążenie!'})`,
+      `Wykorzystanie przestrzeni: ${packingResult.packingEfficiencyPct}%`,
+      `Balans poprzeczny: ${cogResult.isLateralSymmetric ? 'Idealny (symetryczny)' : `Asymetria ${cogResult.lateralOffsetMm} mm`}`,
+      '',
+      '--- KOLEJNOŚĆ ZAŁADUNKU (KROK PO KROKU) ---',
+    ];
+
+    packingResult.placements.forEach((p) => {
+      const itm = activeItems.find((i) => i.id === p.itemId);
+      lines.push(
+        `#${p.sequenceOrder}. ${itm?.name ?? p.itemId} — ${Math.round(p.orientedDimensionsMm.lengthMm / 10)}×${Math.round(p.orientedDimensionsMm.widthMm / 10)}×${Math.round(p.orientedDimensionsMm.heightMm / 10)} cm (poz: ${Math.round(p.positionMm.xMm / 10)}/${Math.round(p.positionMm.yMm / 10)}/${Math.round(p.positionMm.zMm / 10)} cm)`
+      );
+    });
+
+    if (payloadResult.warnings.length > 0 || cogResult.warnings.length > 0) {
+      lines.push('');
+      lines.push('--- OSTRZEŻENIA I ZALECENIA BEZPIECZEŃSTWA ---');
+      payloadResult.warnings.forEach((w) => lines.push(`• ${w}`));
+      cogResult.warnings.forEach((w) => lines.push(`• ${w}`));
+    }
+
+    try {
+      await Share.share({
+        message: lines.join('\n'),
+        title: `FitCheck Plan Załadunku — ${vehicle.make} ${vehicle.model}`,
+      });
+    } catch {
+      // Ignoruj anulowanie przez użytkownika
     }
   };
 
@@ -341,6 +378,17 @@ export default function SimulatorScreen() {
               • {w}
             </Text>
           ))}
+        </View>
+
+        {/* Eksport i Udostępnienie Planu Załadunku (Z-128, Z-130) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📤 Udostępnij Plan Załadunku (Z-128, Z-130)</Text>
+          <Text style={styles.bodyText}>
+            Wyślij kompletny plan załadunku z kolejnością pakowania, wymiarami paczek i bilansem DMC przez Wiadomości, WhatsApp, AirDrop lub wydrukuj.
+          </Text>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleSharePlan}>
+            <Text style={styles.shareBtnText}>📲 Udostępnij / Kopiuj Manifest Załadunku</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -664,5 +712,17 @@ const styles = StyleSheet.create({
     color: '#FBBF24',
     fontSize: 12,
     marginTop: 2,
+  },
+  shareBtn: {
+    backgroundColor: '#0284C7',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

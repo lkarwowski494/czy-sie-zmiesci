@@ -59,6 +59,13 @@ describe('Application Services Integration (Warstwa 4: Integracja logiki bizneso
       const sessionItems = db.getSessionItems('session_holiday');
       expect(sessionItems.length).toBe(3);
       expect(sessionItems.every(i => typeof i['pos_x_cm'] === 'number')).toBe(true);
+
+      // Verify Markdown Manifest generation (Z-128, Z-130)
+      const manifest = packSessionService.generatePackManifest(report);
+      expect(manifest).toContain('# 📦 Plan Załadunku Bagażnika');
+      expect(manifest).toContain('Skoda');
+      expect(manifest).toContain('Kolejność Załadunku');
+      expect(manifest).toContain('preset_suitcase_l');
     });
 
     it('throws error when packing unknown session or unknown space', () => {

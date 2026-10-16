@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
+  Share,
 } from 'react-native';
 import { estimateRelocationVolume, ClutterLevel } from '../../src/domain/relocation/volumeEstimator';
 import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator';
@@ -17,6 +18,10 @@ import {
   calculateSelfStorageCapacity,
   analyzeAtticSlope,
   evaluateFurnitureUnderSlope,
+  evaluateFunctionalClearance,
+  evaluatePorterManualHandling,
+  FurnitureClearanceType,
+  RECOMMENDED_CLEARANCES_MM,
 } from '../../src/domain/room-fitting/atticAndErgonomics';
 import { compareCarVsVanRelocation } from '../../src/domain/relocation/vanVsCarEconomics';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
@@ -189,6 +194,63 @@ export default function RelocationScreen() {
     corridorWidthM: 0.50,
   });
 
+  // Ergonomia stref mebli i przejść (Z-172, Z-177, RD-51, DEC-45)
+  const [clearanceType, setClearanceType] = useState<FurnitureClearanceType>('HINGED_WARDROBE');
+  const [availableClearanceCm, setAvailableClearanceCm] = useState('80');
+
+  // Tragarze i normy BHP (Z-188, RD-53)
+  const [porterCargoWeightKg, setPorterCargoWeightKg] = useState('120');
+  const [portersCount, setPortersCount] = useState(2);
+  const [isOccasionalHandling, setIsOccasionalHandling] = useState(true);
+
+  const functionalClearanceResult = evaluateFunctionalClearance(
+    clearanceType,
+    Math.max(0, (parseFloat(availableClearanceCm) || 0) * 10)
+  );
+
+  const porterBhpResult = evaluatePorterManualHandling(
+    Math.max(1, parseFloat(porterCargoWeightKg) || 1),
+    Math.max(1, portersCount),
+    isOccasionalHandling
+  );
+
+  const handleShareRelocationManifest = async () => {
+    const lines: string[] = [
+      `🚚 PLAN PRZEPROWADZKI I SEKWENCJA ZAŁADUNKU — FitCheck Manifest (Z-186, RD-49)`,
+      `Metraż lokalu: ${areaM2} m² (${residents} os., umeblowanie: ${clutter})`,
+      `Szacowana kubatura: ${relocResult.estimatedVolumeM3} m³ (masa mienia: ~${relocResult.estimatedWeightKg} kg)`,
+      `Rekomendowana flota: ${relocResult.fleetDescription}`,
+      `Boks self-storage: min. ${relocResult.recommendedSelfStorageAreaM2} m² (wys. 2.7m)`,
+      `Szacowane kartony: ~${relocResult.recommendedBoxesCount} szt.`,
+      '',
+      '--- ZASADA 4 FAZY ZAŁADUNKU FURGONU ---',
+      '1. Faza 1: Ciężkie AGD (pralka, lodówka) i korpusy szaf — montowane przy grodzi czołowej furgonu',
+      '2. Faza 2: Meble skrzyniowe, komody, stoły i standardowe kartony bazowe',
+      '3. Faza 3: Wypełniacze, miękkie torby, pościel (blokowanie luzów w furgonie)',
+      '4. Faza 4: Karton „Pierwsza Noc” (przy drzwiach tylnych / wyjmowany jako 1.)',
+      '',
+      '--- RACHUNEK EKONOMICZNY: OSOBÓWKA VS VAN (Z-164) ---',
+      `Odległość: ${distanceKm} km (w jedną stronę)`,
+      `Rekomendacja: ${tripComparison.isVanRecommended ? 'Wynajem Busa' : 'Kursy Osobówką'}`,
+      `Osobówka: ${tripComparison.carTripsCount} kursów, paliwo i amortyzacja: ${tripComparison.carTotalCostPln} zł`,
+      `Van: ${tripComparison.vanTripsCount} kurs, koszt łączny: ${tripComparison.vanTotalCostPln} zł`,
+      '',
+      '--- ZALECENIA BEZPIECZEŃSTWA LOGISTYCZNEGO ---',
+      '• AGD chłodnicze przewoź w pionie lub odczekaj 12-24h przed włączeniem zasilania (Z-189)',
+      '• Używaj pasów transportowych o wytrzymałości min. 500 daN',
+      '• Zespół tragarzy: max 50 kg/osobę dorywczo wg norm BHP (Z-188)',
+    ];
+
+    try {
+      await Share.share({
+        message: lines.join('\n'),
+        title: `FitCheck - Plan Przeprowadzki (${areaM2} m²)`,
+      });
+    } catch {
+      // Ignoruj anulowanie
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -325,6 +387,14 @@ export default function RelocationScreen() {
               💡 {tripComparison.recommendation}
             </Text>
           </View>
+
+          {/* Przycisk Udostępnienia Manifestu (Z-186) */}
+          <TouchableOpacity
+            style={styles.shareBtn}
+            onPress={handleShareRelocationManifest}
+          >
+            <Text style={styles.shareBtnText}>📤 Udostępnij Raport Przeprowadzki (Z-186)</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Sekcja 1b: Boks Self-Storage z Korytarzem 50 cm (RD-50, Z-166) */}
@@ -818,6 +888,192 @@ export default function RelocationScreen() {
           <Text style={styles.cardTitle}>❄️ Wymiarowanie Montażowe & Wentylacja AGD (RD-37…RD-51)</Text>
           <ApplianceClearanceView />
         </View>
+
+        {/* Sekcja 7: Ergonomia Stref Mebli i Ciągów Komunikacyjnych (Z-172, Z-177, RD-51, DEC-45) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📐 Ergonomia Stref Mebli i Przejść (RD-51, DEC-45)</Text>
+          <Text style={styles.subtext}>
+            Weryfikacja minimalnych stref wysuwu szuflad, otwarcia frontów i swobody przejścia:
+          </Text>
+
+          <Text style={[styles.label, { marginTop: 10 }]}>Rodzaj strefy użytkowej:</Text>
+          <View style={styles.turnSelector}>
+            {[
+              { type: 'HINGED_WARDROBE', label: '🚪 Szafa (70 cm)' },
+              { type: 'CHEST_OF_DRAWERS', label: '🗄️ Szuflady (90 cm)' },
+              { type: 'DISHWASHER', label: '🧼 Zmywarka (105 cm)' },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.type}
+                style={[styles.turnBtn, clearanceType === opt.type && styles.turnBtnActive]}
+                onPress={() => setClearanceType(opt.type as FurnitureClearanceType)}
+              >
+                <Text style={[styles.turnBtnText, clearanceType === opt.type && styles.turnBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={[styles.turnSelector, { marginTop: 6 }]}>
+            {[
+              { type: 'DINING_CHAIR', label: '🍽️ Krzesło (75 cm)' },
+              { type: 'DINING_PASSAGE', label: '🚶‍♂️ Ciąg ze stołem (100 cm)' },
+              { type: 'BED_SIDE', label: '🛏️ Bok łóżka (60 cm)' },
+            ].map((opt) => (
+              <TouchableOpacity
+                key={opt.type}
+                style={[styles.turnBtn, clearanceType === opt.type && styles.turnBtnActive]}
+                onPress={() => setClearanceType(opt.type as FurnitureClearanceType)}
+              >
+                <Text style={[styles.turnBtnText, clearanceType === opt.type && styles.turnBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[styles.row, { marginTop: 12 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Dostępna przestrzeń przed meblem (cm):</Text>
+              <TextInput
+                style={styles.input}
+                value={availableClearanceCm}
+                onChangeText={setAvailableClearanceCm}
+                keyboardType="numeric"
+                placeholder="np. 80"
+              />
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.resultBox,
+              functionalClearanceResult.isErgonomic ? styles.resultBoxSuccess : styles.resultBoxAlert,
+            ]}
+          >
+            <Text
+              style={[
+                styles.resultHighlight,
+                functionalClearanceResult.isErgonomic ? styles.successText : styles.alertText,
+              ]}
+            >
+              {functionalClearanceResult.isErgonomic
+                ? '✅ Strefa ergonomiczna i swobodna'
+                : '❌ Zbyt ciasno na swobodne użytkowanie!'}
+            </Text>
+            <Text style={styles.subtext}>
+              Norma: {functionalClearanceResult.requiredClearanceMm / 10} cm • Dostępne: {functionalClearanceResult.availableClearanceMm / 10} cm •{' '}
+              {functionalClearanceResult.marginMm >= 0 ? `Zapas: +${functionalClearanceResult.marginMm / 10} cm` : `Brak: ${Math.abs(functionalClearanceResult.marginMm / 10)} cm`}
+            </Text>
+            <Text style={[styles.subtext, { marginTop: 4, color: '#F8FAFC' }]}>
+              💡 {functionalClearanceResult.recommendation}
+            </Text>
+          </View>
+        </View>
+
+        {/* Sekcja 8: Tragarze i Dopuszczalne Normy Dźwigania BHP (Z-188, RD-53) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>👷 Zespół Tragarzy i Normy Dźwigania BHP (RD-53, Z-188)</Text>
+          <Text style={styles.subtext}>
+            Kontrola dopuszczalnych norm dźwigania ręcznego monolitów (pianino, sejf, szafy dębowe):
+          </Text>
+
+          <View style={[styles.row, { marginTop: 10 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Masa ładunku (kg):</Text>
+              <TextInput
+                style={styles.input}
+                value={porterCargoWeightKg}
+                onChangeText={setPorterCargoWeightKg}
+                keyboardType="numeric"
+                placeholder="120"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.label}>Liczba tragarzy:</Text>
+              <View style={styles.turnSelector}>
+                {[1, 2, 3, 4].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[styles.turnBtn, portersCount === n && styles.turnBtnActive]}
+                    onPress={() => setPortersCount(n)}
+                  >
+                    <Text style={[styles.turnBtnText, portersCount === n && styles.turnBtnTextActive]}>
+                      {n} os.
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.quickPresetRow}>
+            {[
+              { label: 'Pralka (65 kg)', w: '65' },
+              { label: 'Szafa dąb (90 kg)', w: '90' },
+              { label: 'Sejf (120 kg)', w: '120' },
+              { label: 'Pianino (220 kg)', w: '220' },
+            ].map((p) => (
+              <TouchableOpacity
+                key={p.w}
+                style={[styles.smallChip, porterCargoWeightKg === p.w && styles.smallChipActive]}
+                onPress={() => setPorterCargoWeightKg(p.w)}
+              >
+                <Text style={[styles.smallChipText, porterCargoWeightKg === p.w && styles.smallChipTextActive]}>
+                  {p.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={[styles.row, { marginTop: 6 }]}>
+            <TouchableOpacity
+              style={[styles.turnBtn, isOccasionalHandling && styles.turnBtnActive, { flex: 1 }]}
+              onPress={() => setIsOccasionalHandling(true)}
+            >
+              <Text style={[styles.turnBtnText, isOccasionalHandling && styles.turnBtnTextActive]}>
+                Praca dorywcza (50 kg/os.)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.turnBtn, !isOccasionalHandling && styles.turnBtnActive, { flex: 1, marginLeft: 8 }]}
+              onPress={() => setIsOccasionalHandling(false)}
+            >
+              <Text style={[styles.turnBtnText, !isOccasionalHandling && styles.turnBtnTextActive]}>
+                Praca stała (30 kg/os.)
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <View
+            style={[
+              styles.resultBox,
+              porterBhpResult.isCompliant ? styles.resultBoxSuccess : styles.resultBoxAlert,
+            ]}
+          >
+            <Text
+              style={[
+                styles.resultHighlight,
+                porterBhpResult.isCompliant ? styles.successText : styles.alertText,
+              ]}
+            >
+              {porterBhpResult.isCompliant
+                ? '✅ Zgodne z przepisami BHP'
+                : '❌ ZAKAZ WNOSZENIA RĘCZNEGO!'}
+            </Text>
+            <Text style={styles.subtext}>
+              Obciążenie: <Text style={{ fontWeight: '800' }}>{porterBhpResult.weightPerPorterKg} kg/osobę</Text> (limit: {porterBhpResult.isOccasionalHandling ? 50 : 30} kg/os.)
+            </Text>
+            <Text style={[styles.subtext, { marginTop: 4, color: '#F8FAFC' }]}>
+              {porterBhpResult.legalAdvisory}
+            </Text>
+            {porterBhpResult.requiresMechanicalEquipment && (
+              <Text style={[styles.warningText, { marginTop: 6 }]}>
+                ⚠️ Waga przekracza 150 kg — bezwzględny wymóg użycia schodołazu lub pasów nośnych na ramiona.
+              </Text>
+            )}
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -1037,6 +1293,26 @@ const styles = StyleSheet.create({
   },
   smallChipTextActive: {
     color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  resultBoxSuccess: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#34D399',
+  },
+  resultBoxAlert: {
+    borderLeftWidth: 3,
+    borderLeftColor: '#F87171',
+  },
+  shareBtn: {
+    backgroundColor: '#0284C7',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  shareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '700',
   },
 });

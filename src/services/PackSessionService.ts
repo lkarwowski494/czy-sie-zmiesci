@@ -182,4 +182,51 @@ export class PackSessionService {
       combinedRecommendations,
     };
   }
+
+  /**
+   * Generuje czytelny manifest załadunku bagażnika w formacie Markdown do druku i Share Sheet (Z-128, Z-130)
+   */
+  public generatePackManifest(report: FullPackReport): string {
+    const lines: string[] = [
+      `# 📦 Plan Załadunku Bagażnika — FitCheck Manifest`,
+      `**Pojazd:** ${report.vehicleName}`,
+      `**Sesja:** ${report.sessionName}`,
+      `**Status:** ${report.isFullyPacked ? '✅ Wszystkie przedmioty zmieszczone' : '⚠️ Niektóre przedmioty nie zmieściły się'}`,
+      `**Masa ładunku:** ${report.packingResult.totalWeightKg} kg (DMC: ${report.payloadResult.status === 'SAFE' ? 'Bezpieczna' : 'Przeciążenie!'})`,
+      `**Wykorzystanie przestrzeni:** ${report.packingResult.packingEfficiencyPct}%`,
+      `**Balans poprzeczny:** ${report.cogResult.isLateralSymmetric ? 'Idealny (symetryczny)' : `Asymetria ${report.cogResult.lateralOffsetMm} mm`}`,
+      '',
+      '---',
+      '## 📋 Kolejność Załadunku (Krok po Kroku)',
+      '',
+    ];
+
+    for (const p of report.packingResult.placements) {
+      lines.push(
+        `#${p.sequenceOrder}. **${p.itemId}** — ` +
+        `${Math.round(p.orientedDimensionsMm.lengthMm / 10)}×${Math.round(p.orientedDimensionsMm.widthMm / 10)}×${Math.round(p.orientedDimensionsMm.heightMm / 10)} cm ` +
+        `(poz. X/Y/Z: ${Math.round(p.positionMm.xMm / 10)}/${Math.round(p.positionMm.yMm / 10)}/${Math.round(p.positionMm.zMm / 10)} cm)`
+      );
+    }
+
+    if (report.combinedWarnings.length > 0) {
+      lines.push('');
+      lines.push('---');
+      lines.push('## ⚠️ Ostrzeżenia i Zalecenia:');
+      for (const w of report.combinedWarnings) {
+        lines.push(`- ${w}`);
+      }
+    }
+
+    if (report.combinedRecommendations.length > 0) {
+      lines.push('');
+      lines.push('## 💡 Wskazówki Bezpieczeństwa:');
+      for (const r of report.combinedRecommendations) {
+        lines.push(`- ${r}`);
+      }
+    }
+
+    return lines.join('\n');
+  }
 }
+
