@@ -5,7 +5,7 @@
 // Apps4Brew Studio — 100% Offline-First, Zero Telemetry.
 // ============================================================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getAppSetting, setAppSetting } from '../data/db';
 
 export const TRIAL_MAX_PROJECTS = 3;
@@ -45,6 +45,15 @@ export interface AppAccessState {
   canCreate: boolean;
   isHistoryReadOnly: boolean;
   subscriptionTier: SubscriptionTier;
+}
+
+type AccessListener = (state: AppAccessState) => void;
+const accessListeners = new Set<AccessListener>();
+
+function notifyAccessListeners(): AppAccessState {
+  const state = getAppAccessState();
+  accessListeners.forEach((fn) => fn(state));
+  return state;
 }
 
 export function getAppAccessState(): AppAccessState {
@@ -114,36 +123,53 @@ export function recordProjectCreated(): AppAccessState {
   }
   const newCount = current.projectsCount + 1;
   setAppSetting('trial_projects_count', String(newCount));
-  return getAppAccessState();
+  return notifyAccessListeners();
 }
 
 export function activateSubscription(tier: 'monthly' | 'annual' | 'lifetime'): AppAccessState {
   setAppSetting('is_pro_active', 'true');
   setAppSetting('subscription_tier', tier);
-  return getAppAccessState();
+  setAppSetting('purchased_tier_receipt', tier);
+  return notifyAccessListeners();
 }
 
 export function restorePurchases(): AppAccessState {
-  setAppSetting('is_pro_active', 'true');
-  setAppSetting('subscription_tier', 'lifetime');
-  return getAppAccessState();
+  const receipt = getAppSetting('purchased_tier_receipt', '') as SubscriptionTier;
+  if (receipt === 'monthly' || receipt === 'annual' || receipt === 'lifetime') {
+    setAppSetting('is_pro_active', 'true');
+    setAppSetting('subscription_tier', receipt);
+  } else {
+    setAppSetting('is_pro_active', 'false');
+    setAppSetting('subscription_tier', 'none');
+  }
+  return notifyAccessListeners();
 }
 
 export function resetTrialForTesting(): void {
   setAppSetting('is_pro_active', 'false');
   setAppSetting('subscription_tier', 'none');
+  setAppSetting('purchased_tier_receipt', '');
   setAppSetting('trial_projects_count', '0');
   setAppSetting('trial_started_at', new Date().toISOString());
+  notifyAccessListeners();
 }
 
 export function setTrialExpiredForTesting(): void {
   setAppSetting('is_pro_active', 'false');
   setAppSetting('subscription_tier', 'none');
   setAppSetting('trial_projects_count', String(TRIAL_MAX_PROJECTS));
+  notifyAccessListeners();
 }
 
 export function useAppAccess() {
   const [access, setAccess] = useState<AppAccessState>(() => getAppAccessState());
+
+  useEffect(() => {
+    accessListeners.add(setAccess);
+    return () => {
+      accessListeners.delete(setAccess);
+    };
+  }, []);
 
   const refresh = () => {
     setAccess(getAppAccessState());
@@ -152,16 +178,19 @@ export function useAppAccess() {
   const subscribe = (tier: 'monthly' | 'annual' | 'lifetime') => {
     const updated = activateSubscription(tier);
     setAccess(updated);
+    return updated;
   };
 
   const restore = () => {
     const updated = restorePurchases();
     setAccess(updated);
+    return updated;
   };
 
   const recordProject = () => {
     const updated = recordProjectCreated();
     setAccess(updated);
+    return updated;
   };
 
   return {

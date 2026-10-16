@@ -58,6 +58,17 @@ export function setAppSetting(key: string, value: string): void {
   getDatabaseService().setAppSetting(key, value);
 }
 
+export async function triggerAutoBackup(): Promise<void> {
+  try {
+    const { autoBackup } = require('../../lib/backup');
+    const db = getDatabaseService();
+    const backup = db.exportBackupJson();
+    await autoBackup(backup.data);
+  } catch {
+    // Graceful fallback in environments without file system
+  }
+}
+
 export { DatabaseService, BackupExportPayload, BackupImportResult } from './database';
 export * from './schema';
 export * from './driver';

@@ -247,6 +247,105 @@ describe('DatabaseService & SQLite Transactions (Warstwa 5: Baza danych i JSON r
     });
   });
 
+  describe('Forensic Persistence & Offline-First State Storage', () => {
+    it('persists and retrieves pack sessions across reloads', () => {
+      db.savePackSession({
+        id: 'session_persisted_1',
+        name: 'Załadunek Wakacyjny',
+        target_space_id: 'space_octavia_standard',
+        passengers_count: 2,
+        total_weight_kg: 85,
+        packing_efficiency_pct: 78.5,
+        is_valid: true,
+        items: [
+          {
+            id: 'item_1',
+            cargo_item_id: 'preset_suitcase_l',
+            pos_x_cm: 0,
+            pos_y_cm: 0,
+            pos_z_cm: 0,
+            dim_x_cm: 75,
+            dim_y_cm: 50,
+            dim_z_cm: 30,
+            sequence_order: 1,
+            is_packed: true,
+          },
+        ],
+      });
+
+      const latest = db.getLatestPackSession();
+      expect(latest).toBeDefined();
+      expect(latest!.id).toBe('session_persisted_1');
+      expect(latest!.name).toBe('Załadunek Wakacyjny');
+      expect(latest!.total_weight_kg).toBe(85);
+
+      const all = db.getAllPackSessions();
+      expect(all.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('persists and updates garage profile and towbar/roof config', () => {
+      db.saveGarageProfile({
+        id: 'default_garage',
+        name: 'Garaż Domowy',
+        gate_width_cm: 250,
+        interior_width_cm: 290,
+        ceiling_height_cm: 230,
+        gate_runner_height_cm: 215,
+        obstacle_x_cm: 0,
+        obstacle_width_cm: 0,
+        max_entry_sign_m: 2.1,
+      });
+
+      const profile = db.getLatestGarageProfile();
+      expect(profile).toBeDefined();
+      expect(profile!.gate_width_cm).toBe(250);
+      expect(profile!.ceiling_height_cm).toBe(230);
+
+      db.saveTowbarRoofConfig({
+        id: 'default_towbar_roof',
+        vehicle_id: 'veh_skoda_octavia_4_combi',
+        towbar_s_limit_kg: 75,
+        bike_rack_weight_kg: 18,
+        bikes_count: 3,
+        bikes_total_weight_kg: 45,
+        roof_limit_kg: 75,
+        bars_weight_kg: 5,
+        roof_box_weight_kg: 18,
+        roof_cargo_weight_kg: 35,
+        total_roof_height_cm: 205,
+      });
+
+      const towbar = db.getTowbarRoofConfig('veh_skoda_octavia_4_combi');
+      expect(towbar).toBeDefined();
+      expect(towbar!.towbar_s_limit_kg).toBe(75);
+      expect(towbar!.bikes_count).toBe(3);
+      expect(towbar!.total_roof_height_cm).toBe(205);
+    });
+
+    it('persists and retrieves relocation projects', () => {
+      db.saveRelocationProject({
+        id: 'reloc_project_1',
+        name: 'Przeprowadzka M3',
+        origin_type: 'apartment',
+        origin_area_m2: 65,
+        residents_count: 3,
+        clutter_level: 'standard',
+        total_volume_m3: 18.5,
+        total_weight_kg: 1200,
+        recommended_vehicle_type: 'Iveco Daily 20m³',
+      });
+
+      const latest = db.getLatestRelocationProject();
+      expect(latest).toBeDefined();
+      expect(latest!.id).toBe('reloc_project_1');
+      expect(latest!.origin_area_m2).toBe(65);
+      expect(latest!.total_volume_m3).toBe(18.5);
+
+      const all = db.getAllRelocationProjects();
+      expect(all.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
   describe('ExpoSQLiteDriver wrapper contract', () => {
     it('wraps native expo-sqlite methods correctly', () => {
       const { ExpoSQLiteDriver } = require('../driver');

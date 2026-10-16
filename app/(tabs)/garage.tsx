@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { evaluateGarageFit, evaluateRoofSetupHeight } from '../../src/domain/garage/garageClearance';
 import { evaluateTowbarLoad, Bicycle } from '../../src/domain/garage/towbarPhysics';
@@ -20,8 +21,17 @@ import { GarageVisualizer } from '../../src/components/GarageVisualizer';
 import { TowbarVisualizer } from '../../src/components/TowbarVisualizer';
 import { RoofRackVisualizer } from '../../src/components/RoofRackVisualizer';
 import { DogKennelVisualizer } from '../../src/components/DogKennelVisualizer';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import { useAppAccess } from '../../src/services/app-access';
+import { getDatabaseService, triggerAutoBackup } from '../../src/data/db';
+import { useUnitSystem, formatDimension, formatWeight } from '../../src/lib/unit-converter';
+import { t } from '../../src/lib/i18n';
 
 export default function GarageScreen() {
+  const access = useAppAccess();
+  const unitSystem = useUnitSystem();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
   // Garaż: wymiary pojazdu i bramy
   const [gateWidth, setGateWidth] = useState('240'); // cm
   const [carWidthMirrors, setCarWidthMirrors] = useState('208'); // cm
@@ -59,7 +69,77 @@ export default function GarageScreen() {
   const [hasFalseFloor, setHasFalseFloor] = useState(true);
   const [pointLoadKg, setPointLoadKg] = useState('80');
 
+  // Wczytywanie zapisanego profilu garażu i haka z SQLite przy starcie (Persystencja)
+  useEffect(() => {
+    try {
+      const db = getDatabaseService();
+      const profile = db.getLatestGarageProfile();
+      if (profile) {
+        if (profile.gate_width_cm) setGateWidth(String(profile.gate_width_cm));
+        if (profile.ceiling_height_cm) setGarageCeiling(String(profile.ceiling_height_cm));
+      }
+
+      const vehicles = db.getAllVehicles();
+      const vehicleId = String(vehicles[0]?.id ?? 'veh_skoda_octavia_4_combi');
+      const towbar = db.getTowbarRoofConfig(vehicleId);
+      if (towbar) {
+        if (towbar.towbar_s_limit_kg) setHookLimit(String(towbar.towbar_s_limit_kg) as any);
+        if (towbar.bike_rack_weight_kg) setRackWeight(String(towbar.bike_rack_weight_kg));
+        if (typeof towbar.bikes_count === 'number') setBikeCount(towbar.bikes_count);
+        if (towbar.roof_limit_kg) setRoofRailLimit(String(towbar.roof_limit_kg) as any);
+        if (towbar.bars_weight_kg) setCrossbarsWeightKg(String(towbar.bars_weight_kg));
+        if (towbar.roof_box_weight_kg) setRoofBoxWeightKg(String(towbar.roof_box_weight_kg));
+        if (towbar.roof_cargo_weight_kg) setRoofCargoWeightKg(String(towbar.roof_cargo_weight_kg));
+      }
+    } catch {
+      // fallback
+    }
+  }, []);
+
+  const persistGarageToSQLite = () => {
+    try {
+      const db = getDatabaseService();
+      db.saveGarageProfile({
+        id: 'default_garage',
+        name: 'Mój Garaż',
+        gate_width_cm: parseFloat(gateWidth) || 240,
+        interior_width_cm: (parseFloat(gateWidth) || 240) + 40,
+        ceiling_height_cm: parseFloat(garageCeiling) || 220,
+        gate_runner_height_cm: 210,
+        obstacle_x_cm: 0,
+        obstacle_width_cm: 0,
+        max_entry_sign_m: 2.0,
+      });
+
+      const vehicles = db.getAllVehicles();
+      const vehicleId = String(vehicles[0]?.id ?? 'veh_skoda_octavia_4_combi');
+      db.saveTowbarRoofConfig({
+        id: 'default_towbar_roof',
+        vehicle_id: vehicleId,
+        towbar_s_limit_kg: parseFloat(hookLimit) || 75,
+        bike_rack_weight_kg: parseFloat(rackWeight) || 18,
+        bikes_count: bikeCount,
+        bikes_total_weight_kg: bikeCount * (isEBike ? 24 : 13),
+        roof_limit_kg: parseFloat(roofRailLimit) || 75,
+        bars_weight_kg: parseFloat(crossbarsWeightKg) || 5,
+        roof_box_weight_kg: parseFloat(roofBoxWeightKg) || 18,
+        roof_cargo_weight_kg: parseFloat(roofCargoWeightKg) || 35,
+        total_roof_height_cm: (parseFloat(carHeight) || 155) + (parseFloat(roofBarsHeight) || 8) + (parseFloat(roofCargoHeight) || 42),
+      });
+
+      triggerAutoBackup();
+    } catch {
+      // fallback
+    }
+  };
+
   const handleSelectCarPreset = (preset: 'octavia' | 'passat' | 'rav4' | 'duster') => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    access.recordProject();
+
     switch (preset) {
       case 'octavia':
         setCarWidthMirrors('200');
@@ -90,9 +170,16 @@ export default function GarageScreen() {
         setHookLimit('75');
         break;
     }
+    persistGarageToSQLite();
   };
 
   const handleSelectGaragePreset = (preset: 'standard' | 'underground' | 'wide') => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    access.recordProject();
+
     switch (preset) {
       case 'standard':
         setGateWidth('240');
@@ -107,6 +194,17 @@ export default function GarageScreen() {
         setGarageCeiling('240');
         break;
     }
+    persistGarageToSQLite();
+  };
+
+  const handleManualSave = () => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    access.recordProject();
+    persistGarageToSQLite();
+    Alert.alert(t('Sukces'), t('Konfiguracja garażu i haka została zapisana w bazie SQLite.'));
   };
 
   // Kalkulacja wjazdu do garażu
@@ -201,22 +299,42 @@ export default function GarageScreen() {
     isPointLoadConcentrated: true,
   });
 
+  const unitSuffix = unitSystem === 'imperial' ? 'in' : 'cm';
+  const weightSuffix = unitSystem === 'imperial' ? 'lbs' : 'kg';
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>🏢 Garaż & Hak Holowniczy</Text>
+          <Text style={styles.title}>{t('🏢 Garaż & Hak Holowniczy')}</Text>
           <Text style={styles.subtitle}>
-            Skrajnie wjazdowe bramy, parkingi podziemne (B-16) i nacisk kuli haka S
+            {t('Skrajnie wjazdowe bramy, parkingi podziemne (B-16) i nacisk kuli haka S')}
           </Text>
         </View>
 
+        {/* Baner Read-Only po trialu */}
+        {access.status === 'trial_expired' && (
+          <TouchableOpacity
+            testID="garage-read-only-banner"
+            style={styles.readOnlyBanner}
+            onPress={() => setIsPaywallOpen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.readOnlyBannerTitle}>
+              {t('Tryb Archiwalny (Read-Only) — Dotknij, aby odblokować pełną wersję')}
+            </Text>
+            <Text style={styles.readOnlyBannerDesc}>
+              {t('Przeglądasz zapisane profile. Wybierz Apps4Brew Pass ($0.99), aby modyfikować i tworzyć nowe.')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Sekcja 1: Wjazd do garażu i brama */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚪 Skrajnia Bramy & Klapa Bagażnika (RD-41, RD-42)</Text>
-          
+          <Text style={styles.cardTitle}>{t('🚪 Skrajnia Bramy & Klapa Bagażnika (RD-41, RD-42)')}</Text>
+
           {/* Szybki wybór auta */}
-          <Text style={styles.subLabel}>Szybki model pojazdu:</Text>
+          <Text style={styles.subLabel}>{t('Szybki model pojazdu:')}</Text>
           <View style={styles.chipRow}>
             {[
               { id: 'octavia', label: '🚗 Škoda Octavia' },
@@ -235,12 +353,12 @@ export default function GarageScreen() {
           </View>
 
           {/* Szybki typ garażu */}
-          <Text style={[styles.subLabel, { marginTop: 4 }]}>Typ garażu / bramy:</Text>
+          <Text style={[styles.subLabel, { marginTop: 4 }]}>{t('Typ garażu / bramy:')}</Text>
           <View style={styles.chipRow}>
             {[
-              { id: 'standard', label: '🏠 Brama 240 / Sufit 220' },
-              { id: 'underground', label: '🏢 Parking 230 / B-16 2.0m' },
-              { id: 'wide', label: '🚪 Szeroka 260 / Sufit 240' },
+              { id: 'standard', label: `🏠 ${t('Brama 240 / Sufit 220')}` },
+              { id: 'underground', label: `🏢 ${t('Parking 230 / B-16 2.0m')}` },
+              { id: 'wide', label: `🚪 ${t('Szeroka 260 / Sufit 240')}` },
             ].map((g) => (
               <TouchableOpacity
                 key={g.id}
@@ -254,20 +372,34 @@ export default function GarageScreen() {
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Szerokość bramy (cm):</Text>
+              <Text style={styles.label}>{t('Szerokość bramy ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={gateWidth}
-                onChangeText={setGateWidth}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setGateWidth(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Szer. z lusterkami (cm):</Text>
+              <Text style={styles.label}>{t('Szer. z lusterkami ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={carWidthMirrors}
-                onChangeText={setCarWidthMirrors}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setCarWidthMirrors(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -275,20 +407,34 @@ export default function GarageScreen() {
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Szer. ze złożonymi (cm):</Text>
+              <Text style={styles.label}>{t('Szer. ze złożonymi ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={carWidthFolded}
-                onChangeText={setCarWidthFolded}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setCarWidthFolded(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Wys. uniesionej klapy (cm):</Text>
+              <Text style={styles.label}>{t('Wys. uniesionej klapy ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={tailgateHeight}
-                onChangeText={setTailgateHeight}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setTailgateHeight(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -296,48 +442,50 @@ export default function GarageScreen() {
 
           <View style={styles.resultBox}>
             <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Wjazd z rozłożonymi lusterkami:</Text>
+              <Text style={styles.statusLabel}>{t('Wjazd z rozłożonymi lusterkami:')}</Text>
               <Text
                 style={[
                   styles.statusValue,
                   { color: garageFit.canEnterWithOpenMirrors ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                {garageFit.canEnterWithOpenMirrors ? '✅ ZMIEŚCI SIĘ' : '⚠️ ZA CIASNO'}
+                {garageFit.canEnterWithOpenMirrors ? t('✅ ZMIEŚCI SIĘ') : t('⚠️ ZA CIASNO')}
               </Text>
             </View>
             <Text style={styles.dimSubtext}>
-              Luz po bokach: {Math.round(garageFit.entryMarginOpenMirrorsMm / 10)} cm
+              {t('Luz po bokach: {val}', { val: formatDimension(garageFit.entryMarginOpenMirrorsMm / 10, unitSystem) })}
             </Text>
 
             <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Wjazd ze złożonymi lusterkami:</Text>
+              <Text style={styles.statusLabel}>{t('Wjazd ze złożonymi lusterkami:')}</Text>
               <Text
                 style={[
                   styles.statusValue,
                   { color: garageFit.canEnterWithFoldedMirrors ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                {garageFit.canEnterWithFoldedMirrors ? '✅ ZMIEŚCI SIĘ' : '⛔ KOLIZJA'}
+                {garageFit.canEnterWithFoldedMirrors ? t('✅ ZMIEŚCI SIĘ') : t('⛔ KOLIZJA')}
               </Text>
             </View>
             <Text style={styles.dimSubtext}>
-              Luz po bokach: {Math.round(garageFit.entryMarginFoldedMirrorsMm / 10)} cm
+              {t('Luz po bokach: {val}', { val: formatDimension(garageFit.entryMarginFoldedMirrorsMm / 10, unitSystem) })}
             </Text>
 
             <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Kolizja klapy z sufitem ({garageCeiling} cm):</Text>
+              <Text style={styles.statusLabel}>
+                {t('Kolizja klapy z sufitem ({val}):', { val: formatDimension(parseFloat(garageCeiling) || 220, unitSystem) })}
+              </Text>
               <Text
                 style={[
                   styles.statusValue,
                   { color: !garageFit.willTailgateHitCeiling ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                {!garageFit.willTailgateHitCeiling ? '✅ BEZPIECZNIE' : '💥 UDERZY W SUFIT'}
+                {!garageFit.willTailgateHitCeiling ? t('✅ BEZPIECZNIE') : t('💥 UDERZY W SUFIT')}
               </Text>
             </View>
             <Text style={styles.dimSubtext}>
-              Margines nad klapą: {Math.round(garageFit.tailgateCeilingMarginMm / 10)} cm
+              {t('Margines nad klapą: {val}', { val: formatDimension(garageFit.tailgateCeilingMarginMm / 10, unitSystem) })}
             </Text>
           </View>
 
@@ -357,33 +505,54 @@ export default function GarageScreen() {
 
         {/* Sekcja 2: Box dachowy & Parking podziemny B-16 */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚗 Box Dachowy vs Parking Podziemny (RD-43)</Text>
+          <Text style={styles.cardTitle}>{t('🚗 Box Dachowy vs Parking Podziemny (RD-43)')}</Text>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Wys. auta (cm):</Text>
+              <Text style={styles.label}>{t('Wys. auta ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={carHeight}
-                onChangeText={setCarHeight}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setCarHeight(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Belki dachowe (cm):</Text>
+              <Text style={styles.label}>{t('Belki dachowe ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={roofBarsHeight}
-                onChangeText={setRoofBarsHeight}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setRoofBarsHeight(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Box / Rowery (cm):</Text>
+              <Text style={styles.label}>{t('Box / Rowery ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={roofCargoHeight}
-                onChangeText={setRoofCargoHeight}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setRoofCargoHeight(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -391,10 +560,10 @@ export default function GarageScreen() {
 
           <View style={styles.resultBox}>
             <Text style={styles.resultHeader}>
-              Wysokość całkowita (z buforem +3 cm na nierówności):
+              {t('Wysokość całkowita (z buforem +3 cm na nierówności):')}
             </Text>
             <Text style={styles.bigHighlight}>
-              {(roofFit.totalHeightWithBounceMm / 1000).toFixed(2)} m ({roofFit.totalHeightWithBounceMm} mm)
+              {(roofFit.totalHeightWithBounceMm / 1000).toFixed(2)} m ({formatDimension(roofFit.totalHeightWithBounceMm / 10, unitSystem)})
             </Text>
 
             <View style={styles.signGrid}>
@@ -404,9 +573,9 @@ export default function GarageScreen() {
                   { backgroundColor: roofFit.canEnterSign210m ? '#065F46' : '#991B1B' },
                 ]}
               >
-                <Text style={styles.signTitle}>Znak 2.1 m</Text>
+                <Text style={styles.signTitle}>{t('Znak 2.1 m')}</Text>
                 <Text style={styles.signVerdict}>
-                  {roofFit.canEnterSign210m ? 'WJAZD OK' : 'ZAKAZ'}
+                  {roofFit.canEnterSign210m ? t('WJAZD OK') : t('ZAKAZ')}
                 </Text>
               </View>
 
@@ -416,9 +585,9 @@ export default function GarageScreen() {
                   { backgroundColor: roofFit.canEnterSign200m ? '#065F46' : '#991B1B' },
                 ]}
               >
-                <Text style={styles.signTitle}>Znak 2.0 m</Text>
+                <Text style={styles.signTitle}>{t('Znak 2.0 m')}</Text>
                 <Text style={styles.signVerdict}>
-                  {roofFit.canEnterSign200m ? 'WJAZD OK' : 'ZAKAZ'}
+                  {roofFit.canEnterSign200m ? t('WJAZD OK') : t('ZAKAZ')}
                 </Text>
               </View>
 
@@ -428,25 +597,32 @@ export default function GarageScreen() {
                   { backgroundColor: roofFit.canEnterSign190m ? '#065F46' : '#991B1B' },
                 ]}
               >
-                <Text style={styles.signTitle}>Znak 1.9 m</Text>
+                <Text style={styles.signTitle}>{t('Znak 1.9 m')}</Text>
                 <Text style={styles.signVerdict}>
-                  {roofFit.canEnterSign190m ? 'WJAZD OK' : 'ZAKAZ'}
+                  {roofFit.canEnterSign190m ? t('WJAZD OK') : t('ZAKAZ')}
                 </Text>
               </View>
             </View>
 
             {/* Kontrola Nośności Dachu i Zwisów */}
             <View style={{ marginTop: 14 }}>
-              <Text style={styles.label}>Limit nośności relingów dachowych:</Text>
+              <Text style={styles.label}>{t('Limit nośności relingów dachowych:')}</Text>
               <View style={styles.buttonRow}>
                 {(['50', '75', '100'] as const).map((lim) => (
                   <TouchableOpacity
                     key={lim}
                     style={[styles.pill, roofRailLimit === lim && styles.pillActive]}
-                    onPress={() => setRoofRailLimit(lim)}
+                    onPress={() => {
+                      if (!access.canCreate) {
+                        setIsPaywallOpen(true);
+                        return;
+                      }
+                      setRoofRailLimit(lim);
+                      persistGarageToSQLite();
+                    }}
                   >
                     <Text style={[styles.pillText, roofRailLimit === lim && styles.pillTextActive]}>
-                      {lim} kg
+                      {formatWeight(parseInt(lim, 10), unitSystem)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -454,20 +630,34 @@ export default function GarageScreen() {
 
               <View style={styles.row}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Pusty box + belki (kg):</Text>
+                  <Text style={styles.label}>{t('Pusty box + belki ({u}):', { u: weightSuffix })}</Text>
                   <TextInput
                     style={styles.input}
                     value={roofBoxWeightKg}
-                    onChangeText={setRoofBoxWeightKg}
+                    onChangeText={(v) => {
+                      if (!access.canCreate) {
+                        setIsPaywallOpen(true);
+                        return;
+                      }
+                      setRoofBoxWeightKg(v);
+                      persistGarageToSQLite();
+                    }}
                     keyboardType="numeric"
                   />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.label}>Bagaż w boxie (kg):</Text>
+                  <Text style={styles.label}>{t('Bagaż w boxie ({u}):', { u: weightSuffix })}</Text>
                   <TextInput
                     style={styles.input}
                     value={roofCargoWeightKg}
-                    onChangeText={setRoofCargoWeightKg}
+                    onChangeText={(v) => {
+                      if (!access.canCreate) {
+                        setIsPaywallOpen(true);
+                        return;
+                      }
+                      setRoofCargoWeightKg(v);
+                      persistGarageToSQLite();
+                    }}
                     keyboardType="numeric"
                   />
                 </View>
@@ -475,20 +665,34 @@ export default function GarageScreen() {
 
               <View style={[styles.row, { marginTop: 8 }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Zwis przód (cm, max 50):</Text>
+                  <Text style={styles.label}>{t('Zwis przód ({u}):', { u: unitSuffix })}</Text>
                   <TextInput
                     style={styles.input}
                     value={frontOverhangCm}
-                    onChangeText={setFrontOverhangCm}
+                    onChangeText={(v) => {
+                      if (!access.canCreate) {
+                        setIsPaywallOpen(true);
+                        return;
+                      }
+                      setFrontOverhangCm(v);
+                      persistGarageToSQLite();
+                    }}
                     keyboardType="numeric"
                   />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.label}>Zwis tył (cm, max 200):</Text>
+                  <Text style={styles.label}>{t('Zwis tył ({u}):', { u: unitSuffix })}</Text>
                   <TextInput
                     style={styles.input}
                     value={rearOverhangCm}
-                    onChangeText={setRearOverhangCm}
+                    onChangeText={(v) => {
+                      if (!access.canCreate) {
+                        setIsPaywallOpen(true);
+                        return;
+                      }
+                      setRearOverhangCm(v);
+                      persistGarageToSQLite();
+                    }}
                     keyboardType="numeric"
                   />
                 </View>
@@ -511,18 +715,25 @@ export default function GarageScreen() {
 
         {/* Sekcja 3: Hak holowniczy & Rowery */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚲 Platforma na Hak & Rowery (RD-44, Nośność S)</Text>
+          <Text style={styles.cardTitle}>{t('🚲 Platforma na Hak & Rowery (RD-44, Nośność S)')}</Text>
 
-          <Text style={styles.label}>Dopuszczalny nacisk pionowy haka S (tabliczka znamionowa):</Text>
+          <Text style={styles.label}>{t('Dopuszczalny nacisk pionowy haka S (tabliczka znamionowa):')}</Text>
           <View style={styles.buttonRow}>
             {(['50', '75', '100'] as const).map((limit) => (
               <TouchableOpacity
                 key={limit}
                 style={[styles.pill, hookLimit === limit && styles.pillActive]}
-                onPress={() => setHookLimit(limit)}
+                onPress={() => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setHookLimit(limit);
+                  persistGarageToSQLite();
+                }}
               >
                 <Text style={[styles.pillText, hookLimit === limit && styles.pillTextActive]}>
-                  S = {limit} kg
+                  S = {formatWeight(parseInt(limit, 10), unitSystem)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -530,27 +741,48 @@ export default function GarageScreen() {
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Waga platformy (kg):</Text>
+              <Text style={styles.label}>{t('Waga platformy ({u}):', { u: weightSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={rackWeight}
-                onChangeText={setRackWeight}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setRackWeight(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Liczba rowerów:</Text>
+              <Text style={styles.label}>{t('Liczba rowerów:')}</Text>
               <View style={styles.counterRow}>
                 <TouchableOpacity
                   style={styles.counterBtn}
-                  onPress={() => setBikeCount(Math.max(1, bikeCount - 1))}
+                  onPress={() => {
+                    if (!access.canCreate) {
+                      setIsPaywallOpen(true);
+                      return;
+                    }
+                    setBikeCount(Math.max(1, bikeCount - 1));
+                    persistGarageToSQLite();
+                  }}
                 >
                   <Text style={styles.counterBtnText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.counterValue}>{bikeCount}</Text>
                 <TouchableOpacity
                   style={styles.counterBtn}
-                  onPress={() => setBikeCount(Math.min(4, bikeCount + 1))}
+                  onPress={() => {
+                    if (!access.canCreate) {
+                      setIsPaywallOpen(true);
+                      return;
+                    }
+                    setBikeCount(Math.min(4, bikeCount + 1));
+                    persistGarageToSQLite();
+                  }}
                 >
                   <Text style={styles.counterBtnText}>+</Text>
                 </TouchableOpacity>
@@ -560,35 +792,44 @@ export default function GarageScreen() {
 
           <TouchableOpacity
             style={[styles.toggleBtn, isEBike && styles.toggleBtnActive]}
-            onPress={() => setIsEBike(!isEBike)}
+            onPress={() => {
+              if (!access.canCreate) {
+                setIsPaywallOpen(true);
+                return;
+              }
+              setIsEBike(!isEBike);
+              persistGarageToSQLite();
+            }}
           >
             <Text style={styles.toggleBtnText}>
-              {isEBike ? '⚡ Rowery elektryczne E-Bike (~24 kg/szt.)' : '🚲 Rowery tradycyjne (~13 kg/szt.)'}
+              {isEBike
+                ? t('⚡ Rowery elektryczne E-Bike (~24 kg/szt.)')
+                : t('🚲 Rowery tradycyjne (~13 kg/szt.)')}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.resultBox}>
             <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Całkowity nacisk na kulę haka:</Text>
+              <Text style={styles.statusLabel}>{t('Całkowity nacisk na kulę haka:')}</Text>
               <Text
                 style={[
                   styles.statusValue,
                   { color: !towbarFit.isOverloaded ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                {towbarFit.totalVerticalLoadKg} kg / {hookLimit} kg
+                {formatWeight(towbarFit.totalVerticalLoadKg, unitSystem)} / {formatWeight(parseFloat(hookLimit) || 75, unitSystem)}
               </Text>
             </View>
 
             <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Status bezpieczeństwa:</Text>
+              <Text style={styles.statusLabel}>{t('Status bezpieczeństwa:')}</Text>
               <Text
                 style={[
                   styles.statusValue,
                   { color: !towbarFit.isOverloaded ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                {!towbarFit.isOverloaded ? '✅ W NORMIE' : '⚠️ PRZECIĄŻENIE HAKA!'}
+                {!towbarFit.isOverloaded ? t('✅ W NORMIE') : t('⚠️ PRZECIĄŻENIE HAKA!')}
               </Text>
             </View>
 
@@ -615,45 +856,73 @@ export default function GarageScreen() {
 
         {/* Sekcja 4: Klatka kennelowa dla psa (RD-46, Z-184) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🐕 Klatka Kennelowa a Skos Szyby Bagażnika (RD-46)</Text>
+          <Text style={styles.cardTitle}>{t('🐕 Klatka Kennelowa a Skos Szyby Bagażnika (RD-46)')}</Text>
           <Text style={styles.label}>
-            Wymiary klatki (Dół × Góra × Wys. w cm) vs Kąt szyby klapy:
+            {t('Wymiary klatki (Dół × Góra × Wys. w cm) vs Kąt szyby klapy:')}
           </Text>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.subLabel}>Dno (cm):</Text>
+              <Text style={styles.subLabel}>{t('Dno ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={kennelDepthBottomCm}
-                onChangeText={setKennelDepthBottomCm}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setKennelDepthBottomCm(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.subLabel}>Dach (cm):</Text>
+              <Text style={styles.subLabel}>{t('Dach ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={kennelDepthTopCm}
-                onChangeText={setKennelDepthTopCm}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setKennelDepthTopCm(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.subLabel}>Wys. (cm):</Text>
+              <Text style={styles.subLabel}>{t('Wys. ({u}):', { u: unitSuffix })}</Text>
               <TextInput
                 style={styles.input}
                 value={kennelHeightCm}
-                onChangeText={setKennelHeightCm}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setKennelHeightCm(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.subLabel}>Szyba (°):</Text>
+              <Text style={styles.subLabel}>{t('Szyba (°):')}</Text>
               <TextInput
                 style={styles.input}
                 value={windowSlopeDeg}
-                onChangeText={setWindowSlopeDeg}
+                onChangeText={(v) => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setWindowSlopeDeg(v);
+                  persistGarageToSQLite();
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -674,32 +943,44 @@ export default function GarageScreen() {
 
         {/* Sekcja 5: Ochrona podwójnej podłogi bagażnika (RD-47, Z-185) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🛡️ Nośność Podwójnej Podłogi Bagażnika (RD-47)</Text>
+          <Text style={styles.cardTitle}>{t('🛡️ Nośność Podwójnej Podłogi Bagażnika (RD-47)')}</Text>
           <Text style={styles.label}>
-            Ochrona modułowych szyn i półki przed załamaniem przy transporcie materiałów (cement, glazura):
+            {t('Ochrona modułowych szyn i półki przed załamaniem przy transporcie materiałów (cement, glazura):')}
           </Text>
 
           <TouchableOpacity
             style={[styles.toggleBtn, hasFalseFloor && styles.toggleBtnActive]}
-            onPress={() => setHasFalseFloor(!hasFalseFloor)}
+            onPress={() => {
+              if (!access.canCreate) {
+                setIsPaywallOpen(true);
+                return;
+              }
+              setHasFalseFloor(!hasFalseFloor);
+            }}
           >
             <Text style={styles.toggleBtnText}>
               {hasFalseFloor
-                ? '📦 Auto posiada podwójną / podwyższoną podłogę bagażnika (limit ~120 kg)'
-                : '🚙 Zwykła stalowa podłoga fabryczna (pełna nośność bagażnika)'}
+                ? t('📦 Auto posiada podwójną / podwyższoną podłogę bagażnika (limit ~120 kg)')
+                : t('🚙 Zwykła stalowa podłoga fabryczna (pełna nośność bagażnika)')}
             </Text>
           </TouchableOpacity>
 
           {hasFalseFloor && (
             <View style={[styles.row, { marginTop: 10 }]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.subLabel}>Ciężar skupiony ładunku (kg):</Text>
+                <Text style={styles.subLabel}>{t('Ciężar skupiony ładunku ({u}):', { u: weightSuffix })}</Text>
                 <TextInput
                   style={styles.input}
                   value={pointLoadKg}
-                  onChangeText={setPointLoadKg}
+                  onChangeText={(v) => {
+                    if (!access.canCreate) {
+                      setIsPaywallOpen(true);
+                      return;
+                    }
+                    setPointLoadKg(v);
+                  }}
                   keyboardType="numeric"
-                  placeholder="np. 150 kg cementu"
+                  placeholder={t('np. 150 kg cementu')}
                 />
               </View>
             </View>
@@ -738,17 +1019,33 @@ export default function GarageScreen() {
               ]}
             >
               {falseFloorFit.warningRisk === 'CRITICAL_COLLAPSE'
-                ? '⛔ RYZYKO ZAŁAMANIA PÓŁKI!'
+                ? t('⛔ RYZYKO ZAŁAMANIA PÓŁKI!')
                 : falseFloorFit.warningRisk === 'MODERATE'
-                ? '⚠️ UWAGA NA NACISK PUNKTOWY'
-                : '✅ OBCIĄŻENIE BEZPIECZNE'}
+                ? t('⚠️ UWAGA NA NACISK PUNKTOWY')
+                : t('✅ OBCIĄŻENIE BEZPIECZNE')}
             </Text>
             <Text style={[styles.dimSubtext, { marginTop: 4, color: '#E2E8F0' }]}>
               {falseFloorFit.advice}
             </Text>
           </View>
         </View>
+
+        {/* Zapis konfiguracji do SQLite */}
+        <TouchableOpacity
+          testID="save-garage-btn"
+          style={styles.saveGarageBtn}
+          onPress={handleManualSave}
+        >
+          <Text style={styles.saveGarageBtnText}>💾 {t('Zapisz konfigurację garażu w SQLite')}</Text>
+        </TouchableOpacity>
       </ScrollView>
+
+      {/* Paywall modal */}
+      <Apps4BrewPassModal
+        visible={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        onPurchaseSuccess={() => access.refresh()}
+      />
     </SafeAreaView>
   );
 }
@@ -774,6 +1071,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     marginTop: 4,
+  },
+  readOnlyBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  readOnlyBannerTitle: {
+    color: '#F87171',
+    fontWeight: '800',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  readOnlyBannerDesc: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    lineHeight: 16,
   },
   card: {
     backgroundColor: '#1E293B',
@@ -979,5 +1295,17 @@ const styles = StyleSheet.create({
     color: '#38BDF8',
     fontSize: 11,
     fontWeight: '600',
+  },
+  saveGarageBtn: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  saveGarageBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

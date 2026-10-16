@@ -18,8 +18,14 @@ import { POPULAR_VEHICLES_PRESETS, VehiclePreset } from '../data/presets/vehicle
 import { CARGO_ITEMS_PRESETS, ExtendedCargoItemPreset } from '../data/presets/cargoItems';
 import { packItemsInTrunk, isInsideTrunkBoundary } from '../domain/geometry/extremePoints';
 import { TrunkGeometry } from '../domain/geometry/types';
-import { useUnitSystem, formatDimension } from '../lib/unit-converter';
-import { t } from '../lib/i18n';
+import {
+  useUnitSystem,
+  formatDimension,
+  formatDimensions3D,
+  formatVolume,
+} from '../lib/unit-converter';
+import { t, useLang } from '../lib/i18n';
+import { useAppAccess } from '../services/app-access';
 
 export interface PocketProofQuickCheckProps {
   readonly onOpenFullSimulator?: (vehicleId: string, itemId: string) => void;
@@ -122,7 +128,7 @@ export function calculateQuickVerdict(
     lengthMarginCm: foldedLenMargin,
     widthMarginCm: widthMargin,
     heightMarginCm: heightMargin,
-    criticalDimensionName: 'Długość',
+    criticalDimensionName: t('Długość'),
   };
 }
 
@@ -130,7 +136,9 @@ export function PocketProofQuickCheck({
   onOpenFullSimulator,
   onRequestPaywall,
 }: PocketProofQuickCheckProps) {
+  useLang();
   const unitSystem = useUnitSystem();
+  const access = useAppAccess();
 
   const [selectedCarId, setSelectedCarId] = useState<string>(POPULAR_VEHICLES_PRESETS[0].id);
   const [selectedItemId, setSelectedItemId] = useState<string>(CARGO_ITEMS_PRESETS[0].id);
@@ -141,6 +149,43 @@ export function PocketProofQuickCheck({
   const [customWidth, setCustomWidth] = useState<string>('60');
   const [customHeight, setCustomHeight] = useState<string>('40');
 
+  const handleSelectCar = (carId: string) => {
+    if (!access.canCreate) {
+      onRequestPaywall?.();
+      return;
+    }
+    setSelectedCarId(carId);
+  };
+
+  const handleSelectItem = (itemId: string) => {
+    if (!access.canCreate) {
+      onRequestPaywall?.();
+      return;
+    }
+    setSelectedItemId(itemId);
+    access.recordProject();
+  };
+
+  const handleSwitchMode = (custom: boolean) => {
+    if (!access.canCreate) {
+      onRequestPaywall?.();
+      return;
+    }
+    setIsCustomMode(custom);
+    if (custom) {
+      access.recordProject();
+    }
+  };
+
+  const handleOpenSimulator = () => {
+    if (!access.canCreate) {
+      onRequestPaywall?.();
+      return;
+    }
+    access.recordProject();
+    onOpenFullSimulator?.(selectedCarId, activeCargoItem.id);
+  };
+
   const selectedVehicle = useMemo<VehiclePreset>(() => {
     return (
       POPULAR_VEHICLES_PRESETS.find((v) => v.id === selectedCarId) ??
@@ -150,9 +195,10 @@ export function PocketProofQuickCheck({
 
   const activeCargoItem = useMemo(() => {
     if (isCustomMode) {
-      const l = Math.max(10, (parseFloat(customLen) || 100) * 10);
-      const w = Math.max(10, (parseFloat(customWidth) || 50) * 10);
-      const h = Math.max(10, (parseFloat(customHeight) || 40) * 10);
+      const unitMultiplier = unitSystem === 'imperial' ? 25.4 : 10;
+      const l = Math.max(10, (parseFloat(customLen) || 100) * unitMultiplier);
+      const w = Math.max(10, (parseFloat(customWidth) || 50) * unitMultiplier);
+      const h = Math.max(10, (parseFloat(customHeight) || 40) * unitMultiplier);
       return {
         id: 'custom-input',
         name: t('Własny mebel / gabaryt'),
@@ -182,21 +228,21 @@ export function PocketProofQuickCheck({
           bg: 'rgba(16, 185, 129, 0.15)',
           border: '#10B981',
           text: '#34D399',
-          badge: '✅ TAK (Bagażnik)',
+          badge: t('✅ TAK (Bagażnik)'),
         };
       case 'FITS_FOLDED_SEATS':
         return {
           bg: 'rgba(245, 158, 11, 0.15)',
           border: '#F59E0B',
           text: '#FBBF24',
-          badge: '⚠️ ZŁÓŻ KANAPĘ',
+          badge: t('⚠️ ZŁÓŻ KANAPĘ'),
         };
       case 'DOES_NOT_FIT':
         return {
           bg: 'rgba(239, 68, 68, 0.15)',
           border: '#EF4444',
           text: '#F87171',
-          badge: '❌ NIE WEJDZIE',
+          badge: t('❌ NIE WEJDZIE'),
         };
     }
   }, [verdict.status]);
@@ -224,13 +270,13 @@ export function PocketProofQuickCheck({
               key={v.id}
               testID={`quick-car-${v.id}`}
               style={[styles.chip, isSelected && styles.chipSelected]}
-              onPress={() => setSelectedCarId(v.id)}
+              onPress={() => handleSelectCar(v.id)}
             >
               <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                 {v.make} {v.model}
               </Text>
               <Text style={[styles.chipSubtext, isSelected && styles.chipSubtextSelected]}>
-                {v.vdaVolumeLiters}L · {v.bodyType}
+                {formatVolume(v.vdaVolumeLiters, unitSystem)} · {v.bodyType}
               </Text>
             </TouchableOpacity>
           );
@@ -241,7 +287,7 @@ export function PocketProofQuickCheck({
       <View style={styles.modeTabs}>
         <TouchableOpacity
           style={[styles.modeTab, !isCustomMode && styles.modeTabActive]}
-          onPress={() => setIsCustomMode(false)}
+          onPress={() => handleSwitchMode(false)}
         >
           <Text style={[styles.modeTabText, !isCustomMode && styles.modeTabTextActive]}>
             {t('Popularne meble i AGD')}
@@ -249,7 +295,7 @@ export function PocketProofQuickCheck({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.modeTab, isCustomMode && styles.modeTabActive]}
-          onPress={() => setIsCustomMode(true)}
+          onPress={() => handleSwitchMode(true)}
         >
           <Text style={[styles.modeTabText, isCustomMode && styles.modeTabTextActive]}>
             {t('Wpisz wymiary z etykiety')}
@@ -267,15 +313,18 @@ export function PocketProofQuickCheck({
                 key={item.id}
                 testID={`quick-item-${item.id}`}
                 style={[styles.chip, isSelected && styles.chipSelected]}
-                onPress={() => setSelectedItemId(item.id)}
+                onPress={() => handleSelectItem(item.id)}
               >
                 <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
                   {item.name}
                 </Text>
                 <Text style={[styles.chipSubtext, isSelected && styles.chipSubtextSelected]}>
-                  {Math.round(item.dimensionsMm.lengthMm / 10)}×
-                  {Math.round(item.dimensionsMm.widthMm / 10)}×
-                  {Math.round(item.dimensionsMm.heightMm / 10)} cm
+                  {formatDimensions3D(
+                    item.dimensionsMm.lengthMm / 10,
+                    item.dimensionsMm.widthMm / 10,
+                    item.dimensionsMm.heightMm / 10,
+                    unitSystem
+                  )}
                 </Text>
               </TouchableOpacity>
             );
@@ -285,33 +334,57 @@ export function PocketProofQuickCheck({
         /* Formularz wpisywania wymiarów z kartonu w IKEA */
         <View style={styles.customDimRow}>
           <View style={styles.dimField}>
-            <Text style={styles.dimLabel}>{t('Długość (cm):')}</Text>
+            <Text style={styles.dimLabel}>
+              {unitSystem === 'imperial' ? t('Długość (in):') : t('Długość (cm):')}
+            </Text>
             <TextInput
               testID="custom-len-input"
               style={styles.dimInput}
               keyboardType="numeric"
               value={customLen}
-              onChangeText={setCustomLen}
+              onChangeText={(val) => {
+                if (!access.canCreate) {
+                  onRequestPaywall?.();
+                  return;
+                }
+                setCustomLen(val);
+              }}
             />
           </View>
           <View style={styles.dimField}>
-            <Text style={styles.dimLabel}>{t('Szerokość (cm):')}</Text>
+            <Text style={styles.dimLabel}>
+              {unitSystem === 'imperial' ? t('Szerokość (in):') : t('Szerokość (cm):')}
+            </Text>
             <TextInput
               testID="custom-width-input"
               style={styles.dimInput}
               keyboardType="numeric"
               value={customWidth}
-              onChangeText={setCustomWidth}
+              onChangeText={(val) => {
+                if (!access.canCreate) {
+                  onRequestPaywall?.();
+                  return;
+                }
+                setCustomWidth(val);
+              }}
             />
           </View>
           <View style={styles.dimField}>
-            <Text style={styles.dimLabel}>{t('Wysokość (cm):')}</Text>
+            <Text style={styles.dimLabel}>
+              {unitSystem === 'imperial' ? t('Wysokość (in):') : t('Wysokość (cm):')}
+            </Text>
             <TextInput
               testID="custom-height-input"
               style={styles.dimInput}
               keyboardType="numeric"
               value={customHeight}
-              onChangeText={setCustomHeight}
+              onChangeText={(val) => {
+                if (!access.canCreate) {
+                  onRequestPaywall?.();
+                  return;
+                }
+                setCustomHeight(val);
+              }}
             />
           </View>
         </View>
@@ -339,13 +412,13 @@ export function PocketProofQuickCheck({
         {/* Szczegóły marginesów */}
         <View style={styles.marginsRow}>
           <Text style={styles.marginText}>
-            {t('Zapas długości: {val} cm', { val: verdict.lengthMarginCm })}
+            {t('Zapas długości: {val}', { val: formatDimension(verdict.lengthMarginCm, unitSystem) })}
           </Text>
           <Text style={styles.marginText}>
-            {t('Zapas szerokości: {val} cm', { val: verdict.widthMarginCm })}
+            {t('Zapas szerokości: {val}', { val: formatDimension(verdict.widthMarginCm, unitSystem) })}
           </Text>
           <Text style={styles.marginText}>
-            {t('Zapas wysokości: {val} cm', { val: verdict.heightMarginCm })}
+            {t('Zapas wysokości: {val}', { val: formatDimension(verdict.heightMarginCm, unitSystem) })}
           </Text>
         </View>
       </View>
@@ -355,7 +428,7 @@ export function PocketProofQuickCheck({
         <TouchableOpacity
           testID="open-full-sim-btn"
           style={styles.actionBtn}
-          onPress={() => onOpenFullSimulator(selectedCarId, activeCargoItem.id)}
+          onPress={handleOpenSimulator}
         >
           <Text style={styles.actionBtnText}>{t('Zobacz ułożenie w symulatorze 3D →')}</Text>
         </TouchableOpacity>

@@ -1,8 +1,11 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { t, useLang } from '../../src/lib/i18n';
 
 export default function TabLayout() {
+  useLang();
+
   return (
     <Tabs
       screenOptions={{
@@ -27,35 +30,35 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Symulator 3D',
+          title: t('Symulator 3D'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📦</Text>,
         }}
       />
       <Tabs.Screen
         name="catalog"
         options={{
-          title: 'Katalog',
+          title: t('Katalog'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🚗</Text>,
         }}
       />
       <Tabs.Screen
         name="relocation"
         options={{
-          title: 'Wnętrza & Dom',
+          title: t('Wnętrza & Dom'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🛋️</Text>,
         }}
       />
       <Tabs.Screen
         name="garage"
         options={{
-          title: 'Garaż & Hak',
+          title: t('Garaż & Hak'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏢</Text>,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Ustawienia',
+          title: t('Ustawienia'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚙️</Text>,
         }}
       />

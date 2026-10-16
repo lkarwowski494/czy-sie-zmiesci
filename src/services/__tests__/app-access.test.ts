@@ -99,7 +99,20 @@ describe('App Access & Monetization Engine (Cheaper than Espresso)', () => {
     expect(state.subscriptionTier).toBe('lifetime');
   });
 
-  test('Przywrócenie zakupów (Restore Purchases) aktywuje pełny dostęp', () => {
+  test('Przywrócenie zakupów (Restore Purchases) bez wcześniejszego zakupu nie odblokowuje wersji Pro', () => {
+    setTrialExpiredForTesting();
+    expect(getAppAccessState().canCreate).toBe(false);
+
+    const state = restorePurchases();
+    expect(state.status).toBe('trial_expired');
+    expect(state.isSubscribed).toBe(false);
+    expect(state.canCreate).toBe(false);
+  });
+
+  test('Przywrócenie zakupów (Restore Purchases) z zapisanym potwierdzeniem zakupu aktywuje pełny dostęp', () => {
+    activateSubscription('lifetime');
+    expect(getAppSetting('purchased_tier_receipt', '')).toBe('lifetime');
+
     setTrialExpiredForTesting();
     expect(getAppAccessState().canCreate).toBe(false);
 

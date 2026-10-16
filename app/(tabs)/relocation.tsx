@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Share,
+  Alert,
 } from 'react-native';
 import { estimateRelocationVolume, ClutterLevel } from '../../src/domain/relocation/volumeEstimator';
 import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator';
@@ -21,7 +22,6 @@ import {
   evaluateFunctionalClearance,
   evaluatePorterManualHandling,
   FurnitureClearanceType,
-  RECOMMENDED_CLEARANCES_MM,
 } from '../../src/domain/room-fitting/atticAndErgonomics';
 import { compareCarVsVanRelocation } from '../../src/domain/relocation/vanVsCarEconomics';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
@@ -31,8 +31,23 @@ import { ElevatorVisualizer } from '../../src/components/ElevatorVisualizer';
 import { ApplianceClearanceView } from '../../src/components/ApplianceClearanceView';
 import { AtticSlopeVisualizer } from '../../src/components/AtticSlopeVisualizer';
 import { SelfStorageVisualizer } from '../../src/components/SelfStorageVisualizer';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import { useAppAccess } from '../../src/services/app-access';
+import { getDatabaseService, triggerAutoBackup } from '../../src/data/db';
+import {
+  useUnitSystem,
+  formatDimension,
+  formatVolume,
+  formatWeight,
+} from '../../src/lib/unit-converter';
+import { t, useLang } from '../../src/lib/i18n';
 
 export default function RelocationScreen() {
+  useLang();
+  const unitSystem = useUnitSystem();
+  const access = useAppAccess();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
   // Stan kalkulatora przeprowadzki
   const [areaM2, setAreaM2] = useState('50');
   const [residents, setResidents] = useState('2');
@@ -73,6 +88,39 @@ export default function RelocationScreen() {
   const [storageLenM, setStorageLenM] = useState('3.0');
   const [storageWidthM, setStorageWidthM] = useState('2.0');
   const [hasStorageCorridor, setHasStorageCorridor] = useState(true);
+
+  // Ergonomia stref mebli i przejść (Z-172, Z-177, RD-51, DEC-45)
+  const [clearanceType, setClearanceType] = useState<FurnitureClearanceType>('HINGED_WARDROBE');
+  const [availableClearanceCm, setAvailableClearanceCm] = useState('80');
+
+  // Tragarze i normy BHP (Z-188, RD-53)
+  const [porterCargoWeightKg, setPorterCargoWeightKg] = useState('120');
+  const [portersCount, setPortersCount] = useState(2);
+  const [isOccasionalHandling, setIsOccasionalHandling] = useState(true);
+
+  // Stan windy (RD-35)
+  const [elevDepth, setElevDepth] = useState('100'); // cm
+  const [elevWidth, setElevWidth] = useState('90'); // cm
+  const [elevHeight, setElevHeight] = useState('210'); // cm
+  const [elevDoorWidth, setElevDoorWidth] = useState('70'); // cm
+  const [elevItemLen, setElevItemLen] = useState('220'); // cm
+  const [elevItemWidth, setElevItemWidth] = useState('60'); // cm
+  const [elevItemHeight, setElevItemHeight] = useState('4'); // cm
+
+  // Wczytywanie zapisanego projektu z bazy SQLite przy starcie (Persystencja)
+  useEffect(() => {
+    try {
+      const db = getDatabaseService();
+      const proj = db.getLatestRelocationProject();
+      if (proj) {
+        if (proj.origin_area_m2) setAreaM2(String(proj.origin_area_m2));
+        if (proj.residents_count) setResidents(String(proj.residents_count));
+        if (proj.clutter_level) setClutter(proj.clutter_level as ClutterLevel);
+      }
+    } catch {
+      // fallback
+    }
+  }, []);
 
   const relocResult = estimateRelocationVolume({
     floorAreaM2: parseFloat(areaM2) || 0,
@@ -127,15 +175,6 @@ export default function RelocationScreen() {
       handrailWidthMm: 80,
     }
   );
-
-  // Stan windy (RD-35)
-  const [elevDepth, setElevDepth] = useState('100'); // cm
-  const [elevWidth, setElevWidth] = useState('90'); // cm
-  const [elevHeight, setElevHeight] = useState('210'); // cm
-  const [elevDoorWidth, setElevDoorWidth] = useState('70'); // cm
-  const [elevItemLen, setElevItemLen] = useState('220'); // cm
-  const [elevItemWidth, setElevItemWidth] = useState('60'); // cm
-  const [elevItemHeight, setElevItemHeight] = useState('4'); // cm
 
   const elevatorResult = calculateElevatorFit(
     {
@@ -194,15 +233,6 @@ export default function RelocationScreen() {
     corridorWidthM: 0.50,
   });
 
-  // Ergonomia stref mebli i przejść (Z-172, Z-177, RD-51, DEC-45)
-  const [clearanceType, setClearanceType] = useState<FurnitureClearanceType>('HINGED_WARDROBE');
-  const [availableClearanceCm, setAvailableClearanceCm] = useState('80');
-
-  // Tragarze i normy BHP (Z-188, RD-53)
-  const [porterCargoWeightKg, setPorterCargoWeightKg] = useState('120');
-  const [portersCount, setPortersCount] = useState(2);
-  const [isOccasionalHandling, setIsOccasionalHandling] = useState(true);
-
   const functionalClearanceResult = evaluateFunctionalClearance(
     clearanceType,
     Math.max(0, (parseFloat(availableClearanceCm) || 0) * 10)
@@ -214,89 +244,137 @@ export default function RelocationScreen() {
     isOccasionalHandling
   );
 
+  const persistRelocationToSQLite = () => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    access.recordProject();
+    try {
+      const db = getDatabaseService();
+      db.saveRelocationProject({
+        id: 'default_relocation_project',
+        name: `Projekt ${areaM2}m²`,
+        origin_type: 'apartment',
+        origin_area_m2: parseFloat(areaM2) || 50,
+        residents_count: parseInt(residents, 10) || 2,
+        clutter_level: clutter,
+        total_volume_m3: relocResult.estimatedVolumeM3,
+        total_weight_kg: relocResult.estimatedWeightKg,
+        recommended_vehicle_type: relocResult.fleetDescription,
+      });
+      triggerAutoBackup();
+      Alert.alert(t('Sukces'), t('Projekt przeprowadzki został trwale zapisany w bazie SQLite i kopii zapasowej.'));
+    } catch (e: any) {
+      Alert.alert(t('Błąd zapisu'), e?.message ?? 'SQLite error');
+    }
+  };
+
+  const checkAccessAndSet = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, val: T) => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    setter(val);
+  };
+
   const handleShareRelocationManifest = async () => {
     const lines: string[] = [
-      `🚚 PLAN PRZEPROWADZKI I SEKWENCJA ZAŁADUNKU — FitCheck Manifest (Z-186, RD-49)`,
-      `Metraż lokalu: ${areaM2} m² (${residents} os., umeblowanie: ${clutter})`,
-      `Szacowana kubatura: ${relocResult.estimatedVolumeM3} m³ (masa mienia: ~${relocResult.estimatedWeightKg} kg)`,
-      `Rekomendowana flota: ${relocResult.fleetDescription}`,
-      `Boks self-storage: min. ${relocResult.recommendedSelfStorageAreaM2} m² (wys. 2.7m)`,
-      `Szacowane kartony: ~${relocResult.recommendedBoxesCount} szt.`,
+      `🚚 ${t('PLAN PRZEPROWADZKI I SEKWENCJA ZAŁADUNKU — FitCheck Manifest (Z-186, RD-49)')}`,
+      `${t('Metraż lokalu:')} ${areaM2} m² (${residents} os., umeblowanie: ${clutter})`,
+      `${t('Szacowana kubatura:')} ${relocResult.estimatedVolumeM3} m³ (${t('masa mienia:')} ~${formatWeight(relocResult.estimatedWeightKg, unitSystem)})`,
+      `${t('Rekomendowana flota:')} ${relocResult.fleetDescription}`,
+      `${t('Boks self-storage:')} min. ${relocResult.recommendedSelfStorageAreaM2} m² (wys. 2.7m)`,
+      `${t('Szacowane kartony:')} ~${relocResult.recommendedBoxesCount} szt.`,
       '',
-      '--- ZASADA 4 FAZY ZAŁADUNKU FURGONU ---',
-      '1. Faza 1: Ciężkie AGD (pralka, lodówka) i korpusy szaf — montowane przy grodzi czołowej furgonu',
-      '2. Faza 2: Meble skrzyniowe, komody, stoły i standardowe kartony bazowe',
-      '3. Faza 3: Wypełniacze, miękkie torby, pościel (blokowanie luzów w furgonie)',
-      '4. Faza 4: Karton „Pierwsza Noc” (przy drzwiach tylnych / wyjmowany jako 1.)',
+      `--- ${t('ZASADA 4 FAZY ZAŁADUNKU FURGONU')} ---`,
+      `1. ${t('Faza 1: Ciężkie AGD (pralka, lodówka) i korpusy szaf — montowane przy grodzi czołowej furgonu')}`,
+      `2. ${t('Faza 2: Meble skrzyniowe, komody, stoły i standardowe kartony bazowe')}`,
+      `3. ${t('Faza 3: Wypełniacze, miękkie torby, pościel (blokowanie luzów w furgonie)')}`,
+      `4. ${t('Faza 4: Karton „Pierwsza Noc” (przy drzwiach tylnych / wyjmowany jako 1.)')}`,
       '',
-      '--- RACHUNEK EKONOMICZNY: OSOBÓWKA VS VAN (Z-164) ---',
-      `Odległość: ${distanceKm} km (w jedną stronę)`,
-      `Rekomendacja: ${tripComparison.isVanRecommended ? 'Wynajem Busa' : 'Kursy Osobówką'}`,
-      `Osobówka: ${tripComparison.carTripsCount} kursów, paliwo i amortyzacja: ${tripComparison.carTotalCostPln} zł`,
-      `Van: ${tripComparison.vanTripsCount} kurs, koszt łączny: ${tripComparison.vanTotalCostPln} zł`,
+      `--- ${t('RACHUNEK EKONOMICZNY: OSOBÓWKA VS VAN (Z-164)')} ---`,
+      `${t('Odległość:')} ${distanceKm} km (${t('w jedną stronę')})`,
+      `${t('Rekomendacja:')} ${tripComparison.isVanRecommended ? t('Wynajem Busa') : t('Kursy Osobówką')}`,
+      `${t('Osobówka:')} ${tripComparison.carTripsCount} ${t('kursów')}, ${t('koszt łączny:')} ${tripComparison.carTotalCostPln} zł`,
+      `${t('Van:')} ${tripComparison.vanTripsCount} ${t('kurs')}, ${t('koszt łączny:')} ${tripComparison.vanTotalCostPln} zł`,
       '',
-      '--- ZALECENIA BEZPIECZEŃSTWA LOGISTYCZNEGO ---',
-      '• AGD chłodnicze przewoź w pionie lub odczekaj 12-24h przed włączeniem zasilania (Z-189)',
-      '• Używaj pasów transportowych o wytrzymałości min. 500 daN',
-      '• Zespół tragarzy: max 50 kg/osobę dorywczo wg norm BHP (Z-188)',
+      `--- ${t('ZALECENIA BEZPIECZEŃSTWA LOGISTYCZNEGO')} ---`,
+      `• ${t('AGD chłodnicze przewoź w pionie lub odczekaj 12-24h przed włączeniem zasilania (Z-189)')}`,
+      `• ${t('Używaj pasów transportowych o wytrzymałości min. 500 daN')}`,
+      `• ${t('Zespół tragarzy: max 50 kg/osobę dorywczo wg norm BHP (Z-188)')}`,
     ];
 
     try {
       await Share.share({
         message: lines.join('\n'),
-        title: `FitCheck - Plan Przeprowadzki (${areaM2} m²)`,
+        title: `FitCheck - ${t('Plan Przeprowadzki')} (${areaM2} m²)`,
       });
     } catch {
       // Ignoruj anulowanie
     }
   };
 
+  const dimUnitLabel = unitSystem === 'imperial' ? 'in' : 'cm';
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Wnętrza & Przeprowadzki</Text>
+          <Text style={styles.title}>{t('Wnętrza & Przeprowadzki')}</Text>
           <Text style={styles.subtitle}>
-            Kalkulator floty, wnęki z listwami, ościeżnice i schody (Moving Sofa)
+            {t('Kalkulator floty, wnęki z listwami, ościeżnice i schody (Moving Sofa)')}
           </Text>
         </View>
 
+        {!access.canCreate && (
+          <TouchableOpacity
+            style={styles.readOnlyBanner}
+            onPress={() => setIsPaywallOpen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.readOnlyBannerText}>
+              🔒 {t('Przeglądasz kalkulacje w trybie do odczytu. Aktywuj Apps4Brew Pass ($0.99), aby edytować parametry i tworzyć nowe plany.')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {/* Sekcja 1: Kalkulator Przeprowadzki */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚚 Kalkulator Floty Przeprowadzkowej (RD-49)</Text>
+          <Text style={styles.cardTitle}>🚚 {t('Kalkulator Floty Przeprowadzkowej (RD-49)')}</Text>
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Metraż (m²):</Text>
+              <Text style={styles.label}>{t('Metraż (m²):')}</Text>
               <TextInput
                 style={styles.input}
                 value={areaM2}
-                onChangeText={setAreaM2}
+                onChangeText={(val) => checkAccessAndSet(setAreaM2, val)}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Liczba osób:</Text>
+              <Text style={styles.label}>{t('Liczba osób:')}</Text>
               <TextInput
                 style={styles.input}
                 value={residents}
-                onChangeText={setResidents}
+                onChangeText={(val) => checkAccessAndSet(setResidents, val)}
                 keyboardType="numeric"
               />
             </View>
           </View>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>Poziom umeblowania / zagracenia:</Text>
+          <Text style={[styles.label, { marginTop: 10 }]}>{t('Poziom umeblowania / zagracenia:')}</Text>
           <View style={styles.clutterSelector}>
             {(['minimalist', 'standard', 'cluttered'] as ClutterLevel[]).map((c) => (
               <TouchableOpacity
                 key={c}
                 style={[styles.clutterBtn, clutter === c && styles.clutterBtnActive]}
-                onPress={() => setClutter(c)}
+                onPress={() => checkAccessAndSet(setClutter, c)}
               >
                 <Text
                   style={[styles.clutterBtnText, clutter === c && styles.clutterBtnTextActive]}
                 >
-                  {c === 'minimalist' ? 'Minimalny' : c === 'standard' ? 'Standard' : 'Duży'}
+                  {c === 'minimalist' ? t('Minimalny') : c === 'standard' ? t('Standard') : t('Duży')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -304,16 +382,16 @@ export default function RelocationScreen() {
 
           <View style={styles.resultBox}>
             <Text style={styles.resultMain}>
-              Szacowana kubatura: {relocResult.estimatedVolumeM3} m³
+              {t('Szacowana kubatura: {vol} m³', { vol: relocResult.estimatedVolumeM3 })}
             </Text>
             <Text style={styles.resultHighlight}>
-              Rekomendowany pojazd: {relocResult.fleetDescription}
+              {t('Rekomendowany pojazd: {vehicle}', { vehicle: relocResult.fleetDescription })}
             </Text>
             <Text style={styles.subtext}>
-              Boks self-storage: min. {relocResult.recommendedSelfStorageAreaM2} m²
+              {t('Boks self-storage: min. {area} m²', { area: relocResult.recommendedSelfStorageAreaM2 })}
             </Text>
             <Text style={styles.subtext}>
-              Potrzebne kartony: ~{relocResult.recommendedBoxesCount} szt. • Waga mienia: ~{relocResult.estimatedWeightKg} kg
+              {t('Potrzebne kartony: ~{boxes} szt.', { boxes: relocResult.recommendedBoxesCount })} • {t('Waga mienia: ~{weight}', { weight: formatWeight(relocResult.estimatedWeightKg, unitSystem) })}
             </Text>
           </View>
 
@@ -322,43 +400,43 @@ export default function RelocationScreen() {
             onPress={() => setShowManifest(!showManifest)}
           >
             <Text style={styles.manifestToggleText}>
-              {showManifest ? '▲ Ukryj Manifest 4 Fazy' : '▼ Zobacz Manifest Załadunku (Zasada 4 Fazy)'}
+              {showManifest ? t('▲ Ukryj Manifest 4 Fazy') : t('▼ Zobacz Manifest Załadunku (Zasada 4 Fazy)')}
             </Text>
           </TouchableOpacity>
 
           {showManifest && (
             <View style={styles.manifestBox}>
-              <Text style={styles.manifestTitle}>📋 Zasada 4 Fazy Załadunku (FitCheck Manifest):</Text>
-              <Text style={styles.manifestPhase}>1. Ciężkie AGD i korpusy szaf (Przy grodzi czołowej furgonu)</Text>
-              <Text style={styles.manifestPhase}>2. Meble skrzyniowe, komody, stoły i kartony bazowe</Text>
-              <Text style={styles.manifestPhase}>3. Wypełniacze, miękkie torby, pościel (Blokowanie luzów)</Text>
-              <Text style={styles.manifestPhaseHighlight}>4. Karton „Pierwsza Noc” (Przy drzwiach kontenera / Wyjmowany jako 1.)</Text>
+              <Text style={styles.manifestTitle}>📋 {t('Zasada 4 Fazy Załadunku (FitCheck Manifest):')}</Text>
+              <Text style={styles.manifestPhase}>1. {t('Ciężkie AGD i korpusy szaf (Przy grodzi czołowej furgonu)')}</Text>
+              <Text style={styles.manifestPhase}>2. {t('Meble skrzyniowe, komody, stoły i kartony bazowe')}</Text>
+              <Text style={styles.manifestPhase}>3. {t('Wypełniacze, miękkie torby, pościel (Blokowanie luzów)')}</Text>
+              <Text style={styles.manifestPhaseHighlight}>4. {t('Karton „Pierwsza Noc” (Przy drzwiach kontenera / Wyjmowany jako 1.)')}</Text>
             </View>
           )}
 
           {/* Rachunek Ekonomiczny: Osobówka vs Van (Z-164) */}
           <View style={[styles.resultBox, { marginTop: 12, backgroundColor: '#0F172A' }]}>
             <Text style={[styles.cardTitle, { fontSize: 14, color: '#38BDF8', marginBottom: 8 }]}>
-              💰 Porównanie: Osobówka vs Wynajem Busa (Z-164)
+              💰 {t('Porównanie: Osobówka vs Wynajem Busa (Z-164)')}
             </Text>
 
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Odległość w 1 stronę (km):</Text>
+                <Text style={styles.label}>{t('Odległość w 1 stronę (km):')}</Text>
                 <TextInput
                   style={styles.input}
                   value={distanceKm}
-                  onChangeText={setDistanceKm}
+                  onChangeText={(val) => checkAccessAndSet(setDistanceKm, val)}
                   keyboardType="numeric"
                   placeholder="25"
                 />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.label}>Koszt vana (zł/doba):</Text>
+                <Text style={styles.label}>{t('Koszt vana (zł/doba):')}</Text>
                 <TextInput
                   style={styles.input}
                   value={vanRentalFee}
-                  onChangeText={setVanRentalFee}
+                  onChangeText={(val) => checkAccessAndSet(setVanRentalFee, val)}
                   keyboardType="numeric"
                   placeholder="180"
                 />
@@ -367,13 +445,13 @@ export default function RelocationScreen() {
 
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Kombi ({tripComparison.carTripsCount} kursy):</Text>
+                <Text style={styles.label}>{t('Kombi ({count} kursy):', { count: tripComparison.carTripsCount })}</Text>
                 <Text style={[styles.resultHighlight, { fontSize: 15, color: '#F8FAFC' }]}>
                   {tripComparison.carTotalCostPln} zł • {tripComparison.carTotalTimeHours}h
                 </Text>
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.label}>Bus van ({tripComparison.vanTripsCount} kurs):</Text>
+                <Text style={styles.label}>{t('Bus van ({count} kurs):', { count: tripComparison.vanTripsCount })}</Text>
                 <Text style={[styles.resultHighlight, { fontSize: 15, color: '#34D399' }]}>
                   {tripComparison.vanTotalCostPln} zł • {tripComparison.vanTotalTimeHours}h
                 </Text>
@@ -388,39 +466,47 @@ export default function RelocationScreen() {
             </Text>
           </View>
 
+          {/* Przycisk Zapisania w SQLite */}
+          <TouchableOpacity
+            style={[styles.shareBtn, { backgroundColor: '#10B981', marginTop: 12 }]}
+            onPress={persistRelocationToSQLite}
+          >
+            <Text style={styles.shareBtnText}>💾 {t('Zapisz Projekt Przeprowadzki w SQLite')}</Text>
+          </TouchableOpacity>
+
           {/* Przycisk Udostępnienia Manifestu (Z-186) */}
           <TouchableOpacity
             style={styles.shareBtn}
             onPress={handleShareRelocationManifest}
           >
-            <Text style={styles.shareBtnText}>📤 Udostępnij Raport Przeprowadzki (Z-186)</Text>
+            <Text style={styles.shareBtnText}>📤 {t('Udostępnij Raport Przeprowadzki (Z-186)')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Sekcja 1b: Boks Self-Storage z Korytarzem 50 cm (RD-50, Z-166) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📦 Boks Self-Storage & Ścieżka Inspekcyjna (RD-50)</Text>
+          <Text style={styles.cardTitle}>📦 {t('Boks Self-Storage & Ścieżka Inspekcyjna (RD-50)')}</Text>
           <Text style={styles.label}>
-            Wymiary boksu magazynowego (Długość × Szerokość w metrach):
+            {t('Wymiary boksu magazynowego (Długość × Szerokość w metrach):')}
           </Text>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Długość (m):</Text>
+              <Text style={styles.label}>{t('Długość (m):')}</Text>
               <TextInput
                 style={styles.input}
                 value={storageLenM}
-                onChangeText={setStorageLenM}
+                onChangeText={(val) => checkAccessAndSet(setStorageLenM, val)}
                 keyboardType="numeric"
                 placeholder="3.0"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Szerokość (m):</Text>
+              <Text style={styles.label}>{t('Szerokość (m):')}</Text>
               <TextInput
                 style={styles.input}
                 value={storageWidthM}
-                onChangeText={setStorageWidthM}
+                onChangeText={(val) => checkAccessAndSet(setStorageWidthM, val)}
                 keyboardType="numeric"
                 placeholder="2.0"
               />
@@ -429,12 +515,12 @@ export default function RelocationScreen() {
 
           <TouchableOpacity
             style={[styles.manifestToggleBtn, hasStorageCorridor && { borderColor: '#F59E0B' }]}
-            onPress={() => setHasStorageCorridor(!hasStorageCorridor)}
+            onPress={() => checkAccessAndSet(setHasStorageCorridor, !hasStorageCorridor)}
           >
             <Text style={[styles.manifestToggleText, hasStorageCorridor && { color: '#FCD34D' }]}>
               {hasStorageCorridor
-                ? '🚶 Korytarz inspekcyjny 50 cm: AKTYWNY (Łatwy dostęp do kartonów)'
-                : '📦 Bez korytarza: Zapełnienie 100% (Ryzyko braku dostępu)'}
+                ? t('🚶 Korytarz inspekcyjny 50 cm: AKTYWNY (Łatwy dostęp do kartonów)')
+                : t('📦 Bez korytarza: Zapełnienie 100% (Ryzyko braku dostępu)')}
             </Text>
           </TouchableOpacity>
 
@@ -452,23 +538,23 @@ export default function RelocationScreen() {
 
         {/* Sekcja 2: Pasowanie we wnęce i listwy */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📐 Pasowanie we Wnęce i Listwy (RD-36)</Text>
-          <Text style={styles.label}>Szerokość wnęki (cm) vs Szerokość szafy (cm):</Text>
+          <Text style={styles.cardTitle}>📐 {t('Pasowanie we Wnęce i Listwy (RD-36)')}</Text>
+          <Text style={styles.label}>{t('Szerokość wnęki ({u}) vs Szerokość szafy ({u}):', { u: dimUnitLabel })}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={nicheWidth}
-              onChangeText={setNicheWidth}
+              onChangeText={(val) => checkAccessAndSet(setNicheWidth, val)}
               keyboardType="numeric"
-              placeholder="Wnęka"
+              placeholder={t('Wnęka')}
             />
             <Text style={styles.vsText}>vs</Text>
             <TextInput
               style={styles.input}
               value={furnWidth}
-              onChangeText={setFurnWidth}
+              onChangeText={(val) => checkAccessAndSet(setFurnWidth, val)}
               keyboardType="numeric"
-              placeholder="Szafa"
+              placeholder={t('Szafa')}
             />
           </View>
 
@@ -480,12 +566,12 @@ export default function RelocationScreen() {
               ]}
             >
               {nicheResult.fitsOverall
-                ? '✅ Szafa mieści się we wnęce!'
-                : '❌ Kolizja! Mebel nie wejdzie'}
+                ? t('✅ Szafa mieści się we wnęce!')
+                : t('❌ Kolizja! Mebel nie wejdzie')}
             </Text>
             {nicheResult.isSkirtingCollision && (
               <Text style={styles.warningText}>
-                ⚠️ Uwaga: Mebel mieści się u góry, ale koliduje z listwami przypodłogowymi! (Szerokość przy podłodze to {nicheResult.effectiveWidthAtFloorMm / 10} cm)
+                ⚠️ {t('Uwaga: Mebel mieści się u góry, ale koliduje z listwami przypodłogowymi! (Szerokość przy podłodze to {val} cm)', { val: formatDimension(nicheResult.effectiveWidthAtFloorMm / 10, unitSystem) })}
               </Text>
             )}
             {nicheResult.recommendations.map((r: string, i: number) => (
@@ -510,58 +596,58 @@ export default function RelocationScreen() {
 
         {/* Sekcja 2b: Skosy Poddasza i Wstawienie Mebla (RD-48, DEC-57) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📐 Skosy Poddasza & Wysokość Użytkowa (RD-48)</Text>
+          <Text style={styles.cardTitle}>📐 {t('Skosy Poddasza & Wysokość Użytkowa (RD-48)')}</Text>
           <Text style={styles.label}>
-            Wysokość ścianki kolankowej i kąt połaci dachu:
+            {t('Wysokość ścianki kolankowej i kąt połaci dachu:')}
           </Text>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Ścianka kolankowa (cm):</Text>
+              <Text style={styles.label}>{t('Ścianka kolankowa ({u}):', { u: dimUnitLabel })}</Text>
               <TextInput
                 style={styles.input}
                 value={kneeWallCm}
-                onChangeText={setKneeWallCm}
+                onChangeText={(val) => checkAccessAndSet(setKneeWallCm, val)}
                 keyboardType="numeric"
                 placeholder="np. 80"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Kąt dachu (stopnie):</Text>
+              <Text style={styles.label}>{t('Kąt dachu (stopnie):')}</Text>
               <TextInput
                 style={styles.input}
                 value={roofPitchDeg}
-                onChangeText={setRoofPitchDeg}
+                onChangeText={(val) => checkAccessAndSet(setRoofPitchDeg, val)}
                 keyboardType="numeric"
                 placeholder="np. 40"
               />
             </View>
           </View>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>Mebel pod skosem (Głęb. × Wys. | Od ściany w cm):</Text>
+          <Text style={[styles.label, { marginTop: 10 }]}>{t('Mebel pod skosem (Głęb. × Wys. | Od ściany w cm):')}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={atticFurnDepthCm}
-              onChangeText={setAtticFurnDepthCm}
+              onChangeText={(val) => checkAccessAndSet(setAtticFurnDepthCm, val)}
               keyboardType="numeric"
-              placeholder="Głęb. cm"
+              placeholder="Głęb."
             />
             <Text style={styles.vsText}>×</Text>
             <TextInput
               style={styles.input}
               value={atticFurnHeightCm}
-              onChangeText={setAtticFurnHeightCm}
+              onChangeText={(val) => checkAccessAndSet(setAtticFurnHeightCm, val)}
               keyboardType="numeric"
-              placeholder="Wys. cm"
+              placeholder="Wys."
             />
             <Text style={styles.vsText}>|</Text>
             <TextInput
               style={styles.input}
               value={atticFurnDistCm}
-              onChangeText={setAtticFurnDistCm}
+              onChangeText={(val) => checkAccessAndSet(setAtticFurnDistCm, val)}
               keyboardType="numeric"
-              placeholder="Od ściany cm"
+              placeholder="Od ściany"
             />
           </View>
 
@@ -580,23 +666,23 @@ export default function RelocationScreen() {
 
         {/* Sekcja 3: Przejście przez ościeżnicę drzwi */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚪 Przejście przez Drzwi i Klamka (RD-33)</Text>
-          <Text style={styles.label}>Szerokość drzwi (cm) vs Najmniejszy wymiar mebla (cm):</Text>
+          <Text style={styles.cardTitle}>🚪 {t('Przejście przez Drzwi i Klamka (RD-33)')}</Text>
+          <Text style={styles.label}>{t('Szerokość drzwi ({u}) vs Najmniejszy wymiar mebla ({u}):', { u: dimUnitLabel })}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={doorWidth}
-              onChangeText={setDoorWidth}
+              onChangeText={(val) => checkAccessAndSet(setDoorWidth, val)}
               keyboardType="numeric"
-              placeholder="Drzwi"
+              placeholder={t('Drzwi')}
             />
             <Text style={styles.vsText}>vs</Text>
             <TextInput
               style={styles.input}
               value={itemSmallestDim}
-              onChangeText={setItemSmallestDim}
+              onChangeText={(val) => checkAccessAndSet(setItemSmallestDim, val)}
               keyboardType="numeric"
-              placeholder="Mebel"
+              placeholder={t('Mebel')}
             />
           </View>
 
@@ -607,10 +693,10 @@ export default function RelocationScreen() {
                 doorResult.canPass ? styles.successText : styles.alertText,
               ]}
             >
-              {doorResult.canPass ? '✅ Przejdzie bezpiecznie z tragarzami' : '❌ Zablokuje się w drzwiach!'}
+              {doorResult.canPass ? t('✅ Przejdzie bezpiecznie z tragarzami') : t('❌ Zablokuje się w drzwiach!')}
             </Text>
             <Text style={styles.subtext}>
-              Efektywne światło (klamka -6cm, skrzydło -4.5cm, dłonie -10cm): {doorResult.netClearanceWithHandsMm / 10} cm
+              {t('Efektywne światło (klamka -6cm, skrzydło -4.5cm, dłonie -10cm): {val} cm', { val: formatDimension(doorResult.netClearanceWithHandsMm / 10, unitSystem) })}
             </Text>
             {doorResult.recommendations.map((r: string, i: number) => (
               <Text key={i} style={styles.recommendationText}>
@@ -632,64 +718,76 @@ export default function RelocationScreen() {
 
         {/* Sekcja 4: Schody i Spocznik (Moving Sofa) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🪜 Schody & Spocznik (Moving Sofa 3D, RD-34)</Text>
+          <Text style={styles.cardTitle}>🪜 {t('Schody & Spocznik (Moving Sofa 3D, RD-34)')}</Text>
           
-          <Text style={styles.label}>Kształt klatki schodowej:</Text>
+          <Text style={styles.label}>{t('Kształt klatki schodowej:')}</Text>
           <View style={styles.turnSelector}>
             <TouchableOpacity
               style={[styles.turnBtn, turnAngle === 90 && styles.turnBtnActive]}
-              onPress={() => setTurnAngle(90)}
+              onPress={() => {
+                if (!access.canCreate) {
+                  setIsPaywallOpen(true);
+                  return;
+                }
+                setTurnAngle(90);
+              }}
             >
               <Text style={[styles.turnBtnText, turnAngle === 90 && styles.turnBtnTextActive]}>
-                Zakręt L (90°)
+                {t('Zakręt L (90°)')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.turnBtn, turnAngle === 180 && styles.turnBtnActive]}
-              onPress={() => setTurnAngle(180)}
+              onPress={() => {
+                if (!access.canCreate) {
+                  setIsPaywallOpen(true);
+                  return;
+                }
+                setTurnAngle(180);
+              }}
             >
               <Text style={[styles.turnBtnText, turnAngle === 180 && styles.turnBtnTextActive]}>
-                Nawrót U (180°)
+                {t('Nawrót U (180°)')}
               </Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Bieg W1 (cm):</Text>
+              <Text style={styles.label}>{t('Bieg W1 ({u}):', { u: dimUnitLabel })}</Text>
               <TextInput
                 style={styles.input}
                 value={flightWidth}
-                onChangeText={setFlightWidth}
+                onChangeText={(val) => checkAccessAndSet(setFlightWidth, val)}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1, marginHorizontal: 8 }}>
-              <Text style={styles.label}>Spocznik W2 (cm):</Text>
+              <Text style={styles.label}>{t('Spocznik W2 ({u}):', { u: dimUnitLabel })}</Text>
               <TextInput
                 style={styles.input}
                 value={landingDepth}
-                onChangeText={setLandingDepth}
+                onChangeText={(val) => checkAccessAndSet(setLandingDepth, val)}
                 keyboardType="numeric"
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Sufit (cm):</Text>
+              <Text style={styles.label}>{t('Sufit ({u}):', { u: dimUnitLabel })}</Text>
               <TextInput
                 style={styles.input}
                 value={ceilingHeight}
-                onChangeText={setCeilingHeight}
+                onChangeText={(val) => checkAccessAndSet(setCeilingHeight, val)}
                 keyboardType="numeric"
               />
             </View>
           </View>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>Wymiary mebla (Dł. × Szer. × Wys. w cm):</Text>
+          <Text style={[styles.label, { marginTop: 10 }]}>{t('Wymiary mebla (Dł. × Szer. × Wys. w cm):')}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={sofaLength}
-              onChangeText={setSofaLength}
+              onChangeText={(val) => checkAccessAndSet(setSofaLength, val)}
               keyboardType="numeric"
               placeholder="Długość"
             />
@@ -697,7 +795,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={sofaWidth}
-              onChangeText={setSofaWidth}
+              onChangeText={(val) => checkAccessAndSet(setSofaWidth, val)}
               keyboardType="numeric"
               placeholder="Szerokość"
             />
@@ -705,7 +803,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={sofaHeight}
-              onChangeText={setSofaHeight}
+              onChangeText={(val) => checkAccessAndSet(setSofaHeight, val)}
               keyboardType="numeric"
               placeholder="Wysokość"
             />
@@ -719,10 +817,10 @@ export default function RelocationScreen() {
               ]}
             >
               {stairsResult.canTurnHorizontally
-                ? '✅ Obrót płaski możliwy bez unoszenia'
+                ? t('✅ Obrót płaski możliwy bez unoszenia')
                 : stairsResult.canTurnWithVerticalTilt
-                ? `⤴️ Wymaga pionizacji / uniesienia pod kątem ${stairsResult.requiredTiltAngleDeg}°`
-                : '❌ Zablokowanie! Mebel zaklinuje się na schodach'}
+                ? t('⤴️ Wymaga pionizacji / uniesienia pod kątem {angle}°', { angle: stairsResult.requiredTiltAngleDeg ?? 0 })
+                : t('❌ Zablokowanie! Mebel zaklinuje się na schodach')}
             </Text>
             <Text style={styles.subtext}>
               {stairsResult.bottleneckDescription}
@@ -756,20 +854,24 @@ export default function RelocationScreen() {
 
         {/* Sekcja 5: Winda Osobowa & Towarowa (Przekątna 3D, RD-35) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🛗 Winda Osobowa & Towarowa (Przekątna 3D, RD-35)</Text>
-          <Text style={styles.label}>Typowa kabina windy w bloku:</Text>
+          <Text style={styles.cardTitle}>🛗 {t('Winda Osobowa & Towarowa (Przekątna 3D, RD-35)')}</Text>
+          <Text style={styles.label}>{t('Typowa kabina windy w bloku:')}</Text>
           <View style={styles.quickPresetRow}>
             {[
-              { label: '4-osobowa (Wielka płyta)', d: '100', w: '90', h: '210', door: '70' },
-              { label: '8-osobowa (Nowe bloki)', d: '140', w: '110', h: '215', door: '80' },
-              { label: 'Towarowa / Szpitalna', d: '210', w: '120', h: '220', door: '90' },
+              { labelKey: '4-osobowa (Wielka płyta)', d: '100', w: '90', h: '210', door: '70' },
+              { labelKey: '8-osobowa (Nowe bloki)', d: '140', w: '110', h: '215', door: '80' },
+              { labelKey: 'Towarowa / Szpitalna', d: '210', w: '120', h: '220', door: '90' },
             ].map((p) => {
               const active = elevDepth === p.d && elevWidth === p.w;
               return (
                 <TouchableOpacity
-                  key={p.label}
+                  key={p.labelKey}
                   style={[styles.smallChip, active && styles.smallChipActive]}
                   onPress={() => {
+                    if (!access.canCreate) {
+                      setIsPaywallOpen(true);
+                      return;
+                    }
                     setElevDepth(p.d);
                     setElevWidth(p.w);
                     setElevHeight(p.h);
@@ -777,19 +879,19 @@ export default function RelocationScreen() {
                   }}
                 >
                   <Text style={[styles.smallChipText, active && styles.smallChipTextActive]}>
-                    {p.label}
+                    {t(p.labelKey)}
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <Text style={styles.label}>Wymiary kabiny (Gł. × Szer. × Wys. w cm) i Drzwi (cm):</Text>
+          <Text style={styles.label}>{t('Wymiary kabiny (Gł. × Szer. × Wys. w cm) i Drzwi (cm):')}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={elevDepth}
-              onChangeText={setElevDepth}
+              onChangeText={(val) => checkAccessAndSet(setElevDepth, val)}
               keyboardType="numeric"
               placeholder="Gł"
             />
@@ -797,7 +899,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={elevWidth}
-              onChangeText={setElevWidth}
+              onChangeText={(val) => checkAccessAndSet(setElevWidth, val)}
               keyboardType="numeric"
               placeholder="Szer"
             />
@@ -805,7 +907,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={elevHeight}
-              onChangeText={setElevHeight}
+              onChangeText={(val) => checkAccessAndSet(setElevHeight, val)}
               keyboardType="numeric"
               placeholder="Wys"
             />
@@ -813,18 +915,18 @@ export default function RelocationScreen() {
             <TextInput
               style={[styles.input, { flex: 0.9 }]}
               value={elevDoorWidth}
-              onChangeText={setElevDoorWidth}
+              onChangeText={(val) => checkAccessAndSet(setElevDoorWidth, val)}
               keyboardType="numeric"
               placeholder="Drzwi"
             />
           </View>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>Przedmiot / Blat / Materac (Dł. × Szer. × Wys. w cm):</Text>
+          <Text style={[styles.label, { marginTop: 10 }]}>{t('Przedmiot / Blat / Materac (Dł. × Szer. × Wys. w cm):')}</Text>
           <View style={styles.row}>
             <TextInput
               style={styles.input}
               value={elevItemLen}
-              onChangeText={setElevItemLen}
+              onChangeText={(val) => checkAccessAndSet(setElevItemLen, val)}
               keyboardType="numeric"
               placeholder="Długość"
             />
@@ -832,7 +934,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={elevItemWidth}
-              onChangeText={setElevItemWidth}
+              onChangeText={(val) => checkAccessAndSet(setElevItemWidth, val)}
               keyboardType="numeric"
               placeholder="Szerokość"
             />
@@ -840,7 +942,7 @@ export default function RelocationScreen() {
             <TextInput
               style={styles.input}
               value={elevItemHeight}
-              onChangeText={setElevItemHeight}
+              onChangeText={(val) => checkAccessAndSet(setElevItemHeight, val)}
               keyboardType="numeric"
               placeholder="Grubość"
             />
@@ -854,13 +956,16 @@ export default function RelocationScreen() {
               ]}
             >
               {elevatorResult.fitsInsideCabin
-                ? '✅ Wjedzie windą po przekątnej przestrzennej'
+                ? t('✅ Wjedzie windą po przekątnej przestrzennej')
                 : !elevatorResult.fitsThroughDoor
-                ? '❌ Zablokuje się w drzwiach windy!'
-                : '❌ Za długi na przekątną (wymagane wnoszenie schodami)'}
+                ? t('❌ Zablokuje się w drzwiach windy!')
+                : t('❌ Za długi na przekątną (wymagane wnoszenie schodami)')}
             </Text>
             <Text style={styles.subtext}>
-              Przekątna kabiny 3D: {Math.round(elevatorResult.spatialDiagonalMm / 10)} cm • Max długość z buforem 5 cm: {Math.round(elevatorResult.maxRigidItemLengthMm / 10)} cm
+              {t('Przekątna kabiny 3D: {diag} • Max długość z buforem 5 cm: {len}', {
+                diag: formatDimension(elevatorResult.spatialDiagonalMm / 10, unitSystem),
+                len: formatDimension(elevatorResult.maxRigidItemLengthMm / 10, unitSystem),
+              })}
             </Text>
             {elevatorResult.warnings.map((w: string, i: number) => (
               <Text key={i} style={styles.warningText}>
@@ -885,48 +990,48 @@ export default function RelocationScreen() {
 
         {/* Sekcja 6: Wymiarowanie Montażowe i Wentylacja AGD (RD-37, RD-38, RD-39, RD-51) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>❄️ Wymiarowanie Montażowe & Wentylacja AGD (RD-37…RD-51)</Text>
+          <Text style={styles.cardTitle}>❄️ {t('Wymiarowanie Montażowe & Wentylacja AGD (RD-37…RD-51)')}</Text>
           <ApplianceClearanceView />
         </View>
 
         {/* Sekcja 7: Ergonomia Stref Mebli i Ciągów Komunikacyjnych (Z-172, Z-177, RD-51, DEC-45) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📐 Ergonomia Stref Mebli i Przejść (RD-51, DEC-45)</Text>
+          <Text style={styles.cardTitle}>📐 {t('Ergonomia Stref Mebli i Przejść (RD-51, DEC-45)')}</Text>
           <Text style={styles.subtext}>
-            Weryfikacja minimalnych stref wysuwu szuflad, otwarcia frontów i swobody przejścia:
+            {t('Weryfikacja minimalnych stref wysuwu szuflad, otwarcia frontów i swobody przejścia:')}
           </Text>
 
-          <Text style={[styles.label, { marginTop: 10 }]}>Rodzaj strefy użytkowej:</Text>
+          <Text style={[styles.label, { marginTop: 10 }]}>{t('Rodzaj strefy użytkowej:')}</Text>
           <View style={styles.turnSelector}>
             {[
-              { type: 'HINGED_WARDROBE', label: '🚪 Szafa (70 cm)' },
-              { type: 'CHEST_OF_DRAWERS', label: '🗄️ Szuflady (90 cm)' },
-              { type: 'DISHWASHER', label: '🧼 Zmywarka (105 cm)' },
+              { type: 'HINGED_WARDROBE', labelKey: '🚪 Szafa (70 cm)' },
+              { type: 'CHEST_OF_DRAWERS', labelKey: '🗄️ Szuflady (90 cm)' },
+              { type: 'DISHWASHER', labelKey: '🧼 Zmywarka (105 cm)' },
             ].map((opt) => (
               <TouchableOpacity
                 key={opt.type}
                 style={[styles.turnBtn, clearanceType === opt.type && styles.turnBtnActive]}
-                onPress={() => setClearanceType(opt.type as FurnitureClearanceType)}
+                onPress={() => checkAccessAndSet(setClearanceType, opt.type as FurnitureClearanceType)}
               >
                 <Text style={[styles.turnBtnText, clearanceType === opt.type && styles.turnBtnTextActive]}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
           <View style={[styles.turnSelector, { marginTop: 6 }]}>
             {[
-              { type: 'DINING_CHAIR', label: '🍽️ Krzesło (75 cm)' },
-              { type: 'DINING_PASSAGE', label: '🚶‍♂️ Ciąg ze stołem (100 cm)' },
-              { type: 'BED_SIDE', label: '🛏️ Bok łóżka (60 cm)' },
+              { type: 'DINING_CHAIR', labelKey: '🍽️ Krzesło (75 cm)' },
+              { type: 'DINING_PASSAGE', labelKey: '🚶‍♂️ Ciąg ze stołem (100 cm)' },
+              { type: 'BED_SIDE', labelKey: '🛏️ Bok łóżka (60 cm)' },
             ].map((opt) => (
               <TouchableOpacity
                 key={opt.type}
                 style={[styles.turnBtn, clearanceType === opt.type && styles.turnBtnActive]}
-                onPress={() => setClearanceType(opt.type as FurnitureClearanceType)}
+                onPress={() => checkAccessAndSet(setClearanceType, opt.type as FurnitureClearanceType)}
               >
                 <Text style={[styles.turnBtnText, clearanceType === opt.type && styles.turnBtnTextActive]}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -934,11 +1039,11 @@ export default function RelocationScreen() {
 
           <View style={[styles.row, { marginTop: 12 }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Dostępna przestrzeń przed meblem (cm):</Text>
+              <Text style={styles.label}>{t('Dostępna przestrzeń przed meblem (cm):')}</Text>
               <TextInput
                 style={styles.input}
                 value={availableClearanceCm}
-                onChangeText={setAvailableClearanceCm}
+                onChangeText={(val) => checkAccessAndSet(setAvailableClearanceCm, val)}
                 keyboardType="numeric"
                 placeholder="np. 80"
               />
@@ -958,12 +1063,17 @@ export default function RelocationScreen() {
               ]}
             >
               {functionalClearanceResult.isErgonomic
-                ? '✅ Strefa ergonomiczna i swobodna'
-                : '❌ Zbyt ciasno na swobodne użytkowanie!'}
+                ? t('✅ Strefa ergonomiczna i swobodna')
+                : t('❌ Zbyt ciasno na swobodne użytkowanie!')}
             </Text>
             <Text style={styles.subtext}>
-              Norma: {functionalClearanceResult.requiredClearanceMm / 10} cm • Dostępne: {functionalClearanceResult.availableClearanceMm / 10} cm •{' '}
-              {functionalClearanceResult.marginMm >= 0 ? `Zapas: +${functionalClearanceResult.marginMm / 10} cm` : `Brak: ${Math.abs(functionalClearanceResult.marginMm / 10)} cm`}
+              {t('Norma: {req} cm • Dostępne: {avail} cm', {
+                req: functionalClearanceResult.requiredClearanceMm / 10,
+                avail: functionalClearanceResult.availableClearanceMm / 10,
+              })} •{' '}
+              {functionalClearanceResult.marginMm >= 0
+                ? t('Zapas: +{val} cm', { val: functionalClearanceResult.marginMm / 10 })
+                : t('Brak: {val} cm', { val: Math.abs(functionalClearanceResult.marginMm / 10) })}
             </Text>
             <Text style={[styles.subtext, { marginTop: 4, color: '#F8FAFC' }]}>
               💡 {functionalClearanceResult.recommendation}
@@ -973,33 +1083,33 @@ export default function RelocationScreen() {
 
         {/* Sekcja 8: Tragarze i Dopuszczalne Normy Dźwigania BHP (Z-188, RD-53) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>👷 Zespół Tragarzy i Normy Dźwigania BHP (RD-53, Z-188)</Text>
+          <Text style={styles.cardTitle}>👷 {t('Zespół Tragarzy i Normy Dźwigania BHP (RD-53, Z-188)')}</Text>
           <Text style={styles.subtext}>
-            Kontrola dopuszczalnych norm dźwigania ręcznego monolitów (pianino, sejf, szafy dębowe):
+            {t('Kontrola dopuszczalnych norm dźwigania ręcznego monolitów (pianino, sejf, szafy dębowe):')}
           </Text>
 
           <View style={[styles.row, { marginTop: 10 }]}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Masa ładunku (kg):</Text>
+              <Text style={styles.label}>{t('Masa ładunku ({u}):', { u: unitSystem === 'imperial' ? 'lbs' : 'kg' })}</Text>
               <TextInput
                 style={styles.input}
                 value={porterCargoWeightKg}
-                onChangeText={setPorterCargoWeightKg}
+                onChangeText={(val) => checkAccessAndSet(setPorterCargoWeightKg, val)}
                 keyboardType="numeric"
                 placeholder="120"
               />
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
-              <Text style={styles.label}>Liczba tragarzy:</Text>
+              <Text style={styles.label}>{t('Liczba tragarzy:')}</Text>
               <View style={styles.turnSelector}>
                 {[1, 2, 3, 4].map((n) => (
                   <TouchableOpacity
                     key={n}
                     style={[styles.turnBtn, portersCount === n && styles.turnBtnActive]}
-                    onPress={() => setPortersCount(n)}
+                    onPress={() => checkAccessAndSet(setPortersCount, n)}
                   >
                     <Text style={[styles.turnBtnText, portersCount === n && styles.turnBtnTextActive]}>
-                      {n} os.
+                      {t('{n} os.', { n })}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -1009,18 +1119,24 @@ export default function RelocationScreen() {
 
           <View style={styles.quickPresetRow}>
             {[
-              { label: 'Pralka (65 kg)', w: '65' },
-              { label: 'Szafa dąb (90 kg)', w: '90' },
-              { label: 'Sejf (120 kg)', w: '120' },
-              { label: 'Pianino (220 kg)', w: '220' },
+              { labelKey: 'Pralka (65 kg)', w: '65' },
+              { labelKey: 'Szafa dąb (90 kg)', w: '90' },
+              { labelKey: 'Sejf (120 kg)', w: '120' },
+              { labelKey: 'Pianino (220 kg)', w: '220' },
             ].map((p) => (
               <TouchableOpacity
                 key={p.w}
                 style={[styles.smallChip, porterCargoWeightKg === p.w && styles.smallChipActive]}
-                onPress={() => setPorterCargoWeightKg(p.w)}
+                onPress={() => {
+                  if (!access.canCreate) {
+                    setIsPaywallOpen(true);
+                    return;
+                  }
+                  setPorterCargoWeightKg(p.w);
+                }}
               >
                 <Text style={[styles.smallChipText, porterCargoWeightKg === p.w && styles.smallChipTextActive]}>
-                  {p.label}
+                  {t(p.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -1029,18 +1145,30 @@ export default function RelocationScreen() {
           <View style={[styles.row, { marginTop: 6 }]}>
             <TouchableOpacity
               style={[styles.turnBtn, isOccasionalHandling && styles.turnBtnActive, { flex: 1 }]}
-              onPress={() => setIsOccasionalHandling(true)}
+              onPress={() => {
+                if (!access.canCreate) {
+                  setIsPaywallOpen(true);
+                  return;
+                }
+                setIsOccasionalHandling(true);
+              }}
             >
               <Text style={[styles.turnBtnText, isOccasionalHandling && styles.turnBtnTextActive]}>
-                Praca dorywcza (50 kg/os.)
+                {t('Praca dorywcza (50 kg/os.)')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.turnBtn, !isOccasionalHandling && styles.turnBtnActive, { flex: 1, marginLeft: 8 }]}
-              onPress={() => setIsOccasionalHandling(false)}
+              onPress={() => {
+                if (!access.canCreate) {
+                  setIsPaywallOpen(true);
+                  return;
+                }
+                setIsOccasionalHandling(false);
+              }}
             >
               <Text style={[styles.turnBtnText, !isOccasionalHandling && styles.turnBtnTextActive]}>
-                Praca stała (30 kg/os.)
+                {t('Praca stała (30 kg/os.)')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1058,23 +1186,29 @@ export default function RelocationScreen() {
               ]}
             >
               {porterBhpResult.isCompliant
-                ? '✅ Zgodne z przepisami BHP'
-                : '❌ ZAKAZ WNOSZENIA RĘCZNEGO!'}
+                ? t('✅ Zgodne z przepisami BHP')
+                : t('❌ ZAKAZ WNOSZENIA RĘCZNEGO!')}
             </Text>
             <Text style={styles.subtext}>
-              Obciążenie: <Text style={{ fontWeight: '800' }}>{porterBhpResult.weightPerPorterKg} kg/osobę</Text> (limit: {porterBhpResult.isOccasionalHandling ? 50 : 30} kg/os.)
+              {t('Obciążenie:')} <Text style={{ fontWeight: '800' }}>{formatWeight(porterBhpResult.weightPerPorterKg, unitSystem)}/osobę</Text> (limit: {porterBhpResult.isOccasionalHandling ? 50 : 30} kg/os.)
             </Text>
             <Text style={[styles.subtext, { marginTop: 4, color: '#F8FAFC' }]}>
               {porterBhpResult.legalAdvisory}
             </Text>
             {porterBhpResult.requiresMechanicalEquipment && (
               <Text style={[styles.warningText, { marginTop: 6 }]}>
-                ⚠️ Waga przekracza 150 kg — bezwzględny wymóg użycia schodołazu lub pasów nośnych na ramiona.
+                ⚠️ {t('Waga przekracza 150 kg — bezwzględny wymóg użycia schodołazu lub pasów nośnych na ramiona.')}
               </Text>
             )}
           </View>
         </View>
       </ScrollView>
+
+      {/* Modal Paywalla impulsowego Apps4Brew Pass */}
+      <Apps4BrewPassModal
+        visible={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -1100,6 +1234,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#94A3B8',
     marginTop: 2,
+  },
+  readOnlyBanner: {
+    backgroundColor: '#334155',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  readOnlyBannerText: {
+    color: '#FDE68A',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   card: {
     backgroundColor: '#1E293B',
@@ -1210,6 +1358,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#334155',
     borderRadius: 6,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#38BDF8',
   },
   manifestToggleText: {
     color: '#38BDF8',
@@ -1228,39 +1378,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#F8FAFC',
-    marginBottom: 6,
   },
   manifestPhase: {
     fontSize: 12,
     color: '#CBD5E1',
-    marginBottom: 4,
+    marginTop: 4,
   },
   manifestPhaseHighlight: {
     fontSize: 12,
     color: '#FBBF24',
     fontWeight: '700',
-    marginTop: 2,
+    marginTop: 4,
   },
   turnSelector: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   turnBtn: {
     flex: 1,
+    backgroundColor: '#334155',
     paddingVertical: 8,
-    backgroundColor: '#0F172A',
     borderRadius: 6,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#475569',
   },
   turnBtnActive: {
     backgroundColor: '#0284C7',
-    borderColor: '#38BDF8',
   },
   turnBtnText: {
-    color: '#94A3B8',
+    color: '#CBD5E1',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -1271,36 +1417,37 @@ const styles = StyleSheet.create({
   quickPresetRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
+    marginTop: 6,
     marginBottom: 10,
   },
   smallChip: {
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#334155',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#475569',
   },
   smallChipActive: {
+    backgroundColor: '#0284C7',
     borderColor: '#38BDF8',
-    backgroundColor: '#0369A1',
   },
   smallChipText: {
-    color: '#94A3B8',
-    fontSize: 10,
+    color: '#CBD5E1',
+    fontSize: 11,
     fontWeight: '600',
   },
   smallChipTextActive: {
-    color: '#FFFFFF',
+    color: '#FFF',
     fontWeight: '700',
   },
   resultBoxSuccess: {
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#34D399',
   },
   resultBoxAlert: {
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#F87171',
   },
   shareBtn: {
@@ -1308,7 +1455,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   shareBtnText: {
     color: '#FFFFFF',

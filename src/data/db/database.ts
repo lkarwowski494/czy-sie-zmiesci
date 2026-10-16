@@ -298,8 +298,161 @@ export class DatabaseService {
     );
   }
 
+  public getAllPackSessions(): Record<string, unknown>[] {
+    return this.driver.getAllSync('SELECT * FROM pack_sessions ORDER BY updated_at DESC');
+  }
+
+  public getLatestPackSession(): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM pack_sessions ORDER BY updated_at DESC LIMIT 1');
+  }
+
+  public savePackSession(session: {
+    id: string;
+    name: string;
+    target_space_id: string;
+    passengers_count: number;
+    total_weight_kg: number;
+    packing_efficiency_pct: number;
+    is_valid: boolean;
+    items: Array<{
+      id: string;
+      cargo_item_id: string;
+      pos_x_cm: number;
+      pos_y_cm: number;
+      pos_z_cm: number;
+      dim_x_cm: number;
+      dim_y_cm: number;
+      dim_z_cm: number;
+      sequence_order: number;
+      is_packed?: boolean;
+    }>;
+  }): void {
+    const existing = this.getPackSession(session.id);
+    if (!existing) {
+      this.createPackSession({
+        id: session.id,
+        name: session.name,
+        target_space_id: session.target_space_id,
+        passengers_count: session.passengers_count,
+      });
+    }
+    this.updateSessionStatus(
+      session.id,
+      session.total_weight_kg,
+      session.packing_efficiency_pct,
+      session.is_valid
+    );
+    this.clearSessionItems(session.id);
+    for (const it of session.items) {
+      this.insertSessionItem({
+        ...it,
+        session_id: session.id,
+      });
+    }
+  }
+
   public getRelocationProject(id: string): Record<string, unknown> | null {
     return this.driver.getFirstSync('SELECT * FROM relocation_projects WHERE id = ?', [id]);
+  }
+
+  public getAllRelocationProjects(): Record<string, unknown>[] {
+    return this.driver.getAllSync('SELECT * FROM relocation_projects ORDER BY created_at DESC');
+  }
+
+  public getLatestRelocationProject(): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM relocation_projects ORDER BY created_at DESC LIMIT 1');
+  }
+
+  public saveRelocationProject(project: {
+    id: string;
+    name: string;
+    origin_type: string;
+    origin_area_m2: number;
+    residents_count: number;
+    clutter_level: string;
+    total_volume_m3: number;
+    total_weight_kg: number;
+    recommended_vehicle_type: string;
+  }): void {
+    this.driver.runSync('DELETE FROM relocation_projects WHERE id = ?', [project.id]);
+    this.createRelocationProject(project);
+  }
+
+  public getGarageProfiles(): Record<string, unknown>[] {
+    return this.driver.getAllSync('SELECT * FROM garage_profiles ORDER BY created_at DESC');
+  }
+
+  public getGarageProfile(id: string): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM garage_profiles WHERE id = ?', [id]);
+  }
+
+  public getLatestGarageProfile(): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM garage_profiles ORDER BY created_at DESC LIMIT 1');
+  }
+
+  public saveGarageProfile(profile: {
+    id: string;
+    name: string;
+    gate_width_cm: number;
+    interior_width_cm: number;
+    ceiling_height_cm: number;
+    gate_runner_height_cm?: number;
+    obstacle_x_cm?: number;
+    obstacle_width_cm?: number;
+    max_entry_sign_m?: number;
+  }): void {
+    this.driver.runSync('DELETE FROM garage_profiles WHERE id = ?', [profile.id]);
+    this.driver.runSync(
+      `INSERT INTO garage_profiles (id, name, gate_width_cm, interior_width_cm, ceiling_height_cm, gate_runner_height_cm, obstacle_x_cm, obstacle_width_cm, max_entry_sign_m, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        profile.id,
+        profile.name,
+        profile.gate_width_cm,
+        profile.interior_width_cm,
+        profile.ceiling_height_cm,
+        profile.gate_runner_height_cm ?? 0,
+        profile.obstacle_x_cm ?? 0,
+        profile.obstacle_width_cm ?? 0,
+        profile.max_entry_sign_m ?? 0,
+        Date.now(),
+      ]
+    );
+  }
+
+  public getTowbarRoofConfig(vehicleId: string): Record<string, unknown> | null {
+    return this.driver.getFirstSync('SELECT * FROM towbar_roof_configs WHERE vehicle_id = ?', [vehicleId]);
+  }
+
+  public saveTowbarRoofConfig(config: {
+    id: string;
+    vehicle_id: string;
+    towbar_s_limit_kg: number;
+    bike_rack_weight_kg: number;
+    bikes_count: number;
+    bikes_total_weight_kg: number;
+    roof_limit_kg: number;
+    bars_weight_kg: number;
+    roof_box_weight_kg: number;
+    roof_cargo_weight_kg: number;
+    total_roof_height_cm: number;
+  }): void {
+    this.driver.runSync('DELETE FROM towbar_roof_configs WHERE id = ?', [config.id]);
+    this.driver.runSync(
+      `INSERT INTO towbar_roof_configs (id, vehicle_id, towbar_s_limit_kg, bike_rack_weight_kg, bikes_count, bikes_total_weight_kg, roof_limit_kg, bars_weight_kg, roof_box_weight_kg, roof_cargo_weight_kg, total_roof_height_cm) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        config.id,
+        config.vehicle_id,
+        config.towbar_s_limit_kg,
+        config.bike_rack_weight_kg,
+        config.bikes_count,
+        config.bikes_total_weight_kg,
+        config.roof_limit_kg,
+        config.bars_weight_kg,
+        config.roof_box_weight_kg,
+        config.roof_cargo_weight_kg,
+        config.total_roof_height_cm,
+      ]
+    );
   }
 
   // --- Kopie Zapasowe JSON (Rozdział 12.2) ---

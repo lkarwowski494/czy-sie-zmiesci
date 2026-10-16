@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Modal,
   Share,
+  Alert,
 } from 'react-native';
 import { QrCodeSvg } from '../../src/components/QrCodeSvg';
 import { encodeSpaceDeepLink, SpaceSharePayload } from '../../src/lib/deep-links';
@@ -39,8 +40,17 @@ import {
 import { SafetyEducationView } from '../../src/components/SafetyEducationView';
 import { MultiCheckerMatrixView } from '../../src/components/MultiCheckerMatrixView';
 import { ScreenRuler } from '../../src/components/ScreenRuler';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import { useAppAccess } from '../../src/services/app-access';
+import { getDatabaseService, triggerAutoBackup } from '../../src/data/db';
+import { t, useLang } from '../../src/lib/i18n';
 
 export default function CatalogScreen() {
+  useLang();
+  const unitSystem = useUnitSystem();
+  const access = useAppAccess();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+
   // Stan dla Paczkomatu
   const [pLen, setPLen] = useState('40');
   const [pWidth, setPWidth] = useState('30');
@@ -73,9 +83,96 @@ export default function CatalogScreen() {
   const [convertFrom, setConvertFrom] = useState<'cm' | 'in' | 'm' | 'ft'>('cm');
   const [convertTo, setConvertTo] = useState<'cm' | 'in' | 'm' | 'ft'>('in');
 
-  const unitSystem = useUnitSystem();
+  // Udostępnianie
   const [sharingSpace, setSharingSpace] = useState<SpaceSharePayload | null>(null);
   const [shareLink, setShareLink] = useState<string>('');
+
+  // Własne przedmioty z SQLite
+  const [customItems, setCustomItems] = useState<Array<{
+    id: string;
+    name: string;
+    category: string;
+    length_cm: number;
+    width_cm: number;
+    height_cm: number;
+    weight_kg: number;
+  }>>([]);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState<'karton' | 'walizka' | 'mebel_ikea' | 'agd' | 'sport'>('karton');
+  const [newItemLength, setNewItemLength] = useState('60');
+  const [newItemWidth, setNewItemWidth] = useState('40');
+  const [newItemHeight, setNewItemHeight] = useState('40');
+  const [newItemWeight, setNewItemWeight] = useState('10');
+
+  useEffect(() => {
+    try {
+      const db = getDatabaseService();
+      const items = db.getCargoItems();
+      const userItems = items
+        .filter((it: any) => !it.is_preset)
+        .map((it: any) => ({
+          id: String(it.id),
+          name: String(it.name),
+          category: String(it.category),
+          length_cm: Number(it.length_cm),
+          width_cm: Number(it.width_cm),
+          height_cm: Number(it.height_cm),
+          weight_kg: Number(it.weight_kg),
+        }));
+      setCustomItems(userItems);
+    } catch {
+      // fallback
+    }
+  }, []);
+
+  const handleSaveCustomCargoItem = () => {
+    if (!access.canCreate) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    if (!newItemName.trim()) {
+      Alert.alert(t('Błąd'), t('Podaj nazwę przedmiotu'));
+      return;
+    }
+    const length_cm = parseFloat(newItemLength) || 50;
+    const width_cm = parseFloat(newItemWidth) || 40;
+    const height_cm = parseFloat(newItemHeight) || 30;
+    const weight_kg = parseFloat(newItemWeight) || 5;
+
+    try {
+      const db = getDatabaseService();
+      const id = `user_item_${Date.now()}`;
+      db.insertCustomCargoItem({
+        id,
+        name: newItemName.trim(),
+        category: newItemCategory,
+        length_cm,
+        width_cm,
+        height_cm,
+        weight_kg,
+      });
+      setCustomItems((prev) => [
+        ...prev,
+        {
+          id,
+          name: newItemName.trim(),
+          category: newItemCategory,
+          length_cm,
+          width_cm,
+          height_cm,
+          weight_kg,
+        },
+      ]);
+      triggerAutoBackup();
+      access.recordProject();
+      setIsAddItemModalOpen(false);
+      setNewItemName('');
+      Alert.alert(t('Sukces'), t('Dodano własny ładunek do bazy SQLite.'));
+    } catch (err: any) {
+      Alert.alert(t('Błąd zapisu'), err?.message ?? 'SQLite error');
+    }
+  };
 
   const selectedVehicle = POPULAR_VEHICLES_PRESETS.find((v) => v.id === selectedVehicleId) ?? POPULAR_VEHICLES_PRESETS[0];
 
@@ -103,7 +200,25 @@ export default function CatalogScreen() {
     setShareLink(link);
   };
 
-  const filteredCargo = CARGO_ITEMS_PRESETS.filter((item) => {
+  const allCargoItems = [
+    ...CARGO_ITEMS_PRESETS,
+    ...customItems.map((ci) => ({
+      id: ci.id,
+      name: ci.name,
+      category: ci.category as any,
+      dimensionsMm: {
+        lengthMm: ci.length_cm * 10,
+        widthMm: ci.width_cm * 10,
+        heightMm: ci.height_cm * 10,
+      },
+      weightKg: ci.weight_kg,
+      description: t('Własny przedmiot użytkownika'),
+      isFragile: false,
+      allowStacking: true,
+    })),
+  ];
+
+  const filteredCargo = allCargoItems.filter((item) => {
     if (cargoFilter === 'wszystkie') return true;
     return item.category === cargoFilter;
   });
@@ -147,9 +262,23 @@ export default function CatalogScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>Katalog Standardów & Baza</Text>
-          <Text style={styles.subtitle}>Paczkomaty, linie lotnicze, 350+ aut, fizyka ładunku i miarka</Text>
+          <Text style={styles.title}>{t('Katalog Standardów & Baza')}</Text>
+          <Text style={styles.subtitle}>
+            {t('Paczkomaty, linie lotnicze, 350+ aut, fizyka ładunku i miarka')}
+          </Text>
         </View>
+
+        {!access.canCreate && (
+          <TouchableOpacity
+            style={styles.readOnlyBanner}
+            onPress={() => setIsPaywallOpen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.readOnlyBannerText}>
+              🔒 {t('Przeglądasz katalog w trybie do odczytu. Aktywuj Apps4Brew Pass ($0.99), aby dodawać własne przedmioty.')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Sekcja 0: Szybki Multi-Checker (BR-LOT-001) */}
         <View style={styles.card}>
@@ -158,8 +287,8 @@ export default function CatalogScreen() {
 
         {/* Sekcja 1: Paczkomaty InPost */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📦 Weryfikator Paczkomatów InPost (RD-09)</Text>
-          <Text style={styles.infoText}>Wymiary Twojej paczki w cm (Dł. × Szer. × Wys.):</Text>
+          <Text style={styles.cardTitle}>📦 {t('Weryfikator Paczkomatów InPost (RD-09)')}</Text>
+          <Text style={styles.infoText}>{t('Wymiary Twojej paczki w cm (Dł. × Szer. × Wys.):')}</Text>
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
@@ -190,7 +319,7 @@ export default function CatalogScreen() {
           </View>
 
           <View style={styles.resultBox}>
-            <Text style={styles.resultLabel}>Rekomendowana skrytka:</Text>
+            <Text style={styles.resultLabel}>{t('Rekomendowana skrytka:')}</Text>
             <Text
               style={[
                 styles.resultHighlight,
@@ -198,14 +327,14 @@ export default function CatalogScreen() {
               ]}
             >
               {parcelResult.fits
-                ? `Gabaryt ${parcelResult.recommendedSize} (${
+                ? `${t('Gabaryt')} ${parcelResult.recommendedSize} (${
                     parcelResult.recommendedSize === 'A'
                       ? '8 × 38 × 64 cm'
                       : parcelResult.recommendedSize === 'B'
                       ? '19 × 38 × 64 cm'
                       : '41 × 38 × 64 cm'
                   })`
-                : 'PRZEKRACZA GABARYT C (Nie zmieści się)'}
+                : t('PRZEKRACZA GABARYT C (Nie zmieści się)')}
             </Text>
             {parcelResult.warnings.map((w, idx) => (
               <Text key={idx} style={styles.resultDetails}>
@@ -217,8 +346,8 @@ export default function CatalogScreen() {
 
         {/* Sekcja 2: Sizer Linii Lotniczych */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>✈️ Sizer Linii Lotniczych (IATA / Cabin Bag)</Text>
-          <Text style={styles.infoText}>Wybierz linię lotniczą i wymiary walizki z kółkami:</Text>
+          <Text style={styles.cardTitle}>✈️ {t('Sizer Linii Lotniczych (IATA / Cabin Bag)')}</Text>
+          <Text style={styles.infoText}>{t('Wybierz linię lotniczą i wymiary walizki z kółkami:')}</Text>
 
           {/* Wybór linii */}
           <View style={styles.airlineRow}>
@@ -269,34 +398,36 @@ export default function CatalogScreen() {
             onPress={() => setIsSoft(!isSoft)}
           >
             <Text style={styles.softToggleText}>
-              {isSoft ? '🎒 Miękka torba (Można ścisnąć do 10%)' : '🧳 Sztywna walizka (Zero ugięcia)'}
+              {isSoft
+                ? t('👜 Miękka torba (Można upchnąć w sizerze +2 cm)')
+                : t('🧳 Sztywna walizka skorupowa (Zero tolerancji)')}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.resultBox}>
             <Text style={styles.statusRow}>
-              Darmowy pod fotel:{' '}
+              {t('Przedmiot osobisty (pod fotel):')}{' '}
               <Text
-                style={{
-                  fontWeight: '700',
-                  color: aviationResult.fitsFreeSmallBag ? '#34D399' : '#F87171',
-                }}
+                style={[
+                  styles.bold,
+                  aviationResult.fitsFreeSmallBag ? styles.successText : styles.alertText,
+                ]}
               >
-                {aviationResult.fitsFreeSmallBag ? 'MIEŚCI SIĘ ✅' : 'NIE MIEŚCI SIĘ ❌'}
+                {aviationResult.fitsFreeSmallBag ? t('MIEŚCI SIĘ') : t('ZA DUŻY')}
               </Text>
             </Text>
             <Text style={styles.statusRow}>
-              Duży podręczny (Priority):{' '}
+              {t('Bagaż kabinowy (nad głową):')}{' '}
               <Text
-                style={{
-                  fontWeight: '700',
-                  color: aviationResult.fitsPriorityCabinBag ? '#34D399' : '#F87171',
-                }}
+                style={[
+                  styles.bold,
+                  aviationResult.fitsPriorityCabinBag ? styles.successText : styles.alertText,
+                ]}
               >
-                {aviationResult.fitsPriorityCabinBag ? 'MIEŚCI SIĘ ✅' : 'NIE MIEŚCI SIĘ ❌'}
+                {aviationResult.fitsPriorityCabinBag ? t('MIEŚCI SIĘ') : t('WYMAGA DOPŁATY')}
               </Text>
             </Text>
-            {aviationResult.warnings.map((w: string, i: number) => (
+            {aviationResult.warnings.map((w, i) => (
               <Text key={i} style={styles.warningText}>
                 • {w}
               </Text>
@@ -306,18 +437,18 @@ export default function CatalogScreen() {
 
         {/* Sekcja 3: Szkoła Pakowania & Crash Simulator (BR-EDU-001, BR-EDU-002) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>💥 Szkoła Pakowania & Fizyka Zderzenia (BR-EDU)</Text>
+          <Text style={styles.cardTitle}>💥 {t('Szkoła Pakowania & Fizyka Zderzenia (BR-EDU)')}</Text>
           <Text style={styles.infoText}>
-            Niezamocowany ładunek w czasie zderzenia przy przeciążeniu 25g (Euro NCAP) zachowuje się jak pocisk:
+            {t('Niezamocowany ładunek w czasie zderzenia przy przeciążeniu 25g (Euro NCAP) zachowuje się jak pocisk:')}
           </Text>
 
           {/* Szybki wybór masy */}
           <View style={styles.quickPresetRow}>
             {[
-              { label: 'Laptop (2 kg)', val: '2' },
-              { label: 'Zgrzewka wody (9 kg)', val: '9' },
-              { label: 'Walizka L (20 kg)', val: '20' },
-              { label: 'Worek cementu (25 kg)', val: '25' },
+              { labelKey: 'Laptop (2 kg)', val: '2' },
+              { labelKey: 'Zgrzewka wody (9 kg)', val: '9' },
+              { labelKey: 'Walizka L (20 kg)', val: '20' },
+              { labelKey: 'Worek cementu (25 kg)', val: '25' },
             ].map((p) => (
               <TouchableOpacity
                 key={p.val}
@@ -325,7 +456,7 @@ export default function CatalogScreen() {
                 onPress={() => setCrashMassKg(p.val)}
               >
                 <Text style={[styles.smallChipText, crashMassKg === p.val && styles.smallChipTextActive]}>
-                  {p.label}
+                  {t(p.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -334,9 +465,9 @@ export default function CatalogScreen() {
           {/* Wybór prędkości */}
           <View style={styles.speedRow}>
             {[
-              { label: '50 km/h (Miasto)', speed: 50 },
-              { label: '90 km/h (Trasa)', speed: 90 },
-              { label: '140 km/h (Autostrada)', speed: 140 },
+              { labelKey: '50 km/h (Miasto)', speed: 50 },
+              { labelKey: '90 km/h (Trasa)', speed: 90 },
+              { labelKey: '140 km/h (Autostrada)', speed: 140 },
             ].map((s) => (
               <TouchableOpacity
                 key={s.speed}
@@ -344,7 +475,7 @@ export default function CatalogScreen() {
                 onPress={() => setCrashSpeedKmh(s.speed)}
               >
                 <Text style={[styles.speedBtnText, crashSpeedKmh === s.speed && styles.speedBtnTextActive]}>
-                  {s.label}
+                  {t(s.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -355,13 +486,13 @@ export default function CatalogScreen() {
             <View style={styles.crashMetricsRow}>
               <View style={styles.crashMetric}>
                 <Text style={styles.crashMetricVal}>{crashPhysics.kineticEnergyJoules} J</Text>
-                <Text style={styles.crashMetricLbl}>Energia Kinetyczna</Text>
+                <Text style={styles.crashMetricLbl}>{t('Energia Kinetyczna')}</Text>
               </View>
               <View style={styles.crashMetric}>
                 <Text style={[styles.crashMetricVal, { color: '#F87171' }]}>
-                  {crashPhysics.equivalentImpactMassKg} kg
+                  {formatWeight(crashPhysics.equivalentImpactMassKg, unitSystem)}
                 </Text>
-                <Text style={styles.crashMetricLbl}>Siła uderzenia (25g)</Text>
+                <Text style={styles.crashMetricLbl}>{t('Siła uderzenia (25g)')}</Text>
               </View>
             </View>
             <Text style={styles.crashAdvisoryText}>⚠️ {crashPhysics.safetyAdvisory}</Text>
@@ -369,13 +500,13 @@ export default function CatalogScreen() {
 
           {/* Wymogi mocowania pasami (PN-EN 12195-1) */}
           <Text style={[styles.cardSubtitle, { marginTop: 12 }]}>
-            🪢 Wymogi Mocowania Pasami (Norma PN-EN 12195-1)
+            🪢 {t('Wymogi Mocowania Pasami (Norma PN-EN 12195-1)')}
           </Text>
           <View style={styles.surfaceRow}>
             {[
-              { label: 'Mata gumowa (μ=0.6)', val: 'RUBBER_MAT' as TrunkFrictionSurface },
-              { label: 'Welur (μ=0.3)', val: 'CARPET_VELOUR' as TrunkFrictionSurface },
-              { label: 'Plastik (μ=0.2)', val: 'PLASTIC_SLICK' as TrunkFrictionSurface },
+              { labelKey: 'Mata gumowa (μ=0.6)', val: 'RUBBER_MAT' as TrunkFrictionSurface },
+              { labelKey: 'Welur (μ=0.3)', val: 'CARPET_VELOUR' as TrunkFrictionSurface },
+              { labelKey: 'Plastik (μ=0.2)', val: 'PLASTIC_SLICK' as TrunkFrictionSurface },
             ].map((sf) => (
               <TouchableOpacity
                 key={sf.val}
@@ -383,7 +514,7 @@ export default function CatalogScreen() {
                 onPress={() => setFrictionSurface(sf.val)}
               >
                 <Text style={[styles.surfaceChipText, frictionSurface === sf.val && styles.surfaceChipTextActive]}>
-                  {sf.label}
+                  {t(sf.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -391,28 +522,28 @@ export default function CatalogScreen() {
 
           <View style={styles.lashingSummaryBox}>
             <Text style={styles.lashingSummaryText}>
-              Wymagana siła opasania: <Text style={styles.bold}>{lashingResult.minimumLashingCapacityDaN} daN</Text>
-              {'\n'}Zalecana liczba pasów: <Text style={styles.bold}>{lashingResult.recommendedStrapsCount} pas(y)</Text> (LC 250 daN)
+              {t('Wymagana siła opasania:')} <Text style={styles.bold}>{lashingResult.minimumLashingCapacityDaN} daN</Text>
+              {'\n'}{t('Zalecana liczba pasów:')} <Text style={styles.bold}>{lashingResult.recommendedStrapsCount} pas(y)</Text> (LC 250 daN)
             </Text>
           </View>
 
           {/* Protokół AGD */}
           <Text style={[styles.cardSubtitle, { marginTop: 14 }]}>
-            ❄️ Zasady Przewozu AGD i Czas Odstania Płynów
+            ❄️ {t('Zasady Przewozu AGD i Czas Odstania Płynów')}
           </Text>
           <View style={styles.quickPresetRow}>
             {[
-              { label: 'Lodówka', val: 'REFRIGERATOR' as const },
-              { label: 'Pralka', val: 'WASHING_MACHINE' as const },
-              { label: 'TV OLED', val: 'TV_OLED' as const },
-            ].map((t) => (
+              { labelKey: 'Lodówka', val: 'REFRIGERATOR' as const },
+              { labelKey: 'Pralka', val: 'WASHING_MACHINE' as const },
+              { labelKey: 'TV OLED', val: 'TV_OLED' as const },
+            ].map((tp) => (
               <TouchableOpacity
-                key={t.val}
-                style={[styles.smallChip, applianceType === t.val && styles.smallChipActive]}
-                onPress={() => setApplianceType(t.val)}
+                key={tp.val}
+                style={[styles.smallChip, applianceType === tp.val && styles.smallChipActive]}
+                onPress={() => setApplianceType(tp.val)}
               >
-                <Text style={[styles.smallChipText, applianceType === t.val && styles.smallChipTextActive]}>
-                  {t.label}
+                <Text style={[styles.smallChipText, applianceType === tp.val && styles.smallChipTextActive]}>
+                  {t(tp.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -420,9 +551,9 @@ export default function CatalogScreen() {
 
           <View style={styles.surfaceRow}>
             {[
-              { label: 'Pionowo (Upright)', val: 'UPRIGHT' as ApplianceTransportOrientation },
-              { label: 'Pochylenie 45°', val: 'TILTED_45_DEG' as ApplianceTransportOrientation },
-              { label: 'Na płasko (Flat)', val: 'HORIZONTAL_FLAT' as ApplianceTransportOrientation },
+              { labelKey: 'Pionowo (Upright)', val: 'UPRIGHT' as ApplianceTransportOrientation },
+              { labelKey: 'Pochylenie 45°', val: 'TILTED_45_DEG' as ApplianceTransportOrientation },
+              { labelKey: 'Na płasko (Flat)', val: 'HORIZONTAL_FLAT' as ApplianceTransportOrientation },
             ].map((o) => (
               <TouchableOpacity
                 key={o.val}
@@ -430,7 +561,7 @@ export default function CatalogScreen() {
                 onPress={() => setApplianceOrient(o.val)}
               >
                 <Text style={[styles.surfaceChipText, applianceOrient === o.val && styles.surfaceChipTextActive]}>
-                  {o.label}
+                  {t(o.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -438,11 +569,11 @@ export default function CatalogScreen() {
 
           <View style={styles.applianceAlertBox}>
             <Text style={styles.applianceHoursText}>
-              ⏱️ Wymagany czas odstania przed włączeniem: <Text style={styles.bold}>{applianceProtocol.minimumSettlingHours} godz.</Text>
+              ⏱️ {t('Wymagany czas odstania przed włączeniem:')} <Text style={styles.bold}>{applianceProtocol.minimumSettlingHours} godz.</Text>
             </Text>
             {applianceProtocol.requiresTransitBolts && (
               <Text style={styles.transitBoltAlert}>
-                🔒 Wymóg założenia blokad transportowych bębna!
+                🔒 {t('Wymóg założenia blokad transportowych bębna!')}
               </Text>
             )}
             {applianceProtocol.criticalWarnings.map((w, i) => (
@@ -451,52 +582,45 @@ export default function CatalogScreen() {
               </Text>
             ))}
           </View>
-        </View>
 
-        {/* Sekcja Edukacji: Szkoła Bezpiecznego Ładunku & Quiz (BR-EDU-001, BR-EDU-003) */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🎓 Szkoła Ładunku & Quiz Prawny (BR-EDU)</Text>
-          <Text style={styles.infoText}>
-            Normy PN-EN 12195, Kodeks Drogowy (art. 61 PoRD) oraz zasady ryglowania Form-Fit:
-          </Text>
+          {/* Poradnik Eksperta */}
           <SafetyEducationView />
         </View>
 
-        {/* Sekcja 4: Asystent Miarki & Kalibrator Ekranowy (BR-POM) */}
+        {/* Sekcja 4: Asystent Miarki & Tolerancja Pomiaru */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>📏 Asystent Miarki & Tolerancje (BR-POM)</Text>
+          <Text style={styles.cardTitle}>📏 {t('Asystent Miarki & Marginesy Niepewności (BR-POM)')}</Text>
           <Text style={styles.infoText}>
-            Wprowadź pomiar i wybierz metodę pomiaru, aby wyznaczyć wymiar konserwatywny (maxMm):
+            {t('Wprowadź zmierzony wymiar i wybierz narzędzie, aby uwzględnić margines błędu:')}
           </Text>
 
           <View style={styles.measInputRow}>
             <TextInput
-              style={[styles.input, { flex: 2 }]}
+              style={[styles.input, { flex: 1 }]}
               value={measNominalCm}
               onChangeText={setMeasNominalCm}
               keyboardType="numeric"
-              placeholder="Wymiar w cm"
-              placeholderTextColor="#64748B"
             />
             <Text style={styles.unitText}>cm</Text>
           </View>
 
-          {/* Wybór narzędzia */}
+          {/* Narzędzie pomiarowe */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.toolScroll}>
-            {[
-              { label: 'Dalmierz Laser (±0.5%)', val: 'LASER_METER' as MeasurementTool },
-              { label: 'Miarka Taśmowa (±1%)', val: 'MANUAL_TAPE' as MeasurementTool },
-              { label: 'LiDAR iPhone (±2%)', val: 'AR_LIDAR' as MeasurementTool },
-              { label: 'Aparat AR (±5%)', val: 'AR_CAMERA' as MeasurementTool },
-              { label: 'Wzrokowo (±10%)', val: 'VISUAL_ESTIMATE' as MeasurementTool },
-            ].map((tool) => (
+            {(
+              [
+                { id: 'MANUAL_TAPE', labelKey: 'Taśma zwijana (±5 mm)' },
+                { id: 'LASER_METER', labelKey: 'Dalmierz laserowy (±2 mm)' },
+                { id: 'AR_LIDAR', labelKey: 'Apple LiDAR / AR (±15 mm)' },
+                { id: 'VISUAL_ESTIMATE', labelKey: 'Na oko (±50 mm)' },
+              ] as const
+            ).map((tl) => (
               <TouchableOpacity
-                key={tool.val}
-                style={[styles.toolChip, measTool === tool.val && styles.toolChipActive]}
-                onPress={() => setMeasTool(tool.val)}
+                key={tl.id}
+                style={[styles.toolChip, measTool === tl.id && styles.toolChipActive]}
+                onPress={() => setMeasTool(tl.id)}
               >
-                <Text style={[styles.toolChipText, measTool === tool.val && styles.toolChipTextActive]}>
-                  {tool.label}
+                <Text style={[styles.toolChipText, measTool === tl.id && styles.toolChipTextActive]}>
+                  {t(tl.labelKey)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -504,31 +628,31 @@ export default function CatalogScreen() {
 
           <View style={styles.toleranceBox}>
             <Text style={styles.toleranceHeader}>
-              Przedział niepewności (±{toleranceResult.uncertaintyPercentage}%):
+              {t('Przedział niepewności (±{pct}%):', { pct: toleranceResult.uncertaintyPercentage })}
             </Text>
             <View style={styles.toleranceRow}>
               <View style={styles.tolItem}>
-                <Text style={styles.tolVal}>{(toleranceResult.minMm / 10).toFixed(1)} cm</Text>
-                <Text style={styles.tolLbl}>Minimalny</Text>
+                <Text style={styles.tolVal}>{formatDimension(toleranceResult.minMm / 10, unitSystem)}</Text>
+                <Text style={styles.tolLbl}>{t('Minimalny')}</Text>
               </View>
               <View style={styles.tolItem}>
                 <Text style={[styles.tolVal, { color: '#38BDF8' }]}>
-                  {(toleranceResult.nominalMm / 10).toFixed(1)} cm
+                  {formatDimension(toleranceResult.nominalMm / 10, unitSystem)}
                 </Text>
-                <Text style={styles.tolLbl}>Nominalny</Text>
+                <Text style={styles.tolLbl}>{t('Nominalny')}</Text>
               </View>
               <View style={styles.tolItem}>
                 <Text style={[styles.tolVal, { color: '#FBBF24' }]}>
-                  {(toleranceResult.maxMm / 10).toFixed(1)} cm
+                  {formatDimension(toleranceResult.maxMm / 10, unitSystem)}
                 </Text>
-                <Text style={styles.tolLbl}>Konserwatywny (max)</Text>
+                <Text style={styles.tolLbl}>{t('Konserwatywny (max)')}</Text>
               </View>
             </View>
           </View>
 
           {/* Wzorce kalibracyjne */}
           <Text style={[styles.cardSubtitle, { marginTop: 12 }]}>
-            💳 Standardowe Przedmioty Odniesienia (Kalibracja)
+            💳 {t('Standardowe Przedmioty Odniesienia (Kalibracja)')}
           </Text>
           <View style={styles.refObjectsList}>
             {STANDARD_REFERENCE_OBJECTS.map((obj) => (
@@ -546,7 +670,7 @@ export default function CatalogScreen() {
 
           {/* Szybki konwerter */}
           <Text style={[styles.cardSubtitle, { marginTop: 12 }]}>
-            🔄 Szybki Konwerter Jednostek
+            🔄 {t('Szybki Konwerter Jednostek')}
           </Text>
           <View style={styles.convertRow}>
             <TextInput
@@ -572,7 +696,7 @@ export default function CatalogScreen() {
                 }}
               >
                 <Text style={[styles.unitPillText, convertFrom === u && styles.unitPillTextActive]}>
-                  Z {u}
+                  {t('Z {u}', { u })}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -584,8 +708,8 @@ export default function CatalogScreen() {
 
         {/* Sekcja 5: Baza Modeli Pojazdów (Presets) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🚗 Geometria Bagażników — Baza Pojazdów (B2)</Text>
-          <Text style={styles.infoText}>Wybierz model, aby zobaczyć realne wymiary użytkowe:</Text>
+          <Text style={styles.cardTitle}>🚗 {t('Geometria Bagażników — Baza Pojazdów (B2)')}</Text>
+          <Text style={styles.infoText}>{t('Wybierz model, aby zobaczyć realne wymiary użytkowe:')}</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
             {POPULAR_VEHICLES_PRESETS.map((v) => (
@@ -622,21 +746,21 @@ export default function CatalogScreen() {
 
             <View style={styles.specsGrid}>
               <View style={styles.specItem}>
-                <Text style={styles.specLabel}>Dł. podłogi</Text>
+                <Text style={styles.specLabel}>{t('Dł. podłogi')}</Text>
                 <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.lengthFloorMm / 10, unitSystem)}</Text>
               </View>
               <View style={styles.specItem}>
-                <Text style={styles.specLabel}>Szer. min (nadkola)</Text>
+                <Text style={styles.specLabel}>{t('Szer. min (nadkola)')}</Text>
                 <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.widthMinMm / 10, unitSystem)}</Text>
               </View>
               <View style={styles.specItem}>
-                <Text style={styles.specLabel}>Otwór załadunku</Text>
+                <Text style={styles.specLabel}>{t('Otwór załadunku')}</Text>
                 <Text style={styles.specValue}>
                   {formatDimension(selectedVehicle.trunk.apertureWidthMm / 10, unitSystem)} × {formatDimension(selectedVehicle.trunk.apertureHeightMm / 10, unitSystem)}
                 </Text>
               </View>
               <View style={styles.specItem}>
-                <Text style={styles.specLabel}>Próg załadunku</Text>
+                <Text style={styles.specLabel}>{t('Próg załadunku')}</Text>
                 <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.thresholdHeightMm / 10, unitSystem)}</Text>
               </View>
             </View>
@@ -646,14 +770,28 @@ export default function CatalogScreen() {
               onPress={() => handleShareVehicleSpace(selectedVehicle)}
               accessibilityLabel="Udostępnij wymiary przestrzeni za pomocą kodu QR lub linku"
             >
-              <Text style={styles.shareSpaceBtnText}>📲 Udostępnij Przestrzeń (Wektorowy Kod QR / Link)</Text>
+              <Text style={styles.shareSpaceBtnText}>📲 {t('Udostępnij Przestrzeń (Wektorowy Kod QR / Link)')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Sekcja 6: Katalog Paczek Meblowych i Ładunków (Presets) */}
+        {/* Sekcja 6: Katalog Paczek Meblowych i Ładunków (Presets + SQLite) */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>🛋️ Katalog Mebli, Kartonów i AGD (B3)</Text>
+          <Text style={styles.cardTitle}>🛋️ {t('Katalog Mebli, Kartonów i AGD (B3)')}</Text>
+
+          {/* Przycisk dodawania własnego ładunku do SQLite */}
+          <TouchableOpacity
+            style={styles.addCustomItemBtn}
+            onPress={() => {
+              if (!access.canCreate) {
+                setIsPaywallOpen(true);
+                return;
+              }
+              setIsAddItemModalOpen(true);
+            }}
+          >
+            <Text style={styles.addCustomItemBtnText}>➕ {t('Dodaj Własny Przedmiot do SQLite')}</Text>
+          </TouchableOpacity>
 
           {/* Filtry kategorii */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
@@ -665,16 +803,16 @@ export default function CatalogScreen() {
               >
                 <Text style={[styles.filterPillText, cargoFilter === cat && styles.filterPillTextActive]}>
                   {cat === 'wszystkie'
-                    ? 'Wszystkie'
+                    ? t('Wszystkie')
                     : cat === 'karton'
-                    ? '📦 Kartony'
+                    ? `📦 ${t('Kartony')}`
                     : cat === 'walizka'
-                    ? '🧳 Walizki'
+                    ? `🧳 ${t('Walizki')}`
                     : cat === 'mebel_ikea'
-                    ? '🛋️ Meble IKEA'
+                    ? `🛋️ ${t('Meble IKEA')}`
                     : cat === 'agd'
-                    ? '⚡ AGD/RTV'
-                    : '🚲 Sport'}
+                    ? `⚡ ${t('AGD/RTV')}`
+                    : `🚲 ${t('Sport')}`}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -692,12 +830,12 @@ export default function CatalogScreen() {
                 </Text>
                 <Text style={styles.cargoDesc}>{item.description}</Text>
                 <View style={styles.badgeRow}>
-                  <Text style={styles.tagBadge}>Kategoria: {item.category}</Text>
-                  {item.isFragile && <Text style={[styles.tagBadge, styles.fragileBadge]}>KRUCHE</Text>}
+                  <Text style={styles.tagBadge}>{t('Kategoria:')} {item.category}</Text>
+                  {item.isFragile && <Text style={[styles.tagBadge, styles.fragileBadge]}>{t('KRUCHE')}</Text>}
                   {item.allowStacking ? (
-                    <Text style={[styles.tagBadge, styles.stackBadge]}>MOŻNA PIĘTROWAĆ</Text>
+                    <Text style={[styles.tagBadge, styles.stackBadge]}>{t('MOŻNA PIĘTROWAĆ')}</Text>
                   ) : (
-                    <Text style={[styles.tagBadge, styles.noStackBadge]}>NIE PIĘTROWAĆ</Text>
+                    <Text style={[styles.tagBadge, styles.noStackBadge]}>{t('NIE PIĘTROWAĆ')}</Text>
                   )}
                 </View>
               </View>
@@ -706,7 +844,106 @@ export default function CatalogScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal Udostępniania Przestrzeni przez Kod QR i Deep Link (Zadanie C4) */}
+      {/* Modal Dodawania Własnego Przedmiotu */}
+      <Modal
+        visible={isAddItemModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsAddItemModalOpen(false)}
+      >
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setIsAddItemModalOpen(false)}
+              >
+                <Text style={styles.modalCancelText}>{t('Anuluj')}</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{t('Nowy Ładunek (SQLite)')}</Text>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={handleSaveCustomCargoItem}
+              >
+                <Text style={[styles.modalCancelText, { color: '#10B981', fontWeight: '800' }]}>
+                  {t('Zapisz')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={{ padding: 16 }}>
+              <Text style={styles.label}>{t('Nazwa przedmiotu:')}</Text>
+              <TextInput
+                style={[styles.input, { textAlign: 'left', marginBottom: 12 }]}
+                value={newItemName}
+                onChangeText={setNewItemName}
+                placeholder="np. Stolik kawowy"
+                placeholderTextColor="#64748B"
+              />
+
+              <Text style={styles.label}>{t('Kategoria:')}</Text>
+              <View style={[styles.hScroll, { marginBottom: 12 }]}>
+                {(['karton', 'walizka', 'mebel_ikea', 'agd', 'sport'] as const).map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[styles.filterPill, newItemCategory === c && styles.filterPillActive]}
+                    onPress={() => setNewItemCategory(c)}
+                  >
+                    <Text style={[styles.filterPillText, newItemCategory === c && styles.filterPillTextActive]}>
+                      {c}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.label}>{t('Wymiary (Dł. × Szer. × Wys. w cm):')}</Text>
+              <View style={[styles.inputRow, { marginBottom: 12 }]}>
+                <TextInput
+                  style={styles.input}
+                  value={newItemLength}
+                  onChangeText={setNewItemLength}
+                  keyboardType="numeric"
+                  placeholder="Dł"
+                />
+                <Text style={styles.xText}>×</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newItemWidth}
+                  onChangeText={setNewItemWidth}
+                  keyboardType="numeric"
+                  placeholder="Szer"
+                />
+                <Text style={styles.xText}>×</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newItemHeight}
+                  onChangeText={setNewItemHeight}
+                  keyboardType="numeric"
+                  placeholder="Wys"
+                />
+              </View>
+
+              <Text style={styles.label}>{t('Waga (kg):')}</Text>
+              <TextInput
+                style={[styles.input, { marginBottom: 16 }]}
+                value={newItemWeight}
+                onChangeText={setNewItemWeight}
+                keyboardType="numeric"
+                placeholder="np. 10"
+              />
+
+              <TouchableOpacity
+                style={[styles.shareSpaceBtn, { backgroundColor: '#10B981' }]}
+                onPress={handleSaveCustomCargoItem}
+              >
+                <Text style={styles.shareSpaceBtnText}>💾 {t('Zapisz do Bazy SQLite')}</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Modal Udostępniania Przestrzeni przez Kod QR i Deep Link */}
       <Modal
         visible={Boolean(sharingSpace)}
         animationType="slide"
@@ -715,16 +952,15 @@ export default function CatalogScreen() {
       >
         <SafeAreaView style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            {/* Header z przyciskiem Anuluj wg Apple HIG */}
             <View style={styles.modalHeader}>
               <TouchableOpacity
                 style={styles.modalCancelBtn}
                 onPress={() => setSharingSpace(null)}
                 accessibilityLabel="Zamknij okno udostępniania"
               >
-                <Text style={styles.modalCancelText}>Anuluj</Text>
+                <Text style={styles.modalCancelText}>{t('Anuluj')}</Text>
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Udostępnij Przestrzeń</Text>
+              <Text style={styles.modalTitle}>{t('Udostępnij Przestrzeń')}</Text>
               <View style={{ width: 60 }} />
             </View>
 
@@ -754,11 +990,11 @@ export default function CatalogScreen() {
                 </View>
 
                 <Text style={styles.qrInstruction}>
-                  Zeskanuj ten kod z drugiego telefonu aparatem lub otwórz aplikacją Czy się zmieści?.
+                  {t('Zeskanuj ten kod z drugiego telefonu aparatem lub otwórz aplikacją Czy się zmieści?.')}
                 </Text>
 
                 <View style={styles.deepLinkBox}>
-                  <Text style={styles.deepLinkLabel}>Protokół Deep Link:</Text>
+                  <Text style={styles.deepLinkLabel}>{t('Protokół Deep Link:')}</Text>
                   <Text style={styles.deepLinkText} numberOfLines={2}>
                     {shareLink}
                   </Text>
@@ -777,13 +1013,19 @@ export default function CatalogScreen() {
                     }
                   }}
                 >
-                  <Text style={styles.modalShareBtnText}>📤 Udostępnij Link w Innej Aplikacji</Text>
+                  <Text style={styles.modalShareBtnText}>📤 {t('Udostępnij Link w Innej Aplikacji')}</Text>
                 </TouchableOpacity>
               </ScrollView>
             )}
           </View>
         </SafeAreaView>
       </Modal>
+
+      {/* Modal Paywalla impulsowego */}
+      <Apps4BrewPassModal
+        visible={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -810,6 +1052,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     marginTop: 2,
   },
+  readOnlyBanner: {
+    backgroundColor: '#334155',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  readOnlyBannerText: {
+    color: '#FDE68A',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   card: {
     backgroundColor: '#1E293B',
     borderRadius: 12,
@@ -834,6 +1090,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#94A3B8',
     marginBottom: 8,
+  },
+  label: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 6,
   },
   inputRow: {
     flexDirection: 'row',
@@ -1294,6 +1555,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#F8FAFC',
     marginTop: 2,
+  },
+  addCustomItemBtn: {
+    backgroundColor: '#065F46',
+    borderWidth: 1,
+    borderColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addCustomItemBtnText: {
+    color: '#ECFDF5',
+    fontWeight: '700',
+    fontSize: 13,
   },
   filterPill: {
     backgroundColor: '#0F172A',

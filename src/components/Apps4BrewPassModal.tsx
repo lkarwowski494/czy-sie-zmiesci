@@ -63,14 +63,21 @@ export function Apps4BrewPassModal({
   };
 
   const handleRestore = () => {
-    restore();
-    Alert.alert(
-      t('Przywrócono zakupy'),
-      t('Twój dostęp do Apps4Brew Studio Pass został pomyślnie zweryfikowany.')
-    );
-    if (onPurchaseSuccess) onPurchaseSuccess();
-    if (onSubscribed) onSubscribed();
-    onClose();
+    const updated = restore();
+    if (updated.isSubscribed) {
+      Alert.alert(
+        t('Przywrócono zakupy'),
+        t('Twój dostęp do Apps4Brew Studio Pass został pomyślnie zweryfikowany.')
+      );
+      if (onPurchaseSuccess) onPurchaseSuccess();
+      if (onSubscribed) onSubscribed();
+      onClose();
+    } else {
+      Alert.alert(
+        t('Brak aktywnych zakupów'),
+        t('Nie znaleziono wcześniejszych zakupów przypisanych do tego urządzenia.')
+      );
+    }
   };
 
   return (
