@@ -12,9 +12,12 @@ import { estimateRelocationVolume, ClutterLevel } from '../../src/domain/relocat
 import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator';
 import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorwayClearance';
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
+import { calculateElevatorFit } from '../../src/domain/doors-stairs/elevatorDiagonal';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
 import { StaircaseVisualizer } from '../../src/components/StaircaseVisualizer';
+import { ElevatorVisualizer } from '../../src/components/ElevatorVisualizer';
+import { ApplianceClearanceView } from '../../src/components/ApplianceClearanceView';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -93,6 +96,30 @@ export default function RelocationScreen() {
       turnAngleDeg: turnAngle,
       hasHandrailObstruction: true,
       handrailWidthMm: 80,
+    }
+  );
+
+  // Stan windy (RD-35)
+  const [elevDepth, setElevDepth] = useState('100'); // cm
+  const [elevWidth, setElevWidth] = useState('90'); // cm
+  const [elevHeight, setElevHeight] = useState('210'); // cm
+  const [elevDoorWidth, setElevDoorWidth] = useState('70'); // cm
+  const [elevItemLen, setElevItemLen] = useState('220'); // cm
+  const [elevItemWidth, setElevItemWidth] = useState('60'); // cm
+  const [elevItemHeight, setElevItemHeight] = useState('4'); // cm
+
+  const elevatorResult = calculateElevatorFit(
+    {
+      lengthMm: (parseFloat(elevItemLen) || 0) * 10,
+      widthMm: (parseFloat(elevItemWidth) || 0) * 10,
+      heightMm: (parseFloat(elevItemHeight) || 0) * 10,
+    },
+    {
+      depthMm: (parseFloat(elevDepth) || 0) * 10,
+      widthMm: (parseFloat(elevWidth) || 0) * 10,
+      heightMm: (parseFloat(elevHeight) || 0) * 10,
+      doorWidthMm: (parseFloat(elevDoorWidth) || 0) * 10,
+      doorHeightMm: 2000,
     }
   );
 
@@ -415,6 +442,141 @@ export default function RelocationScreen() {
             bottleneckDescription={stairsResult.bottleneckDescription}
           />
         </View>
+
+        {/* Sekcja 5: Winda Osobowa & Towarowa (Przekątna 3D, RD-35) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🛗 Winda Osobowa & Towarowa (Przekątna 3D, RD-35)</Text>
+          <Text style={styles.label}>Typowa kabina windy w bloku:</Text>
+          <View style={styles.quickPresetRow}>
+            {[
+              { label: '4-osobowa (Wielka płyta)', d: '100', w: '90', h: '210', door: '70' },
+              { label: '8-osobowa (Nowe bloki)', d: '140', w: '110', h: '215', door: '80' },
+              { label: 'Towarowa / Szpitalna', d: '210', w: '120', h: '220', door: '90' },
+            ].map((p) => {
+              const active = elevDepth === p.d && elevWidth === p.w;
+              return (
+                <TouchableOpacity
+                  key={p.label}
+                  style={[styles.smallChip, active && styles.smallChipActive]}
+                  onPress={() => {
+                    setElevDepth(p.d);
+                    setElevWidth(p.w);
+                    setElevHeight(p.h);
+                    setElevDoorWidth(p.door);
+                  }}
+                >
+                  <Text style={[styles.smallChipText, active && styles.smallChipTextActive]}>
+                    {p.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={styles.label}>Wymiary kabiny (Gł. × Szer. × Wys. w cm) i Drzwi (cm):</Text>
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              value={elevDepth}
+              onChangeText={setElevDepth}
+              keyboardType="numeric"
+              placeholder="Gł"
+            />
+            <Text style={styles.vsText}>×</Text>
+            <TextInput
+              style={styles.input}
+              value={elevWidth}
+              onChangeText={setElevWidth}
+              keyboardType="numeric"
+              placeholder="Szer"
+            />
+            <Text style={styles.vsText}>×</Text>
+            <TextInput
+              style={styles.input}
+              value={elevHeight}
+              onChangeText={setElevHeight}
+              keyboardType="numeric"
+              placeholder="Wys"
+            />
+            <Text style={styles.vsText}>|</Text>
+            <TextInput
+              style={[styles.input, { flex: 0.9 }]}
+              value={elevDoorWidth}
+              onChangeText={setElevDoorWidth}
+              keyboardType="numeric"
+              placeholder="Drzwi"
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: 10 }]}>Przedmiot / Blat / Materac (Dł. × Szer. × Wys. w cm):</Text>
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              value={elevItemLen}
+              onChangeText={setElevItemLen}
+              keyboardType="numeric"
+              placeholder="Długość"
+            />
+            <Text style={styles.vsText}>×</Text>
+            <TextInput
+              style={styles.input}
+              value={elevItemWidth}
+              onChangeText={setElevItemWidth}
+              keyboardType="numeric"
+              placeholder="Szerokość"
+            />
+            <Text style={styles.vsText}>×</Text>
+            <TextInput
+              style={styles.input}
+              value={elevItemHeight}
+              onChangeText={setElevItemHeight}
+              keyboardType="numeric"
+              placeholder="Grubość"
+            />
+          </View>
+
+          <View style={styles.resultBox}>
+            <Text
+              style={[
+                styles.resultHighlight,
+                elevatorResult.fitsInsideCabin ? styles.successText : styles.alertText,
+              ]}
+            >
+              {elevatorResult.fitsInsideCabin
+                ? '✅ Wjedzie windą po przekątnej przestrzennej'
+                : !elevatorResult.fitsThroughDoor
+                ? '❌ Zablokuje się w drzwiach windy!'
+                : '❌ Za długi na przekątną (wymagane wnoszenie schodami)'}
+            </Text>
+            <Text style={styles.subtext}>
+              Przekątna kabiny 3D: {Math.round(elevatorResult.spatialDiagonalMm / 10)} cm • Max długość z buforem 5 cm: {Math.round(elevatorResult.maxRigidItemLengthMm / 10)} cm
+            </Text>
+            {elevatorResult.warnings.map((w: string, i: number) => (
+              <Text key={i} style={styles.warningText}>
+                ⚠️ {w}
+              </Text>
+            ))}
+          </View>
+
+          <ElevatorVisualizer
+            cabinDepthCm={parseFloat(elevDepth) || 100}
+            cabinWidthCm={parseFloat(elevWidth) || 90}
+            cabinHeightCm={parseFloat(elevHeight) || 210}
+            doorWidthCm={parseFloat(elevDoorWidth) || 70}
+            itemLengthCm={parseFloat(elevItemLen) || 220}
+            itemWidthCm={parseFloat(elevItemWidth) || 60}
+            spatialDiagonalCm={elevatorResult.spatialDiagonalMm / 10}
+            maxRigidLengthCm={elevatorResult.maxRigidItemLengthMm / 10}
+            fitsThroughDoor={elevatorResult.fitsThroughDoor}
+            fitsInsideCabin={elevatorResult.fitsInsideCabin}
+          />
+        </View>
+
+        {/* Sekcja 6: Wymiarowanie Montażowe i Wentylacja AGD (RD-37, RD-38, RD-39, RD-51) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>❄️ Wymiarowanie Montażowe & Wentylacja AGD (RD-37…RD-51)</Text>
+          <ApplianceClearanceView />
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -607,6 +769,33 @@ const styles = StyleSheet.create({
   },
   turnBtnTextActive: {
     color: '#FFF',
+    fontWeight: '700',
+  },
+  quickPresetRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  smallChip: {
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    backgroundColor: '#0F172A',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  smallChipActive: {
+    borderColor: '#38BDF8',
+    backgroundColor: '#0369A1',
+  },
+  smallChipText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  smallChipTextActive: {
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 });

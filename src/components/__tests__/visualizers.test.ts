@@ -17,8 +17,10 @@ jest.mock('react-native', () => {
 import { NicheVisualizer } from '../NicheVisualizer';
 import { DoorwayVisualizer } from '../DoorwayVisualizer';
 import { StaircaseVisualizer } from '../StaircaseVisualizer';
+import { ElevatorVisualizer } from '../ElevatorVisualizer';
 import { SafetyEducationView } from '../SafetyEducationView';
 import { MultiCheckerMatrixView } from '../MultiCheckerMatrixView';
+import { ApplianceClearanceView } from '../ApplianceClearanceView';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -162,6 +164,59 @@ describe('2D Visualizers Component Contracts', () => {
     });
   });
 
+  describe('ElevatorVisualizer', () => {
+    it('renders fitting state when item fits in cabin along 3D diagonal', () => {
+      const element = ElevatorVisualizer({
+        cabinDepthCm: 140,
+        cabinWidthCm: 110,
+        cabinHeightCm: 215,
+        doorWidthCm: 80,
+        itemLengthCm: 230,
+        itemWidthCm: 60,
+        spatialDiagonalCm: 279,
+        maxRigidLengthCm: 274,
+        fitsThroughDoor: true,
+        fitsInsideCabin: true,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders alert when item is blocked by elevator door width', () => {
+      const element = ElevatorVisualizer({
+        cabinDepthCm: 100,
+        cabinWidthCm: 90,
+        cabinHeightCm: 210,
+        doorWidthCm: 70,
+        itemLengthCm: 200,
+        itemWidthCm: 85,
+        spatialDiagonalCm: 249,
+        maxRigidLengthCm: 244,
+        fitsThroughDoor: false,
+        fitsInsideCabin: false,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders alert when item exceeds spatial 3D diagonal', () => {
+      const element = ElevatorVisualizer({
+        cabinDepthCm: 100,
+        cabinWidthCm: 90,
+        cabinHeightCm: 210,
+        doorWidthCm: 70,
+        itemLengthCm: 280,
+        itemWidthCm: 50,
+        spatialDiagonalCm: 249,
+        maxRigidLengthCm: 244,
+        fitsThroughDoor: true,
+        fitsInsideCabin: false,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
   describe('Interactive Views Structure', () => {
     it('instantiates SafetyEducationView without errors', () => {
       const element = React.createElement(SafetyEducationView);
@@ -170,6 +225,11 @@ describe('2D Visualizers Component Contracts', () => {
 
     it('instantiates MultiCheckerMatrixView without errors', () => {
       const element = React.createElement(MultiCheckerMatrixView);
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('instantiates ApplianceClearanceView without errors', () => {
+      const element = React.createElement(ApplianceClearanceView);
       expect(React.isValidElement(element)).toBe(true);
     });
   });
