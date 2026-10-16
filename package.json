@@ -20,8 +20,7 @@
     "check:i18n": "node scripts/check-i18n.mjs",
     "test:coverage": "jest --coverage",
     "verify": "npm run check:i18n && npm run typecheck && npm run test:coverage",
-    "build:ios": "eas-cli build --platform ios --profile production",
-    "deploy:testflight": "eas-cli build --platform ios --profile production --auto-submit"
+    "prebuild:ios": "expo prebuild --platform ios --clean"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
