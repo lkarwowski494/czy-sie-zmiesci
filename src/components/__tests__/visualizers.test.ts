@@ -23,6 +23,7 @@ import { MultiCheckerMatrixView } from '../MultiCheckerMatrixView';
 import { ApplianceClearanceView } from '../ApplianceClearanceView';
 import { ScreenRuler } from '../ScreenRuler';
 import { GarageVisualizer } from '../GarageVisualizer';
+import { TowbarVisualizer } from '../TowbarVisualizer';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -263,6 +264,56 @@ describe('2D Visualizers Component Contracts', () => {
         canEnterFoldedMirrors: false,
         willTailgateHitCeiling: true,
         entryMarginOpenMirrorsCm: -28,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('TowbarVisualizer', () => {
+    it('renders normal load state (under 85%)', () => {
+      const element = TowbarVisualizer({
+        totalLoadKg: 50,
+        limitKg: 75,
+        isOverloaded: false,
+        remainingCapacityKg: 25,
+        overloadKg: 0,
+        eBikesCount: 1,
+        batterySavingsPotentialKg: 3.5,
+        loadWithBatteriesRemovedKg: 46.5,
+        canBeResolvedByRemovingBatteries: false,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders near limit warning state (85% to 100%)', () => {
+      const element = TowbarVisualizer({
+        totalLoadKg: 70,
+        limitKg: 75,
+        isOverloaded: false,
+        remainingCapacityKg: 5,
+        overloadKg: 0,
+        eBikesCount: 2,
+        batterySavingsPotentialKg: 7.0,
+        loadWithBatteriesRemovedKg: 63.0,
+        canBeResolvedByRemovingBatteries: false,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders overloaded state with e-bike battery removal rescue banner', () => {
+      const element = TowbarVisualizer({
+        totalLoadKg: 80,
+        limitKg: 75,
+        isOverloaded: true,
+        remainingCapacityKg: 0,
+        overloadKg: 5,
+        eBikesCount: 2,
+        batterySavingsPotentialKg: 7.0,
+        loadWithBatteriesRemovedKg: 73.0,
+        canBeResolvedByRemovingBatteries: true,
       });
 
       expect(React.isValidElement(element)).toBe(true);

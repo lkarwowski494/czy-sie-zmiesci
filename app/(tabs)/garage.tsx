@@ -11,6 +11,7 @@ import {
 import { evaluateGarageFit, evaluateRoofSetupHeight } from '../../src/domain/garage/garageClearance';
 import { evaluateTowbarLoad, Bicycle } from '../../src/domain/garage/towbarPhysics';
 import { GarageVisualizer } from '../../src/components/GarageVisualizer';
+import { TowbarVisualizer } from '../../src/components/TowbarVisualizer';
 
 export default function GarageScreen() {
   // Garaż: wymiary pojazdu i bramy
@@ -448,6 +449,19 @@ export default function GarageScreen() {
               </Text>
             ))}
           </View>
+
+          {/* Wskaźnik obciążenia haka i ratunek dla e-bike */}
+          <TowbarVisualizer
+            totalLoadKg={towbarFit.totalVerticalLoadKg}
+            limitKg={parseFloat(hookLimit) || 75}
+            isOverloaded={towbarFit.isOverloaded}
+            remainingCapacityKg={towbarFit.remainingCapacityKg}
+            overloadKg={towbarFit.overloadKg}
+            eBikesCount={towbarFit.eBikesCount}
+            batterySavingsPotentialKg={towbarFit.batterySavingsPotentialKg}
+            loadWithBatteriesRemovedKg={towbarFit.loadWithBatteriesRemovedKg}
+            canBeResolvedByRemovingBatteries={towbarFit.canBeResolvedByRemovingBatteries}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

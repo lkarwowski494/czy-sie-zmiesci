@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-206_passed_(32_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-217_passed_(32_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 32 zestawów testów (206 testów, 100% domain coverage)
+# Uruchomienie wszystkich 32 zestawów testów (217 testów, 100% domain coverage)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
@@ -211,6 +211,11 @@ czy-sie-zmiesci/
 │   │   ├── NicheVisualizer.tsx     # Rzut wnęki ściennej z listwami i dylatacjami montażowymi
 │   │   ├── DoorwayVisualizer.tsx   # Rzut ościeżnicy z klamką (-6cm) i grubością skrzydła
 │   │   ├── StaircaseVisualizer.tsx # Rzut spocznika schodów (L-turn 90° i U-turn 180°) i obrót bryły
+│   │   ├── ElevatorVisualizer.tsx  # Rzut 3D przekątnej windy dla długich elementów
+│   │   ├── ApplianceClearanceView.tsx # Kalkulator luzów wentylacyjnych lodówki i hydrauliki pralki
+│   │   ├── ScreenRuler.tsx         # Fizyczna miarka ekranowa 1:1 z kalibracją PPI
+│   │   ├── GarageVisualizer.tsx    # Rzut wjazdu do garażu z obrysem lusterek i klapy bagażnika
+│   │   ├── TowbarVisualizer.tsx    # Wskaźnik nacisku pionowego haka (S) z alertem demontażu baterii e-bike
 │   │   ├── SafetyEducationView.tsx # Karty wiedzy i interaktywny quiz prawny z wyjaśnieniami
 │   │   ├── MultiCheckerMatrixView.tsx # Jednoczesna macierz 4 sieci automatów i 10 linii lotniczych
 │   │   └── IsometricPackView.tsx   # Projekcja aksonometryczna 2.5D załadunku bagażnika
