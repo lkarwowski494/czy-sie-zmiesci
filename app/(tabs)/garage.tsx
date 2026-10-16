@@ -10,10 +10,16 @@ import {
 } from 'react-native';
 import { evaluateGarageFit, evaluateRoofSetupHeight } from '../../src/domain/garage/garageClearance';
 import { evaluateTowbarLoad, Bicycle } from '../../src/domain/garage/towbarPhysics';
-import { calculateRoofRackLoad, validateCargoOverhang } from '../../src/domain/garage/roofAndOverhang';
+import {
+  calculateRoofRackLoad,
+  validateCargoOverhang,
+  evaluateFalseFloorLoad,
+} from '../../src/domain/garage/roofAndOverhang';
+import { evaluateDogKennelFit } from '../../src/domain/garage/dogKennel';
 import { GarageVisualizer } from '../../src/components/GarageVisualizer';
 import { TowbarVisualizer } from '../../src/components/TowbarVisualizer';
 import { RoofRackVisualizer } from '../../src/components/RoofRackVisualizer';
+import { DogKennelVisualizer } from '../../src/components/DogKennelVisualizer';
 
 export default function GarageScreen() {
   // Garaż: wymiary pojazdu i bramy
@@ -41,6 +47,17 @@ export default function GarageScreen() {
   const [rackWeight, setRackWeight] = useState('18'); // kg
   const [bikeCount, setBikeCount] = useState<number>(2);
   const [isEBike, setIsEBike] = useState<boolean>(true);
+
+  // Klatka kennelowa dla psa (RD-46, Z-184)
+  const [kennelWidthCm, setKennelWidthCm] = useState('65');
+  const [kennelDepthBottomCm, setKennelDepthBottomCm] = useState('85');
+  const [kennelDepthTopCm, setKennelDepthTopCm] = useState('50');
+  const [kennelHeightCm, setKennelHeightCm] = useState('65');
+  const [windowSlopeDeg, setWindowSlopeDeg] = useState('35');
+
+  // Podwójna podłoga bagażnika (RD-47, Z-185)
+  const [hasFalseFloor, setHasFalseFloor] = useState(true);
+  const [pointLoadKg, setPointLoadKg] = useState('80');
 
   const handleSelectCarPreset = (preset: 'octavia' | 'passat' | 'rav4' | 'duster') => {
     switch (preset) {
@@ -149,6 +166,39 @@ export default function GarageScreen() {
     towbarSLimitKg: parseInt(hookLimit, 10),
     rackWeightKg: parseFloat(rackWeight) || 15,
     maxBikesCapacity: 4,
+  });
+
+  // Kalkulacja klatki kennelowej (RD-46, Z-184)
+  const parsedKennelWidth = Math.max(10, (parseFloat(kennelWidthCm) || 65) * 10);
+  const parsedKennelDepthBottom = Math.max(10, (parseFloat(kennelDepthBottomCm) || 85) * 10);
+  const parsedKennelDepthTop = Math.min(
+    parsedKennelDepthBottom,
+    Math.max(10, (parseFloat(kennelDepthTopCm) || 50) * 10)
+  );
+  const parsedKennelHeight = Math.max(10, (parseFloat(kennelHeightCm) || 65) * 10);
+  const parsedWindowSlope = Math.min(85, Math.max(5, parseFloat(windowSlopeDeg) || 35));
+
+  const dogKennelFit = evaluateDogKennelFit(
+    {
+      widthMm: parsedKennelWidth,
+      depthBottomMm: parsedKennelDepthBottom,
+      depthTopMm: parsedKennelDepthTop,
+      heightMm: parsedKennelHeight,
+    },
+    {
+      lengthFloorMm: 1000,
+      widthMinMm: 1000,
+      heightApertureMm: 750,
+      heightAtSeatBackMm: 800,
+      windowSlopeAngleDeg: parsedWindowSlope,
+    }
+  );
+
+  // Kalkulacja nacisku punktowego na podłogę (RD-47, Z-185)
+  const falseFloorFit = evaluateFalseFloorLoad({
+    hasModularFalseFloor: hasFalseFloor,
+    cargoWeightKg: Math.max(0, parseFloat(pointLoadKg) || 0),
+    isPointLoadConcentrated: true,
   });
 
   return (
@@ -562,6 +612,142 @@ export default function GarageScreen() {
             canBeResolvedByRemovingBatteries={towbarFit.canBeResolvedByRemovingBatteries}
           />
         </View>
+
+        {/* Sekcja 4: Klatka kennelowa dla psa (RD-46, Z-184) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🐕 Klatka Kennelowa a Skos Szyby Bagażnika (RD-46)</Text>
+          <Text style={styles.label}>
+            Wymiary klatki (Dół × Góra × Wys. w cm) vs Kąt szyby klapy:
+          </Text>
+
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.subLabel}>Dno (cm):</Text>
+              <TextInput
+                style={styles.input}
+                value={kennelDepthBottomCm}
+                onChangeText={setKennelDepthBottomCm}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.subLabel}>Dach (cm):</Text>
+              <TextInput
+                style={styles.input}
+                value={kennelDepthTopCm}
+                onChangeText={setKennelDepthTopCm}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.subLabel}>Wys. (cm):</Text>
+              <TextInput
+                style={styles.input}
+                value={kennelHeightCm}
+                onChangeText={setKennelHeightCm}
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.subLabel}>Szyba (°):</Text>
+              <TextInput
+                style={styles.input}
+                value={windowSlopeDeg}
+                onChangeText={setWindowSlopeDeg}
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+
+          <DogKennelVisualizer
+            kennelDepthBottomCm={parsedKennelDepthBottom / 10}
+            kennelDepthTopCm={parsedKennelDepthTop / 10}
+            kennelHeightCm={parsedKennelHeight / 10}
+            trunkFloorLengthCm={100}
+            windowSlopeAngleDeg={parsedWindowSlope}
+            rearBevelAngleDeg={dogKennelFit.rearBevelAngleDeg}
+            fitsInTrunk={dogKennelFit.fitsInTrunk}
+            fitsWindowSlope={dogKennelFit.fitsWindowSlope}
+            windowClearanceAtTopRearMm={dogKennelFit.windowClearanceAtTopRearMm}
+          />
+        </View>
+
+        {/* Sekcja 5: Ochrona podwójnej podłogi bagażnika (RD-47, Z-185) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🛡️ Nośność Podwójnej Podłogi Bagażnika (RD-47)</Text>
+          <Text style={styles.label}>
+            Ochrona modułowych szyn i półki przed załamaniem przy transporcie materiałów (cement, glazura):
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.toggleBtn, hasFalseFloor && styles.toggleBtnActive]}
+            onPress={() => setHasFalseFloor(!hasFalseFloor)}
+          >
+            <Text style={styles.toggleBtnText}>
+              {hasFalseFloor
+                ? '📦 Auto posiada podwójną / podwyższoną podłogę bagażnika (limit ~120 kg)'
+                : '🚙 Zwykła stalowa podłoga fabryczna (pełna nośność bagażnika)'}
+            </Text>
+          </TouchableOpacity>
+
+          {hasFalseFloor && (
+            <View style={[styles.row, { marginTop: 10 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subLabel}>Ciężar skupiony ładunku (kg):</Text>
+                <TextInput
+                  style={styles.input}
+                  value={pointLoadKg}
+                  onChangeText={setPointLoadKg}
+                  keyboardType="numeric"
+                  placeholder="np. 150 kg cementu"
+                />
+              </View>
+            </View>
+          )}
+
+          <View
+            style={[
+              styles.resultBox,
+              {
+                backgroundColor:
+                  falseFloorFit.warningRisk === 'CRITICAL_COLLAPSE'
+                    ? 'rgba(239, 68, 68, 0.2)'
+                    : falseFloorFit.warningRisk === 'MODERATE'
+                    ? 'rgba(245, 158, 11, 0.2)'
+                    : 'rgba(16, 185, 129, 0.2)',
+                borderColor:
+                  falseFloorFit.warningRisk === 'CRITICAL_COLLAPSE'
+                    ? '#EF4444'
+                    : falseFloorFit.warningRisk === 'MODERATE'
+                    ? '#F59E0B'
+                    : '#10B981',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusTitle,
+                {
+                  color:
+                    falseFloorFit.warningRisk === 'CRITICAL_COLLAPSE'
+                      ? '#EF4444'
+                      : falseFloorFit.warningRisk === 'MODERATE'
+                      ? '#F59E0B'
+                      : '#10B981',
+                },
+              ]}
+            >
+              {falseFloorFit.warningRisk === 'CRITICAL_COLLAPSE'
+                ? '⛔ RYZYKO ZAŁAMANIA PÓŁKI!'
+                : falseFloorFit.warningRisk === 'MODERATE'
+                ? '⚠️ UWAGA NA NACISK PUNKTOWY'
+                : '✅ OBCIĄŻENIE BEZPIECZNE'}
+            </Text>
+            <Text style={[styles.dimSubtext, { marginTop: 4, color: '#E2E8F0' }]}>
+              {falseFloorFit.advice}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -645,6 +831,11 @@ const styles = StyleSheet.create({
   statusValue: {
     fontSize: 13,
     fontWeight: '800',
+  },
+  statusTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
   },
   dimSubtext: {
     fontSize: 11,

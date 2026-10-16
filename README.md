@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-255_passed_(34_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-272_passed_(36_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -29,11 +29,33 @@ Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4B
 
 ---
 
-## 📱 Moduły i Ekrany (Kompletny Pakiet 12 Obszarów)
+## 📱 Moduły i Ekrany — Status Wdrożenia BRD (Kompletny Pakiet 12 Obszarów)
+
+Poniższa macierz przedstawia bieżący status implementacji wszystkich modułów i ekranów zgodnie ze specyfikacją wymagań biznesowych (BRD 0.1, Z-001…Z-190, RD-01…RD-55):
+
+| # | Moduł / Ekran | Wymagania BRD | Status | Pokrycie Testami | Kluczowe Komponenty i Wizualizery |
+|---|---|---|---|:---:|---|
+| 1 | **📦 Symulator Pakowania 3D** (`index.tsx`) | Z-001…006, Z-081…100, RD-01…08 | **WDROŻONE** ✅ | 100% | `TrunkVisualizer`, Extreme Points 3D Solver, VDA, CoG, DMC |
+| 2 | **🚗 Baza Pojazdów i Przestrzeni** (`catalog.tsx`) | Z-010…030, RD-10…16 | **WDROŻONE** ✅ | 100% | 350+ aut, SQLite WAL, kreator boxa, VDA ISO 3832 |
+| 3 | **🛋️ Katalog Mebli, AGD i Walizek** (`catalog.tsx`) | Z-041…060, RD-25…32 | **WDROŻONE** ✅ | 100% | IKEA PAX, BILLY, MALM, kartony S/M/L/XL, ochrona orientacji |
+| 4 | **📬 Paczkomaty i Linie Lotnicze** (`catalog.tsx`) | Z-023…025, RD-09 | **WDROŻONE** ✅ | 100% | `MultiCheckerMatrixView`: InPost A/B/C, Orlen, DPD, 10 linii lotniczych |
+| 5 | **🎓 Szkoła Ładunku i Fizyka Zderzeń** (`catalog.tsx`) | BR-EDU-001…003, RD-17 | **WDROŻONE** ✅ | 100% | `SafetyEducationView`: 7 kart wiedzy, Euro NCAP 25g, Quiz art. 61 PoRD |
+| 6 | **📏 Miarka Ekranowa i Pomiary** (`catalog.tsx`) | BR-POM-001…003 | **WDROŻONE** ✅ | 100% | `ScreenRuler`: kalibracja fizyczna 1:1 przez PPI ekranu i monety/karty |
+| 7 | **🚚 Planer Przeprowadzek i Flota** (`relocation.tsx`) | Z-161…165, RD-49, RD-59 | **WDROŻONE** ✅ | 100% | Estymator $m^2 \to m^3$, dobór vana L1H1…L4H3 + kontener, 4 fazy załadunku |
+| 8 | **🚪 Przejścia, Schody i Winda** (`relocation.tsx`) | Z-167…169, RD-33…35, RD-55 | **WDROŻONE** ✅ | 100% | `DoorwayVisualizer` (klamka -6cm), `StaircaseVisualizer` (Moving Sofa 3D), `ElevatorVisualizer` |
+| 9 | **📐 Wnęki Ścienne, AGD i Skosy** (`relocation.tsx`) | Z-170…176, RD-36…38, RD-48 | **WDROŻONE** ✅ | 100% | `NicheVisualizer` (listwy -4cm), `ApplianceClearanceView`, `AtticSlopeVisualizer` (RD-48) |
+| 10 | **🏢 Garaże i Skrajnie Wjazdowe** (`garage.tsx`) | Z-178…181, RD-39…43 | **WDROŻONE** ✅ | 100% | `GarageVisualizer` (lusterka rozłożone/złożone, strefa 65cm, klapa SUV-a, znaki B-16) |
+| 11 | **🚲 Hak Holowniczy, Belki i Zwisy** (`garage.tsx`) | Z-182…183, Z-187, RD-44, 45, 52 | **WDROŻONE** ✅ | 100% | `TowbarVisualizer` (nacisk S, e-bike), `RoofRackVisualizer` (nośność dachu, zwisy art. 61 PoRD) |
+| 12 | **⌚ Apple Watch & Kopia SQLite** (`settings.tsx`) | Z-121…123, Z-131…135 | **WDROŻONE** ✅ | 100% | `WatchSyncService`, haptyka, eksport/import JSON za 0 zł, StoreKit 2 simulator |
+
+---
+
+### 📋 Szczegółowy Zakres Modułów i Funkcji
 
 1. **📦 Kalkulator i Symulator Pakowania 3D (`PackSimulatorScreen`):**
    - Przestrzenna wizualizacja załadunku w czasie rzeczywistym z orbitą kamery (360°), zoomem i przekrojami rentgenowskimi (*X-Ray*).
    - Generowanie optymalnej kolejności wkładania paczek z kolorystycznym kodowaniem stabilności (zielony = stabilny, żółty = wolnostojący, czerwony = ryzyko zsunięcia/kolizja).
+   - Dynamiczny bilans DMC (Dopuszczalna Masa Całkowita) z odliczeniem wagi pasażerów oraz wyznaczaniem środka ciężkości (CoG) i symetrii poprzecznej.
 2. **🚗 Baza Pojazdów i Kreator Przestrzeni (`VehicleSelectorScreen`):**
    - Ponad 350 modeli aut z precyzyjną geometrią (długość podłogi, szerokość między nadkolami, skos szyby, próg).
    - Własny kreator przestrzeni: box dachowy, bagażnik rowerowy, przyczepka towarowa, winda, paka busa dostawczego.
@@ -51,7 +73,7 @@ Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4B
 6. **📐 Wnęki Ścienne, Skosy i Ergonomia Mebli (`RoomFittingScreen`):**
    - Kreator wnęki z automatycznym odliczeniem listew przypodłogowych ($-4\,\text{cm}$ przy posadzce) i detekcją kolizji z grzejnikami/parapetami.
    - Sprawdzanie stref funkcjonalnych mebli: promień otwarcia drzwi szafy uchylnej (70 cm), wysuw szuflad łóżka/komody (90 cm ze stojącym człowiekiem), odległość krzesła od stołu (75 cm / 100 cm).
-   - Modelowanie skosów poddasza z wyznaczaniem linii wysokości stojącej 190 cm i użytkowej 140 cm.
+   - Modelowanie skosów poddasza z wyznaczaniem linii wysokości stojącej 190 cm i użytkowej 140 cm (`AtticSlopeVisualizer`).
 7. **❄️ Wymiarowanie Montażowe i Wentylacja AGD (`ApplianceClearanceScreen`):**
    - Sprawdzanie dylatacji wentylacyjnej lodówek wolnostojących (min. 5 cm z tyłu na odprowadzenie ciepła skraplacza).
    - Weryfikacja kąta otwarcia drzwi chłodziarki przy ścianie (wymóg min. $115^\circ$ na wysunięcie szuflad zamrażalnika).
@@ -73,6 +95,15 @@ Aplikacja mobilna na systemy **iOS 18+** oraz **watchOS 11+** z rodziny **Apps4B
 12. **🎓 Szkoła Pakowania & Asystent Apple Watch (`PackingSchoolScreen`):**
     - Baza wiedzy o mocowaniu pasami, dociążaniu osi, przewozie zwierząt (klatki kennelowe dopasowane do szyby) i procedurach BHP wnoszenia.
     - Interaktywny asystent watchOS 11 z odhaczaniem kolejności pakowania ruchem nadgarstka i Cyfrową Koronką.
+
+---
+
+### 🚀 Kolejka Wdrożeniowa Pozostałych Funkcji Specjalistycznych
+
+1. **🐕 Klatki kennelowe dla psów a skos szyby bagażnika (RD-46, Z-184)**: Modelowanie klatek aluminiowych ze skośnymi ścianami przednimi i tylnymi ($15^\circ–40^\circ$) pod kątem domknięcia klapy bagażnika.
+2. **📦 Boks Self-Storage ze ścieżką inspekcyjną 50 cm & Porównanie Kombi vs Van (RD-50, Z-164, Z-166)**: Interaktywny rzut 2D boksu z wyznaczonym korytarzem oraz kalkulator oszczędności paliwa i czasu.
+3. **🛡️ Ochrona podwójnej podłogi bagażnika przy materiałach budowlanych (RD-47, Z-185)**: Interaktywne ostrzeżenie przed przeciążeniem punktowym (>120 kg) z zaleceniem zdjęcia płyty podłogowej.
+4. **📄 Eksport planu załadunku i manifestu przeprowadzki (Z-128, Z-130, Z-186)**: Generowanie manifestu z podziałem na pokoje i gotowość do wydruku/udostępnienia.
 
 ---
 
@@ -159,7 +190,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 34 zestawów testów (255 testów, 100% domain coverage)
+# Uruchomienie wszystkich 36 zestawów testów (272 testy, 100% domain coverage)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
@@ -201,8 +232,8 @@ czy-sie-zmiesci/
 │   │   ├── geometry/               # Algorytmy 3D BPP: punkty ekstremalne, gilotyna, rzuty skosów
 │   │   ├── doors-stairs/           # Kinematyka wnoszenia (Moving Sofa 3D), ościeżnice z klamkami, windy
 │   │   ├── room-fitting/           # Wnęki ścienne, dylatacje listew, luzy AGD, skosy poddasza, ergonomia
-│   │   ├── relocation/             # Inwentaryzacja lokalu, estymacja kubatury m3, flota dostawcza
-│   │   ├── garage/                 # Skrajnie bram, strefa wysiadania min. 65 cm, haki S, boxy dachowe, zwisy PoRD
+│   │   ├── relocation/             # Inwentaryzacja lokalu, estymacja kubatury m3, flota dostawcza, koszty van vs osobówka
+│   │   ├── garage/                 # Skrajnie bram, klatka psa (RD-46), podwójna podłoga (RD-47), haki S, boxy dachowe, zwisy PoRD
 │   │   ├── physics/                # Rozkład masy, środek ciężkości (CoG), limity DMC, fizyka Euro NCAP 25g
 │   │   ├── standards/              # Sizer skrytek (InPost, Orlen, DPD, Pocztex) i 10 linii lotniczych, VDA
 │   │   ├── measuring/              # Asystent miarki, tolerancje konserwatywne Lmax, kalibracja PPI ekranu
@@ -213,11 +244,13 @@ czy-sie-zmiesci/
 │   │   ├── StaircaseVisualizer.tsx # Rzut spocznika schodów (L-turn 90° i U-turn 180°) i obrót bryły
 │   │   ├── ElevatorVisualizer.tsx  # Rzut 3D przekątnej windy dla długich elementów
 │   │   ├── AtticSlopeVisualizer.tsx # Rzut 2D skosu poddasza ze ścianką kolankową i wysokością stojącą
+│   │   ├── SelfStorageVisualizer.tsx # Rzut boksu self-storage z korytarzem inspekcyjnym 50 cm
 │   │   ├── ApplianceClearanceView.tsx # Kalkulator luzów wentylacyjnych lodówki i hydrauliki pralki
 │   │   ├── ScreenRuler.tsx         # Fizyczna miarka ekranowa 1:1 z kalibracją PPI
 │   │   ├── GarageVisualizer.tsx    # Rzut wjazdu do garażu z obrysem lusterek i klapy bagażnika
 │   │   ├── TowbarVisualizer.tsx    # Wskaźnik nacisku pionowego haka (S) z alertem demontażu baterii e-bike
 │   │   ├── RoofRackVisualizer.tsx  # Wskaźnik nośności dachu i weryfikator zwisów ładunku (art. 61 PoRD)
+│   │   ├── DogKennelVisualizer.tsx # Weryfikacja klatki kennelowej i kolizji z szybą klapy bagażnika
 │   │   ├── SafetyEducationView.tsx # Karty wiedzy i interaktywny quiz prawny z wyjaśnieniami
 │   │   ├── MultiCheckerMatrixView.tsx # Jednoczesna macierz 4 sieci automatów i 10 linii lotniczych
 │   │   └── IsometricPackView.tsx   # Projekcja aksonometryczna 2.5D załadunku bagażnika

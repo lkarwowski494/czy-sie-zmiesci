@@ -13,13 +13,19 @@ import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator'
 import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorwayClearance';
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
 import { calculateElevatorFit } from '../../src/domain/doors-stairs/elevatorDiagonal';
-import { analyzeAtticSlope, evaluateFurnitureUnderSlope } from '../../src/domain/room-fitting/atticAndErgonomics';
+import {
+  calculateSelfStorageCapacity,
+  analyzeAtticSlope,
+  evaluateFurnitureUnderSlope,
+} from '../../src/domain/room-fitting/atticAndErgonomics';
+import { compareCarVsVanRelocation } from '../../src/domain/relocation/vanVsCarEconomics';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
 import { StaircaseVisualizer } from '../../src/components/StaircaseVisualizer';
 import { ElevatorVisualizer } from '../../src/components/ElevatorVisualizer';
 import { ApplianceClearanceView } from '../../src/components/ApplianceClearanceView';
 import { AtticSlopeVisualizer } from '../../src/components/AtticSlopeVisualizer';
+import { SelfStorageVisualizer } from '../../src/components/SelfStorageVisualizer';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -53,6 +59,15 @@ export default function RelocationScreen() {
   const [atticFurnDepthCm, setAtticFurnDepthCm] = useState('60');
   const [atticFurnHeightCm, setAtticFurnHeightCm] = useState('140');
   const [atticFurnDistCm, setAtticFurnDistCm] = useState('50');
+
+  // Porównanie osobówka vs van (Z-164)
+  const [distanceKm, setDistanceKm] = useState('25');
+  const [vanRentalFee, setVanRentalFee] = useState('180');
+
+  // Boks self-storage (RD-50, Z-166)
+  const [storageLenM, setStorageLenM] = useState('3.0');
+  const [storageWidthM, setStorageWidthM] = useState('2.0');
+  const [hasStorageCorridor, setHasStorageCorridor] = useState(true);
 
   const relocResult = estimateRelocationVolume({
     floorAreaM2: parseFloat(areaM2) || 0,
@@ -156,6 +171,24 @@ export default function RelocationScreen() {
     parsedAtticFurnDistMm
   );
 
+  // Porównanie ekonomiczne: osobówka vs van (Z-164)
+  const tripComparison = compareCarVsVanRelocation({
+    totalVolumeM3: Math.max(0.5, relocResult.estimatedVolumeM3),
+    distanceOneWayKm: Math.max(1, parseFloat(distanceKm) || 25),
+    vanDailyRentalFeePln: Math.max(50, parseFloat(vanRentalFee) || 180),
+  });
+
+  // Boks self-storage (RD-50, Z-166)
+  const parsedStorageLen = Math.max(0.5, parseFloat(storageLenM) || 3.0);
+  const parsedStorageWidth = Math.max(0.5, parseFloat(storageWidthM) || 2.0);
+  const selfStorageResult = calculateSelfStorageCapacity({
+    lengthM: parsedStorageLen,
+    widthM: parsedStorageWidth,
+    heightM: 2.5,
+    hasInspectionCorridor: hasStorageCorridor,
+    corridorWidthM: 0.50,
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -240,6 +273,111 @@ export default function RelocationScreen() {
               <Text style={styles.manifestPhaseHighlight}>4. Karton „Pierwsza Noc” (Przy drzwiach kontenera / Wyjmowany jako 1.)</Text>
             </View>
           )}
+
+          {/* Rachunek Ekonomiczny: Osobówka vs Van (Z-164) */}
+          <View style={[styles.resultBox, { marginTop: 12, backgroundColor: '#0F172A' }]}>
+            <Text style={[styles.cardTitle, { fontSize: 14, color: '#38BDF8', marginBottom: 8 }]}>
+              💰 Porównanie: Osobówka vs Wynajem Busa (Z-164)
+            </Text>
+
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Odległość w 1 stronę (km):</Text>
+                <TextInput
+                  style={styles.input}
+                  value={distanceKm}
+                  onChangeText={setDistanceKm}
+                  keyboardType="numeric"
+                  placeholder="25"
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.label}>Koszt vana (zł/doba):</Text>
+                <TextInput
+                  style={styles.input}
+                  value={vanRentalFee}
+                  onChangeText={setVanRentalFee}
+                  keyboardType="numeric"
+                  placeholder="180"
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Kombi ({tripComparison.carTripsCount} kursy):</Text>
+                <Text style={[styles.resultHighlight, { fontSize: 15, color: '#F8FAFC' }]}>
+                  {tripComparison.carTotalCostPln} zł • {tripComparison.carTotalTimeHours}h
+                </Text>
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.label}>Bus van ({tripComparison.vanTripsCount} kurs):</Text>
+                <Text style={[styles.resultHighlight, { fontSize: 15, color: '#34D399' }]}>
+                  {tripComparison.vanTotalCostPln} zł • {tripComparison.vanTotalTimeHours}h
+                </Text>
+              </View>
+            </View>
+
+            <Text style={[styles.subtext, { fontWeight: '700', color: tripComparison.isVanRecommended ? '#34D399' : '#F59E0B' }]}>
+              {tripComparison.economicVerdict}
+            </Text>
+            <Text style={[styles.subtext, { marginTop: 2, color: '#94A3B8' }]}>
+              💡 {tripComparison.recommendation}
+            </Text>
+          </View>
+        </View>
+
+        {/* Sekcja 1b: Boks Self-Storage z Korytarzem 50 cm (RD-50, Z-166) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📦 Boks Self-Storage & Ścieżka Inspekcyjna (RD-50)</Text>
+          <Text style={styles.label}>
+            Wymiary boksu magazynowego (Długość × Szerokość w metrach):
+          </Text>
+
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Długość (m):</Text>
+              <TextInput
+                style={styles.input}
+                value={storageLenM}
+                onChangeText={setStorageLenM}
+                keyboardType="numeric"
+                placeholder="3.0"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.label}>Szerokość (m):</Text>
+              <TextInput
+                style={styles.input}
+                value={storageWidthM}
+                onChangeText={setStorageWidthM}
+                keyboardType="numeric"
+                placeholder="2.0"
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.manifestToggleBtn, hasStorageCorridor && { borderColor: '#F59E0B' }]}
+            onPress={() => setHasStorageCorridor(!hasStorageCorridor)}
+          >
+            <Text style={[styles.manifestToggleText, hasStorageCorridor && { color: '#FCD34D' }]}>
+              {hasStorageCorridor
+                ? '🚶 Korytarz inspekcyjny 50 cm: AKTYWNY (Łatwy dostęp do kartonów)'
+                : '📦 Bez korytarza: Zapełnienie 100% (Ryzyko braku dostępu)'}
+            </Text>
+          </TouchableOpacity>
+
+          <SelfStorageVisualizer
+            lengthM={parsedStorageLen}
+            widthM={parsedStorageWidth}
+            heightM={2.5}
+            hasInspectionCorridor={hasStorageCorridor}
+            corridorWidthM={0.50}
+            usableStorageAreaM2={selfStorageResult.usableStorageAreaM2}
+            totalFloorAreaM2={selfStorageResult.totalFloorAreaM2}
+            corridorLossPct={selfStorageResult.corridorLossPct}
+          />
         </View>
 
         {/* Sekcja 2: Pasowanie we wnęce i listwy */}

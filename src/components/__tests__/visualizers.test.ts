@@ -26,6 +26,8 @@ import { GarageVisualizer } from '../GarageVisualizer';
 import { TowbarVisualizer } from '../TowbarVisualizer';
 import { AtticSlopeVisualizer } from '../AtticSlopeVisualizer';
 import { RoofRackVisualizer } from '../RoofRackVisualizer';
+import { DogKennelVisualizer } from '../DogKennelVisualizer';
+import { SelfStorageVisualizer } from '../SelfStorageVisualizer';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -400,6 +402,72 @@ describe('2D Visualizers Component Contracts', () => {
         rearOverhangMm: 2200,
         isOverhangLegal: false,
         requiredMarkings: [],
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('DogKennelVisualizer', () => {
+    it('renders fitting dog kennel cage with bevel', () => {
+      const element = DogKennelVisualizer({
+        kennelDepthBottomCm: 85,
+        kennelDepthTopCm: 45,
+        kennelHeightCm: 65,
+        trunkFloorLengthCm: 95,
+        windowSlopeAngleDeg: 35,
+        rearBevelAngleDeg: 32,
+        fitsInTrunk: true,
+        fitsWindowSlope: true,
+        windowClearanceAtTopRearMm: 45,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders collision with sloped rear hatch window', () => {
+      const element = DogKennelVisualizer({
+        kennelDepthBottomCm: 80,
+        kennelDepthTopCm: 80,
+        kennelHeightCm: 70,
+        trunkFloorLengthCm: 90,
+        windowSlopeAngleDeg: 40,
+        rearBevelAngleDeg: 0,
+        fitsInTrunk: false,
+        fitsWindowSlope: false,
+        windowClearanceAtTopRearMm: -120,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('SelfStorageVisualizer', () => {
+    it('renders storage box with central 50 cm inspection corridor', () => {
+      const element = SelfStorageVisualizer({
+        lengthM: 3.0,
+        widthM: 2.0,
+        heightM: 2.5,
+        hasInspectionCorridor: true,
+        corridorWidthM: 0.50,
+        usableStorageAreaM2: 4.5,
+        totalFloorAreaM2: 6.0,
+        corridorLossPct: 25,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders storage box without corridor', () => {
+      const element = SelfStorageVisualizer({
+        lengthM: 4.0,
+        widthM: 2.5,
+        heightM: 3.0,
+        hasInspectionCorridor: false,
+        corridorWidthM: 0,
+        usableStorageAreaM2: 10.0,
+        totalFloorAreaM2: 10.0,
+        corridorLossPct: 0,
       });
 
       expect(React.isValidElement(element)).toBe(true);
