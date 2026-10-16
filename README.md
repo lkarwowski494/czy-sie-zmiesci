@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-178_passed_(29_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-206_passed_(32_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -159,7 +159,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 29 zestawów testów (178 testów, 100% domain coverage)
+# Uruchomienie wszystkich 32 zestawów testów (206 testów, 100% domain coverage)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików
@@ -197,34 +197,30 @@ npm run ios
 ```text
 czy-sie-zmiesci/
 ├── src/
-│   ├── domain/                     # Czysty TypeScript: zero zależności od UI i frameworków
+│   ├── domain/                     # Czysty TypeScript: zero zależności od UI i frameworków (100% test coverage)
 │   │   ├── geometry/               # Algorytmy 3D BPP: punkty ekstremalne, gilotyna, rzuty skosów
 │   │   ├── doors-stairs/           # Kinematyka wnoszenia (Moving Sofa 3D), ościeżnice z klamkami, windy
 │   │   ├── room-fitting/           # Wnęki ścienne, dylatacje listew, luzy wentylacyjne AGD, ergonomia
 │   │   ├── relocation/             # Inwentaryzacja lokalu, estymacja kubatury m3, flota dostawcza
 │   │   ├── garage/                 # Skrajnie bram, strefa wysiadania min. 65 cm, haki S, boxy dachowe
-│   │   ├── physics/                # Rozkład masy, środek ciężkości (CoG), limity DMC, nośność podłogi
-│   │   ├── sizing/                 # Wymiarowanie i tolerancje sizerów (Paczkomaty, linie lotnicze)
-│   │   └── vda/                    # Przelicznik litrażu i kostek normy DIN 70020 / ISO 3832
-│   ├── features/                   # Moduły funkcjonalne i ekrany użytkownika (12 modułów)
-│   │   ├── simulator/              # Interaktywny widok załadunku 3D (SceneKit / Metal)
-│   │   ├── vehicles/               # Przeglądarka bazy modeli samochodów i kreator bagażnika
-│   │   ├── catalog/                # Wyszukiwarka paczek meblowych IKEA, AGD i kartonów
-│   │   ├── relocation/             # Planer przeprowadzki, dobór busa i sekwencja załadunku
-│   │   ├── doorways/               # Sprawdzanie ościeżnic drzwi, klatki schodowej i wind
-│   │   ├── room-fitting/           # Wnęki ścienne z listwami, skosy poddasza i ciągi ergonomiczne
-│   │   ├── appliances/             # Weryfikacja wentylacji lodówek i przyłączy pralek
-│   │   ├── garage/                 # Weryfikator wjazdu do garażu ze słupem i skrajni dachowych
-│   │   ├── towbar/                 # Kalkulator nacisku na kulę haka holowniczego dla e-bike'ów
-│   │   ├── lockers/                # Sizer skrytek paczkomatowych i bagażu lotniczego
-│   │   ├── weight/                 # Kalkulator nacisków na osie i ostrzeżenia DMC
-│   │   ├── watch/                  # Komunikacja z Apple Watch (WatchConnectivity, snapshoty)
-│   │   └── settings/               # Kopia zapasowa JSON v2, motywy, audyt zerowych uprawnień
+│   │   ├── physics/                # Rozkład masy, środek ciężkości (CoG), limity DMC, fizyka Euro NCAP 25g
+│   │   ├── standards/              # Sizer skrytek (InPost, Orlen, DPD, Pocztex) i 10 linii lotniczych, VDA
+│   │   ├── measuring/              # Asystent miarki, tolerancje konserwatywne Lmax, kalibracja PPI ekranu
+│   │   └── education/              # Szkoła Ładunku (7 kart technik) i Quiz art. 61 PoRD / PN-EN 12195
+│   ├── components/                 # Komponenty interaktywne i schematy rzutów 2D
+│   │   ├── NicheVisualizer.tsx     # Rzut wnęki ściennej z listwami i dylatacjami montażowymi
+│   │   ├── DoorwayVisualizer.tsx   # Rzut ościeżnicy z klamką (-6cm) i grubością skrzydła
+│   │   ├── StaircaseVisualizer.tsx # Rzut spocznika schodów (L-turn 90° i U-turn 180°) i obrót bryły
+│   │   ├── SafetyEducationView.tsx # Karty wiedzy i interaktywny quiz prawny z wyjaśnieniami
+│   │   ├── MultiCheckerMatrixView.tsx # Jednoczesna macierz 4 sieci automatów i 10 linii lotniczych
+│   │   └── IsometricPackView.tsx   # Projekcja aksonometryczna 2.5D załadunku bagażnika
+│   ├── services/                   # Usługi aplikacyjne (PackSessionService, RelocationService, WatchSyncService)
 │   ├── data/                       # Warstwa danych lokalnych
 │   │   ├── db/                     # SQLite WAL (expo-sqlite, czyste SQL, migracje, 13 tabel DDL)
 │   │   └── presets/                # Statyczne dane referencyjne (auta, busy, meble, AGD, linie)
 │   ├── config/                     # Pojedyncze źródło prawdy: limity, marginesy, tolerancje
 │   └── i18n/                       # Tłumaczenia wielojęzyczne (ASO 35 języków)
+├── app/                            # Expo Router (Tabs: Symulator 3D, Katalog, Wnętrza, Garaż, Ustawienia)
 ├── czy_sie_zmiesci_brd/            # Kompletna dokumentacja biznesowa (27 plików, 118,72 znormalizowanych stron)
 ├── .maestro/                       # Scenariusze testów E2E na symulatorze iOS z pixelmatch (01-07)
 ├── scripts/                        # Skrypty CI, solver referencyjny w Pythonie, audyty licencji
