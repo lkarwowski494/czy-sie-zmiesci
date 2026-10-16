@@ -14,9 +14,17 @@ import { useLang, setLang, t } from '../../src/lib/i18n';
 import { useUnitSystem, setUnitSystem } from '../../src/lib/unit-converter';
 import { exportBackup, safetyBackup } from '../../src/lib/backup';
 import { useAppAccess } from '../../src/services/app-access';
-import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
-import { sharedCraftTokens, CRAFT_APPS } from '../../src/core/craft-suite-theme';
 import { useRitualProfile, RITUAL_PROFILES, RitualProfileId } from '../../src/services/ritual-profile';
+import { sharedCraftTokens, CRAFT_APPS, CraftAppId } from '../../src/core/craft-suite-theme';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import {
+  NaparAppIcon,
+  PiekarzAppIcon,
+  SloikAppIcon,
+  MasazAppIcon,
+  FermentAppIcon,
+  CraftFamilyEmblem,
+} from '@apps4craft/ui';
 
 export default function SettingsScreen() {
   const db = getDatabaseService();
@@ -26,6 +34,23 @@ export default function SettingsScreen() {
   const access = useAppAccess();
   const { profile, changeProfile } = useRitualProfile();
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+
+  const renderCraftAppIcon = (id: CraftAppId, accent: string) => {
+    switch (id) {
+      case 'napar':
+        return <NaparAppIcon size={24} color={accent} />;
+      case 'piekarz':
+        return <PiekarzAppIcon size={24} color={accent} />;
+      case 'sloik':
+        return <SloikAppIcon size={24} color={accent} />;
+      case 'masaz':
+        return <MasazAppIcon size={24} color={accent} />;
+      case 'ferment':
+        return <FermentAppIcon size={24} color={accent} />;
+      default:
+        return <CraftFamilyEmblem size={24} color={accent} />;
+    }
+  };
 
 
   // Stany bazy i kopii zapasowej
@@ -263,10 +288,13 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 2. Rodzina Apps4Craft Studio (FAZA 4) */}
+        {/* 2. Rodzina Apps4Craft Studio (FAZA 4 & KROK 5) */}
         <View style={styles.card} testID="settings-apps4craft-family-card">
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.cardTitle}>⚒️ {t('Rodzina Apps4Craft Studio')}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <CraftFamilyEmblem size={24} color="#38BDF8" />
+              <Text style={styles.cardTitle}>{t('Rodzina Apps4Craft Studio')}</Text>
+            </View>
             <View style={styles.studioEcosystemBadge}>
               <Text style={styles.studioEcosystemBadgeText}>EKOSYSTEM</Text>
             </View>
@@ -279,6 +307,7 @@ export default function SettingsScreen() {
             {Object.values(CRAFT_APPS).map((app) => (
               <View
                 key={app.id}
+                testID={`craft-app-${app.id}`}
                 style={[
                   styles.craftAppItem,
                   app.id === 'fitcheck' && styles.craftAppItemCurrent,
@@ -286,10 +315,12 @@ export default function SettingsScreen() {
               >
                 <View
                   style={[
-                    styles.craftAppAccentIndicator,
-                    { backgroundColor: app.accent },
+                    styles.craftFamilyIconBox,
+                    { borderColor: app.accent },
                   ]}
-                />
+                >
+                  {renderCraftAppIcon(app.id, app.accent)}
+                </View>
                 <View style={styles.craftAppDetails}>
                   <View style={styles.craftAppNameRow}>
                     <Text style={styles.craftAppName}>{app.name}</Text>
@@ -643,18 +674,16 @@ const styles = StyleSheet.create({
   },
   craftAppItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: sharedCraftTokens.colors.bgBasalt,
     borderRadius: 10,
-    overflow: 'hidden',
     borderWidth: 1,
     borderColor: sharedCraftTokens.colors.border,
+    paddingRight: 8,
   },
   craftAppItemCurrent: {
     borderColor: '#38BDF8',
     backgroundColor: 'rgba(56, 189, 248, 0.05)',
-  },
-  craftAppAccentIndicator: {
-    width: 5,
   },
   craftAppDetails: {
     flex: 1,
@@ -977,5 +1006,66 @@ const styles = StyleSheet.create({
   toggleBtnTextActive: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+  craftBadge: {
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+  },
+  craftBadgeText: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  craftFamilyGrid: {
+    gap: 10,
+    marginTop: 10,
+  },
+  craftFamilyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+    gap: 12,
+  },
+  craftFamilyIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#1E293B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+  },
+  craftFamilyInfo: {
+    flex: 1,
+  },
+  craftFamilyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+    flexWrap: 'wrap',
+  },
+  craftFamilyName: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  craftFamilyDomain: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '500',
+  },
+  craftFamilyDesc: {
+    fontSize: 12,
+    color: '#CBD5E1',
+    lineHeight: 16,
   },
 });

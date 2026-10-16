@@ -80,101 +80,116 @@ if (!fs.existsSync(assetsDir)) {
   fs.mkdirSync(assetsDir, { recursive: true });
 }
 
-console.log('Generating production assets for Czy się zmieści? (FitCheck)...');
+console.log('Generating official Apps4Craft Studio production assets for FitCheck...');
 
 // 1. Icon (1024x1024)
-// Design: Sleek dark navy #0F172A background, glowing blue/cyan trunk contour, 3D box, and green checkmark.
+// Standard Apps4Craft: Deep Ceramic Basalt #121214 with luxury embossed metallic titanium sky #38BDF8 emblem.
 const iconBuffer = createPng(1024, 1024, (x, y, w, h) => {
   const nx = (x - w / 2) / (w / 2);
   const ny = (y - h / 2) / (h / 2);
   const dist = Math.sqrt(nx * nx + ny * ny);
 
-  // Radial subtle gradient from #1E293B in center to #0F172A on edges
-  const rBg = Math.round(30 - dist * 15);
-  const gBg = Math.round(41 - dist * 18);
-  const bBg = Math.round(59 - dist * 17);
+  // Deep basalt background #121214 with subtle radial warmth
+  const rBg = 18;
+  const gBg = 18;
+  const bBg = 20;
 
-  // Outer Trunk Frame / Hatch border (rounded rectangle contour)
-  // Box bounds: [-0.6, 0.6] horizontally, [-0.4, 0.5] vertically
-  const inFrameOuter = Math.abs(nx) < 0.68 && ny > -0.55 && ny < 0.62;
-  const inFrameInner = Math.abs(nx) < 0.58 && ny > -0.45 && ny < 0.52;
-  const isTrunkBorder = inFrameOuter && !inFrameInner;
+  // Outer Craft Emblem Shield / Ring
+  // Radius: 0.72 outer, 0.64 inner
+  const inOuterRing = dist < 0.74 && dist > 0.66;
+  const inInnerRing = dist < 0.65 && dist > 0.63;
 
-  // Isometric Cargo Box inside the trunk
-  // Isometric projection coordinates
-  const isoX = (nx * 0.7 - ny * 0.4);
-  const isoY = (nx * 0.4 + ny * 0.7);
+  // Center Isometric Cube & Precision Aperture Calipers
+  // Isometric coordinates:
+  // Top face: -0.32 < x < 0.32, y < 0, diamond
+  const dX = Math.abs(nx);
+  const isTopFace = ny < 0.02 && ny > -0.38 && (dX * 1.5 + Math.abs(ny + 0.18) * 1.5 < 0.48);
+  const isLeftFace = nx < 0.00 && nx > -0.32 && ny >= 0.00 && ny < 0.38 && (dX * 1.2 + (ny - 0.19) * 0.8 < 0.42);
+  const isRightFace = nx >= 0.00 && nx < 0.32 && ny >= 0.00 && ny < 0.38 && (dX * 1.2 + (ny - 0.19) * 0.8 < 0.42);
 
-  const inBoxTop = Math.abs(nx) < 0.35 && ny > -0.22 && ny < 0.05 && (Math.abs(nx * 1.5 + ny * 2) < 0.5);
-  const inBoxFront = Math.abs(nx) < 0.32 && ny >= 0.05 && ny < 0.38;
+  // Precision Dimension Axis / Caliper ticks
+  const isHorizAxis = Math.abs(ny - 0.44) < 0.015 && Math.abs(nx) < 0.45;
+  const isTickLeft = Math.abs(nx + 0.45) < 0.018 && Math.abs(ny - 0.44) < 0.05;
+  const isTickRight = Math.abs(nx - 0.45) < 0.018 && Math.abs(ny - 0.44) < 0.05;
+  const isCaliper = isHorizAxis || isTickLeft || isTickRight;
 
-  // Checkmark circle at top right: center at nx = 0.48, ny = -0.45, radius 0.22
-  const cdx = nx - 0.48;
-  const cdy = ny - (-0.45);
-  const inCheckCircle = (cdx * cdx + cdy * cdy) < (0.20 * 0.20);
-  const inCheckBorder = (cdx * cdx + cdy * cdy) < (0.23 * 0.23);
+  // Corner craft studs (4 points of the compass: 12, 3, 6, 9 o'clock)
+  const isStudTop = Math.abs(nx) < 0.03 && Math.abs(ny + 0.70) < 0.03;
+  const isStudBottom = Math.abs(nx) < 0.03 && Math.abs(ny - 0.70) < 0.03;
+  const isStudLeft = Math.abs(nx + 0.70) < 0.03 && Math.abs(ny) < 0.03;
+  const isStudRight = Math.abs(nx - 0.70) < 0.03 && Math.abs(ny) < 0.03;
+  const isStud = isStudTop || isStudBottom || isStudLeft || isStudRight;
 
-  // Checkmark tick shape inside the circle
-  // Normalized within check circle:
-  const tX = (cdx) / 0.20;
-  const tY = (cdy) / 0.20;
-  const onTickArm1 = tX >= -0.5 && tX <= -0.1 && Math.abs(tY - (tX + 0.1)) < 0.12;
-  const onTickArm2 = tX >= -0.1 && tX <= 0.5 && Math.abs(tY - (-1.2 * tX - 0.05)) < 0.12;
-  const isTick = onTickArm1 || onTickArm2;
-
-  if (inCheckCircle) {
-    if (isTick) {
-      return [255, 255, 255, 255]; // Pure white tick
-    }
-    return [16, 185, 129, 255]; // Emerald Green #10B981
-  }
-  if (inCheckBorder) {
-    return [15, 23, 42, 255]; // Dark outline separator
+  if (isStud) {
+    return [244, 239, 234, 255]; // Pure ceramic white stud #F4EFEA
   }
 
-  if (inBoxTop) {
-    return [251, 191, 36, 255]; // Warm Gold Top #FBBF24
-  }
-  if (inBoxFront) {
-    const isTape = Math.abs(nx) < 0.05;
-    if (isTape) return [217, 119, 6, 255]; // Darker amber tape #D97706
-    return [245, 158, 11, 255]; // Amber Box Front #F59E0B
+  if (inOuterRing) {
+    // Metallic Titanium border #38BDF8 with top specular highlight #BAE6FD
+    if (ny < -0.3) return [186, 230, 253, 255]; // #BAE6FD Light titanium
+    return [56, 189, 248, 255]; // #38BDF8 Titanium Sky
   }
 
-  if (isTrunkBorder) {
-    return [59, 130, 246, 255]; // Royal Blue Hatch Outline #3B82F6
+  if (inInnerRing) {
+    return [2, 132, 199, 255]; // #0284C7 Deep Cobalt shadow
   }
 
-  return [Math.max(15, rBg), Math.max(23, gBg), Math.max(42, bBg), 255];
+  if (isTopFace) {
+    // Top face receives direct specular light (Bright titanium #E0F2FE)
+    return [224, 242, 254, 255];
+  }
+
+  if (isLeftFace) {
+    // Left face: Anodized Sky #38BDF8
+    return [56, 189, 248, 255];
+  }
+
+  if (isRightFace) {
+    // Right face: Shadowed cobalt titanium #0369A1
+    return [3, 105, 161, 255];
+  }
+
+  if (isCaliper) {
+    return [251, 191, 36, 255]; // Warm Gold measurement caliper mark #FBBF24
+  }
+
+  // Deep basalt ceramic background #121214
+  return [rBg, gBg, bBg, 255];
 });
 
 fs.writeFileSync(path.join(assetsDir, 'icon.png'), iconBuffer);
-console.log('  -> assets/icon.png created (1024x1024)');
+console.log('  -> assets/icon.png created (1024x1024 Apps4Craft Basalt & Titanium)');
 
 // 2. Adaptive Icon (Android)
 fs.writeFileSync(path.join(assetsDir, 'adaptive-icon.png'), iconBuffer);
 console.log('  -> assets/adaptive-icon.png created (1024x1024)');
 
-// 3. Splash Screen (1284x2778)
+// 3. Splash Screen (1284x2778) - Deep Basalt #121214 with central emblem
 const splashBuffer = createPng(1284, 2778, (x, y, w, h) => {
   const nx = (x - w / 2) / (w / 2);
   const ny = (y - h / 2) / (h / 2);
 
-  // Background gradient
-  const rBg = 15;
-  const gBg = 23;
-  const bBg = 42;
+  // Scaled emblem in center
+  const scale = 2.8;
+  const ex = nx * scale;
+  const ey = ny * scale * (2778 / 1284);
+  const edist = Math.sqrt(ex * ex + ey * ey);
 
-  // Center emblem scaled
-  const emblemX = nx * 2.2;
-  const emblemY = ny * 3.5;
-  const inEmblem = (emblemX * emblemX + emblemY * emblemY) < 0.25;
-
-  if (inEmblem) {
-    return [59, 130, 246, 255];
+  if (edist < 0.55 && edist > 0.48) {
+    return [56, 189, 248, 255]; // Titanium ring
   }
 
-  return [rBg, gBg, bBg, 255];
+  const dX = Math.abs(ex);
+  const isTopFace = ey < 0.02 && ey > -0.28 && (dX * 1.5 + Math.abs(ey + 0.14) * 1.5 < 0.36);
+  const isLeftFace = ex < 0.00 && ex > -0.24 && ey >= 0.00 && ey < 0.28 && (dX * 1.2 + (ey - 0.14) * 0.8 < 0.32);
+  const isRightFace = ex >= 0.00 && ex < 0.24 && ey >= 0.00 && ey < 0.28 && (dX * 1.2 + (ey - 0.14) * 0.8 < 0.32);
+
+  if (isTopFace) return [224, 242, 254, 255];
+  if (isLeftFace) return [56, 189, 248, 255];
+  if (isRightFace) return [3, 105, 161, 255];
+
+  // Deep Basalt #121214
+  return [18, 18, 20, 255];
 });
 
 fs.writeFileSync(path.join(assetsDir, 'splash.png'), splashBuffer);
@@ -186,12 +201,12 @@ const faviconBuffer = createPng(48, 48, (x, y, w, h) => {
   const ny = (y - h / 2) / (h / 2);
   const dist = Math.sqrt(nx * nx + ny * ny);
   if (dist < 0.7) {
-    return [16, 185, 129, 255];
+    return [56, 189, 248, 255];
   }
-  return [15, 23, 42, 255];
+  return [18, 18, 20, 255];
 });
 
 fs.writeFileSync(path.join(assetsDir, 'favicon.png'), faviconBuffer);
 console.log('  -> assets/favicon.png created (48x48)');
 
-console.log('All production assets generated successfully.');
+console.log('All Apps4Craft production assets generated successfully.');

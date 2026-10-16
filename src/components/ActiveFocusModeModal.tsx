@@ -8,7 +8,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { sharedCraftTokens } from '../core/craft-suite-theme';
+import {
+  sharedCraftTokens,
+  CloseIcon,
+  PrevStepIcon,
+  NextStepIcon,
+  CraftStatDisplay,
+} from '../core/craft-suite-theme';
 import { t } from '../lib/i18n';
 
 export interface FocusStep {
@@ -136,38 +142,47 @@ export function ActiveFocusModeModal({
             style={styles.closeButton}
             hitSlop={sharedCraftTokens.hitSlopStandard}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t('Zamknij tryb skupienia')}
           >
-            <Text style={styles.closeIcon}>✕</Text>
+            <CloseIcon size={18} color="#F4EFEA" />
           </TouchableOpacity>
         </View>
 
         {/* Sacred Numbers Panel (Always visible at top) */}
         <View style={styles.sacredPanel} testID="sacred-numbers-panel">
           <View style={styles.sacredItem}>
-            <Text style={styles.sacredLabel}>{t('LUZ BEZPIECZEŃSTWA')}</Text>
-            <Text style={styles.sacredValue}>+{clearanceMm} mm</Text>
-            <Text style={styles.sacredSub}>{t('Bez kolizji')}</Text>
+            <CraftStatDisplay
+              testID="sacred-stat-clearance"
+              label={t('LUZ BEZPIECZEŃSTWA')}
+              value={`+${clearanceMm}`}
+              unit="mm"
+              accentColor="#38BDF8"
+              subtext={t('Bez kolizji')}
+              size="sm"
+            />
           </View>
           <View style={styles.sacredDivider} />
           <View style={styles.sacredItem}>
-            <Text style={styles.sacredLabel}>{t('OBCIĄŻENIE ŁADOWNOŚCI')}</Text>
-            <Text
-              style={[
-                styles.sacredValue,
-                payloadPct > 90 ? styles.sacredValueDanger : styles.sacredValueSuccess,
-              ]}
-            >
-              {payloadPct}%
-            </Text>
-            <Text style={styles.sacredSub}>{totalWeightKg} kg / DMC</Text>
+            <CraftStatDisplay
+              testID="sacred-stat-payload"
+              label={t('OBCIĄŻENIE ŁADOWNOŚCI')}
+              value={`${payloadPct}`}
+              unit="%"
+              accentColor={payloadPct > 90 ? '#D9534F' : '#4E9F3D'}
+              subtext={`${totalWeightKg} kg / DMC`}
+              size="sm"
+            />
           </View>
           <View style={styles.sacredDivider} />
           <View style={styles.sacredItem}>
-            <Text style={styles.sacredLabel}>{t('POSTĘP')}</Text>
-            <Text style={styles.sacredValue}>
-              {packedCount}/{totalCount}
-            </Text>
-            <Text style={styles.sacredSub}>{t('Kroków')}</Text>
+            <CraftStatDisplay
+              testID="sacred-stat-progress"
+              label={t('POSTĘP')}
+              value={`${packedCount}/${totalCount}`}
+              subtext={t('Kroków')}
+              size="sm"
+            />
           </View>
         </View>
 
@@ -257,8 +272,11 @@ export function ActiveFocusModeModal({
               disabled={currentStepIdx === 0}
               hitSlop={sharedCraftTokens.hitSlopStandard}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('Poprzedni krok')}
             >
-              <Text style={styles.navBtnText}>← {t('Poprzedni')}</Text>
+              <PrevStepIcon size={18} color={currentStepIdx === 0 ? '#686561' : '#F4EFEA'} />
+              <Text style={[styles.navBtnText, { marginLeft: 6 }]}>{t('Poprzedni')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -272,8 +290,14 @@ export function ActiveFocusModeModal({
               disabled={currentStepIdx === activeStepList.length - 1}
               hitSlop={sharedCraftTokens.hitSlopStandard}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t('Następny krok')}
             >
-              <Text style={styles.navBtnPrimaryText}>{t('Następny krok')} →</Text>
+              <Text style={[styles.navBtnPrimaryText, { marginRight: 6 }]}>{t('Następny krok')}</Text>
+              <NextStepIcon
+                size={18}
+                color={currentStepIdx === activeStepList.length - 1 ? '#686561' : '#0F172A'}
+              />
             </TouchableOpacity>
           </View>
         </View>

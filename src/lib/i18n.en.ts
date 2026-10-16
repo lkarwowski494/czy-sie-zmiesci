@@ -585,6 +585,8 @@ export const EN: Record<string, string> = {
   'Zakaz!': 'Forbidden!',
   'Aktywny': 'Active',
   'Ta aplikacja': 'This app',
+  'Zamknij tryb skupienia': 'Close focus mode',
+  'Poprzedni krok': 'Previous step',
 };
 
 

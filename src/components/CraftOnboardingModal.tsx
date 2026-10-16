@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { sharedCraftTokens } from '../core/craft-suite-theme';
+import { sharedCraftTokens, CraftFamilyEmblem } from '../core/craft-suite-theme';
 import {
   RitualProfileId,
   RITUAL_PROFILES,
@@ -54,6 +54,9 @@ export function CraftOnboardingModal({
         >
           {/* Header */}
           <View style={styles.header}>
+            <View style={{ marginBottom: 12 }}>
+              <CraftFamilyEmblem size={42} color="#38BDF8" />
+            </View>
             <View style={styles.studioPill}>
               <Text style={styles.studioPillText}>APPS4CRAFT STUDIO</Text>
             </View>

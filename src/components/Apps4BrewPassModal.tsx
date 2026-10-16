@@ -17,7 +17,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useAppAccess, PRICING, SubscriptionTier } from '../services/app-access';
-import { sharedCraftTokens } from '../core/craft-suite-theme';
+import { sharedCraftTokens, CloseIcon } from '../core/craft-suite-theme';
 import { t } from '../lib/i18n';
 
 
@@ -95,7 +95,7 @@ export function Apps4BrewPassModal({
             hitSlop={sharedCraftTokens.hitSlopStandard}
             activeOpacity={0.7}
           >
-            <Text style={styles.closeBtnText}>✕</Text>
+            <CloseIcon size={20} color="#F4EFEA" />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle}>{t('Apps4Brew Studio Pass')}</Text>
