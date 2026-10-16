@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Typecheck & 9-Layer Quality Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript strict verification
+        run: npm run typecheck
+
+      - name: Execute all 37 test suites (100% Domain Coverage Guard)
+        run: npm run test:coverage
+
+      - name: Architecture, Guards & Standards
+        run: |
+          npm run test:guards
+          npm run test:contracts
+          npm run test:bench
+          npm run test:resilience
