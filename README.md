@@ -98,12 +98,14 @@ Poniższa macierz przedstawia bieżący status implementacji wszystkich modułó
 
 ---
 
-### 🚀 Kolejka Wdrożeniowa Pozostałych Funkcji Specjalistycznych
+### 🚀 Zrealizowane Funkcje Specjalistyczne (100% Zakresu BRD)
 
-1. **🐕 Klatki kennelowe dla psów a skos szyby bagażnika (RD-46, Z-184)**: Modelowanie klatek aluminiowych ze skośnymi ścianami przednimi i tylnymi ($15^\circ–40^\circ$) pod kątem domknięcia klapy bagażnika.
-2. **📦 Boks Self-Storage ze ścieżką inspekcyjną 50 cm & Porównanie Kombi vs Van (RD-50, Z-164, Z-166)**: Interaktywny rzut 2D boksu z wyznaczonym korytarzem oraz kalkulator oszczędności paliwa i czasu.
-3. **🛡️ Ochrona podwójnej podłogi bagażnika przy materiałach budowlanych (RD-47, Z-185)**: Interaktywne ostrzeżenie przed przeciążeniem punktowym (>120 kg) z zaleceniem zdjęcia płyty podłogowej.
-4. **📄 Eksport planu załadunku i manifestu przeprowadzki (Z-128, Z-130, Z-186)**: Generowanie manifestu z podziałem na pokoje i gotowość do wydruku/udostępnienia.
+1. **🐕 Klatki kennelowe dla psów a skos szyby bagażnika (RD-46, Z-184)**: **WDROŻONE ✅** — Komponent `DogKennelVisualizer`, modelowanie ścian skośnych ($0^\circ–45^\circ$) i kąta szyby klapy z detekcją kolizji w `app/(tabs)/garage.tsx`.
+2. **📦 Boks Self-Storage ze ścieżką inspekcyjną 50 cm & Porównanie Kombi vs Van (RD-50, Z-164, Z-166)**: **WDROŻONE ✅** — Komponent `SelfStorageVisualizer`, korytarz 50 cm, kalkulator porównawczy liczby kursów, kosztów paliwa i czasu w `app/(tabs)/relocation.tsx`.
+3. **🛡️ Ochrona podwójnej podłogi bagażnika przy materiałach budowlanych (RD-47, Z-185)**: **WDROŻONE ✅** — Logika `evaluateFalseFloorLoad` z alertami przeciążenia punktowego (>120 kg) i instrukcją zdjęcia płyty w `app/(tabs)/garage.tsx`.
+4. **📄 Eksport planu załadunku i manifestu przeprowadzki (Z-128, Z-130, Z-186)**: **WDROŻONE ✅** — Natywna integracja z systemowym Share Sheet iOS/watchOS (`Share.share`) w `app/(tabs)/index.tsx` i `app/(tabs)/relocation.tsx`.
+5. **⏱️ Timer Odstania Oleju w Sprężarce Lodówki (Z-189, DEC-14)**: **WDROŻONE ✅** — Weryfikacja 2h / 12h / 24h odstoju agregatu chłodniczego z alarmem uderzenia hydraulicznego w `ApplianceClearanceView`.
+6. **👷 Zespół Tragarzy i Normy Dźwigania BHP (RD-53, Z-188)**: **WDROŻONE ✅** — Kalkulator obciążenia ręcznego (max 50 kg/os.) i wymogu pasów nośnych dla monolitów >150 kg w `app/(tabs)/relocation.tsx`.
 
 ---
 
