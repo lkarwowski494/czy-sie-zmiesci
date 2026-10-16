@@ -30,6 +30,56 @@ export default function GarageScreen() {
   const [bikeCount, setBikeCount] = useState<number>(2);
   const [isEBike, setIsEBike] = useState<boolean>(true);
 
+  const handleSelectCarPreset = (preset: 'octavia' | 'passat' | 'rav4' | 'duster') => {
+    switch (preset) {
+      case 'octavia':
+        setCarWidthMirrors('200');
+        setCarWidthFolded('183');
+        setCarHeight('147');
+        setTailgateHeight('207');
+        setHookLimit('75');
+        break;
+      case 'passat':
+        setCarWidthMirrors('208');
+        setCarWidthFolded('183');
+        setCarHeight('151');
+        setTailgateHeight('209');
+        setHookLimit('100');
+        break;
+      case 'rav4':
+        setCarWidthMirrors('217');
+        setCarWidthFolded('186');
+        setCarHeight('168');
+        setTailgateHeight('214');
+        setHookLimit('75');
+        break;
+      case 'duster':
+        setCarWidthMirrors('207');
+        setCarWidthFolded('181');
+        setCarHeight('166');
+        setTailgateHeight('205');
+        setHookLimit('75');
+        break;
+    }
+  };
+
+  const handleSelectGaragePreset = (preset: 'standard' | 'underground' | 'wide') => {
+    switch (preset) {
+      case 'standard':
+        setGateWidth('240');
+        setGarageCeiling('220');
+        break;
+      case 'underground':
+        setGateWidth('230');
+        setGarageCeiling('200');
+        break;
+      case 'wide':
+        setGateWidth('260');
+        setGarageCeiling('240');
+        break;
+    }
+  };
+
   // Kalkulacja wjazdu do garażu
   const garageFit = evaluateGarageFit(
     {
@@ -86,6 +136,43 @@ export default function GarageScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>🚪 Skrajnia Bramy & Klapa Bagażnika (RD-41, RD-42)</Text>
           
+          {/* Szybki wybór auta */}
+          <Text style={styles.subLabel}>Szybki model pojazdu:</Text>
+          <View style={styles.chipRow}>
+            {[
+              { id: 'octavia', label: '🚗 Škoda Octavia' },
+              { id: 'passat', label: '🚗 VW Passat' },
+              { id: 'rav4', label: '🚗 Toyota RAV4' },
+              { id: 'duster', label: '🚗 Dacia Duster' },
+            ].map((c) => (
+              <TouchableOpacity
+                key={c.id}
+                style={styles.chipBtn}
+                onPress={() => handleSelectCarPreset(c.id as any)}
+              >
+                <Text style={styles.chipBtnText}>{c.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Szybki typ garażu */}
+          <Text style={[styles.subLabel, { marginTop: 4 }]}>Typ garażu / bramy:</Text>
+          <View style={styles.chipRow}>
+            {[
+              { id: 'standard', label: '🏠 Brama 240 / Sufit 220' },
+              { id: 'underground', label: '🏢 Parking 230 / B-16 2.0m' },
+              { id: 'wide', label: '🚪 Szeroka 260 / Sufit 240' },
+            ].map((g) => (
+              <TouchableOpacity
+                key={g.id}
+                style={styles.chipBtn}
+                onPress={() => handleSelectGaragePreset(g.id as any)}
+              >
+                <Text style={styles.chipBtnText}>{g.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
               <Text style={styles.label}>Szerokość bramy (cm):</Text>
@@ -548,6 +635,31 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
     fontSize: 11,
     marginTop: 6,
+    fontWeight: '600',
+  },
+  subLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 8,
+  },
+  chipBtn: {
+    backgroundColor: '#0F172A',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  chipBtnText: {
+    color: '#38BDF8',
+    fontSize: 11,
     fontWeight: '600',
   },
 });
