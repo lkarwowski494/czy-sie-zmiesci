@@ -13,6 +13,7 @@ import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator'
 import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorwayClearance';
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
+import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -278,6 +279,16 @@ export default function RelocationScreen() {
               </Text>
             ))}
           </View>
+
+          {/* Schemat przejścia przez ościeżnicę */}
+          <DoorwayVisualizer
+            nominalWidthCm={parseFloat(doorWidth) || 80}
+            itemCrossSectionCm={parseFloat(itemSmallestDim) || 65}
+            doorSwingDeg={90}
+            handleOffsetCm={6}
+            effectiveWidthCm={doorResult.netClearanceWithHandsMm / 10}
+            canPass={doorResult.canPass}
+          />
         </View>
 
         {/* Sekcja 4: Schody i Spocznik (Moving Sofa) */}
