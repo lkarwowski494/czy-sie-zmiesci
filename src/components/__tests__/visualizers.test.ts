@@ -21,6 +21,7 @@ import { ElevatorVisualizer } from '../ElevatorVisualizer';
 import { SafetyEducationView } from '../SafetyEducationView';
 import { MultiCheckerMatrixView } from '../MultiCheckerMatrixView';
 import { ApplianceClearanceView } from '../ApplianceClearanceView';
+import { ScreenRuler } from '../ScreenRuler';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -230,6 +231,11 @@ describe('2D Visualizers Component Contracts', () => {
 
     it('instantiates ApplianceClearanceView without errors', () => {
       const element = React.createElement(ApplianceClearanceView);
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('instantiates ScreenRuler without errors', () => {
+      const element = React.createElement(ScreenRuler, { maxCm: 15, screenPpi: 460, displayScale: 3.0 });
       expect(React.isValidElement(element)).toBe(true);
     });
   });

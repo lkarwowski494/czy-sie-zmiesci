@@ -27,6 +27,7 @@ import {
 } from '../../src/domain/measuring/tapeMeasureAssistant';
 import { SafetyEducationView } from '../../src/components/SafetyEducationView';
 import { MultiCheckerMatrixView } from '../../src/components/MultiCheckerMatrixView';
+import { ScreenRuler } from '../../src/components/ScreenRuler';
 
 export default function CatalogScreen() {
   // Stan dla Paczkomatu
@@ -537,6 +538,9 @@ export default function CatalogScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Fizyczna linijka ekranowa 1:1 */}
+          <ScreenRuler />
         </View>
 
         {/* Sekcja 5: Baza Modeli Pojazdów (Presets) */}
