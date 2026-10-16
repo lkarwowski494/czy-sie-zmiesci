@@ -7,7 +7,18 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
+  Modal,
+  Share,
 } from 'react-native';
+import { QrCodeSvg } from '../../src/components/QrCodeSvg';
+import { encodeSpaceDeepLink, SpaceSharePayload } from '../../src/lib/deep-links';
+import {
+  useUnitSystem,
+  formatDimension,
+  formatDimensions3D,
+  formatVolume,
+  formatWeight,
+} from '../../src/lib/unit-converter';
 import { validateInPostLocker } from '../../src/domain/standards/parcelLockers';
 import { validateAviationSizer, AirlineCode } from '../../src/domain/standards/aviationSizers';
 import { POPULAR_VEHICLES_PRESETS } from '../../src/data/presets/vehicles';
@@ -62,7 +73,35 @@ export default function CatalogScreen() {
   const [convertFrom, setConvertFrom] = useState<'cm' | 'in' | 'm' | 'ft'>('cm');
   const [convertTo, setConvertTo] = useState<'cm' | 'in' | 'm' | 'ft'>('in');
 
+  const unitSystem = useUnitSystem();
+  const [sharingSpace, setSharingSpace] = useState<SpaceSharePayload | null>(null);
+  const [shareLink, setShareLink] = useState<string>('');
+
   const selectedVehicle = POPULAR_VEHICLES_PRESETS.find((v) => v.id === selectedVehicleId) ?? POPULAR_VEHICLES_PRESETS[0];
+
+  const handleShareVehicleSpace = (v: (typeof POPULAR_VEHICLES_PRESETS)[0]) => {
+    const payload: SpaceSharePayload = {
+      v: 1,
+      type: 'vehicle_space',
+      name: `${v.make} ${v.model} (${v.generation})`,
+      dimensions: {
+        lengthMm: v.trunk.lengthFloorMm,
+        widthMm: v.trunk.widthMinMm,
+        heightMm: v.trunk.heightRoofMm,
+        volumeLiters: v.vdaVolumeLiters,
+      },
+      features: {
+        wheelArches: true,
+        passThroughHole: false,
+        maxWeightKg: v.specs.grossVehicleWeightKg - v.specs.curbWeightKg,
+        notes: `${v.bodyType}, próg załadunku: ${v.trunk.thresholdHeightMm} mm, dach: ${v.specs.maxRoofLoadKg} kg, hak: ${v.specs.maxTowbarLoadKg} kg`,
+      },
+      createdAt: new Date().toISOString(),
+    };
+    const link = encodeSpaceDeepLink(payload);
+    setSharingSpace(payload);
+    setShareLink(link);
+  };
 
   const filteredCargo = CARGO_ITEMS_PRESETS.filter((item) => {
     if (cargoFilter === 'wszystkie') return true;
@@ -584,23 +623,31 @@ export default function CatalogScreen() {
             <View style={styles.specsGrid}>
               <View style={styles.specItem}>
                 <Text style={styles.specLabel}>Dł. podłogi</Text>
-                <Text style={styles.specValue}>{selectedVehicle.trunk.lengthFloorMm / 10} cm</Text>
+                <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.lengthFloorMm / 10, unitSystem)}</Text>
               </View>
               <View style={styles.specItem}>
                 <Text style={styles.specLabel}>Szer. min (nadkola)</Text>
-                <Text style={styles.specValue}>{selectedVehicle.trunk.widthMinMm / 10} cm</Text>
+                <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.widthMinMm / 10, unitSystem)}</Text>
               </View>
               <View style={styles.specItem}>
                 <Text style={styles.specLabel}>Otwór załadunku</Text>
                 <Text style={styles.specValue}>
-                  {selectedVehicle.trunk.apertureWidthMm / 10} × {selectedVehicle.trunk.apertureHeightMm / 10} cm
+                  {formatDimension(selectedVehicle.trunk.apertureWidthMm / 10, unitSystem)} × {formatDimension(selectedVehicle.trunk.apertureHeightMm / 10, unitSystem)}
                 </Text>
               </View>
               <View style={styles.specItem}>
                 <Text style={styles.specLabel}>Próg załadunku</Text>
-                <Text style={styles.specValue}>{selectedVehicle.trunk.thresholdHeightMm / 10} cm</Text>
+                <Text style={styles.specValue}>{formatDimension(selectedVehicle.trunk.thresholdHeightMm / 10, unitSystem)}</Text>
               </View>
             </View>
+
+            <TouchableOpacity
+              style={styles.shareSpaceBtn}
+              onPress={() => handleShareVehicleSpace(selectedVehicle)}
+              accessibilityLabel="Udostępnij wymiary przestrzeni za pomocą kodu QR lub linku"
+            >
+              <Text style={styles.shareSpaceBtnText}>📲 Udostępnij Przestrzeń (Wektorowy Kod QR / Link)</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -638,11 +685,10 @@ export default function CatalogScreen() {
               <View key={item.id} style={styles.cargoCard}>
                 <View style={styles.cargoRow}>
                   <Text style={styles.cargoItemTitle}>{item.name}</Text>
-                  <Text style={styles.cargoWeight}>{item.weightKg} kg</Text>
+                  <Text style={styles.cargoWeight}>{formatWeight(item.weightKg, unitSystem)}</Text>
                 </View>
                 <Text style={styles.cargoDims}>
-                  📏 {item.dimensionsMm.lengthMm / 10} × {item.dimensionsMm.widthMm / 10} ×{' '}
-                  {item.dimensionsMm.heightMm / 10} cm
+                  📏 {formatDimensions3D(item.dimensionsMm.lengthMm / 10, item.dimensionsMm.widthMm / 10, item.dimensionsMm.heightMm / 10, unitSystem)}
                 </Text>
                 <Text style={styles.cargoDesc}>{item.description}</Text>
                 <View style={styles.badgeRow}>
@@ -659,6 +705,85 @@ export default function CatalogScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Modal Udostępniania Przestrzeni przez Kod QR i Deep Link (Zadanie C4) */}
+      <Modal
+        visible={Boolean(sharingSpace)}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSharingSpace(null)}
+      >
+        <SafeAreaView style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Header z przyciskiem Anuluj wg Apple HIG */}
+            <View style={styles.modalHeader}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setSharingSpace(null)}
+                accessibilityLabel="Zamknij okno udostępniania"
+              >
+                <Text style={styles.modalCancelText}>Anuluj</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Udostępnij Przestrzeń</Text>
+              <View style={{ width: 60 }} />
+            </View>
+
+            {sharingSpace && (
+              <ScrollView contentContainerStyle={styles.modalScroll}>
+                <Text style={styles.qrSpaceName}>{sharingSpace.name}</Text>
+                <Text style={styles.qrSpaceDims}>
+                  {formatDimensions3D(
+                    sharingSpace.dimensions.lengthMm / 10,
+                    sharingSpace.dimensions.widthMm / 10,
+                    sharingSpace.dimensions.heightMm / 10,
+                    unitSystem
+                  )}
+                  {sharingSpace.dimensions.volumeLiters
+                    ? ` • ${formatVolume(sharingSpace.dimensions.volumeLiters, unitSystem)}`
+                    : ''}
+                </Text>
+
+                {/* Wektorowy Kod QR SVG */}
+                <View style={styles.qrWrapper}>
+                  <QrCodeSvg
+                    value={shareLink}
+                    size={220}
+                    color="#0F172A"
+                    backgroundColor="#FFFFFF"
+                  />
+                </View>
+
+                <Text style={styles.qrInstruction}>
+                  Zeskanuj ten kod z drugiego telefonu aparatem lub otwórz aplikacją Czy się zmieści?.
+                </Text>
+
+                <View style={styles.deepLinkBox}>
+                  <Text style={styles.deepLinkLabel}>Protokół Deep Link:</Text>
+                  <Text style={styles.deepLinkText} numberOfLines={2}>
+                    {shareLink}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.modalShareBtn}
+                  onPress={async () => {
+                    try {
+                      await Share.share({
+                        title: sharingSpace.name,
+                        message: `Wymiary przestrzeni dla ${sharingSpace.name}:\n${shareLink}`,
+                      });
+                    } catch {
+                      // ignore dismiss
+                    }
+                  }}
+                >
+                  <Text style={styles.modalShareBtnText}>📤 Udostępnij Link w Innej Aplikacji</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -1254,5 +1379,127 @@ const styles = StyleSheet.create({
   noStackBadge: {
     backgroundColor: '#451A03',
     color: '#FCD34D',
+  },
+  shareSpaceBtn: {
+    backgroundColor: '#0284C7',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  shareSpaceBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#1E293B',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderWidth: 1,
+    borderColor: '#334155',
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+  },
+  modalCancelBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    color: '#38BDF8',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalTitle: {
+    color: '#F8FAFC',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalScroll: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  qrSpaceName: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  qrSpaceDims: {
+    color: '#38BDF8',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  qrWrapper: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+    marginBottom: 16,
+  },
+  qrInstruction: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+    marginBottom: 14,
+    paddingHorizontal: 12,
+  },
+  deepLinkBox: {
+    backgroundColor: '#0F172A',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+    width: '100%',
+    marginBottom: 16,
+  },
+  deepLinkLabel: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  deepLinkText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontFamily: 'monospace',
+  },
+  modalShareBtn: {
+    backgroundColor: '#2563EB',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  modalShareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-286_passed_(37_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-332_passed_(42_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -36,8 +36,8 @@ Poniższa macierz przedstawia bieżący status implementacji wszystkich modułó
 | # | Moduł / Ekran | Wymagania BRD | Status | Pokrycie Testami | Kluczowe Komponenty i Wizualizery |
 |---|---|---|---|:---:|---|
 | 1 | **📦 Symulator Pakowania 3D** (`index.tsx`) | Z-001…006, Z-081…100, RD-01…08 | **WDROŻONE** ✅ | 100% | `TrunkVisualizer`, Extreme Points 3D Solver, VDA, CoG, DMC |
-| 2 | **🚗 Baza Pojazdów i Przestrzeni** (`catalog.tsx`) | Z-010…030, RD-10…16 | **WDROŻONE** ✅ | 100% | 350+ aut, SQLite WAL, kreator boxa, VDA ISO 3832 |
-| 3 | **🛋️ Katalog Mebli, AGD i Walizek** (`catalog.tsx`) | Z-041…060, RD-25…32 | **WDROŻONE** ✅ | 100% | IKEA PAX, BILLY, MALM, kartony S/M/L/XL, ochrona orientacji |
+| 2 | **🚗 Baza Pojazdów i Przestrzeni** (`catalog.tsx`) | Z-010…030, RD-10…16 | **WDROŻONE** ✅ | 100% | 350+ aut, SQLite WAL (`/Library/SQLite`), Wektorowy QR SVG & Deep Link `fitcheck://space`, VDA ISO 3832 |
+| 3 | **🛋️ Katalog Mebli, AGD i Walizek** (`catalog.tsx`) | Z-041…060, RD-25…32 | **WDROŻONE** ✅ | 100% | IKEA PAX, BILLY, MALM, kartony S/M/L/XL, ochrona orientacji, konwerter jednostek |
 | 4 | **📬 Paczkomaty i Linie Lotnicze** (`catalog.tsx`) | Z-023…025, RD-09 | **WDROŻONE** ✅ | 100% | `MultiCheckerMatrixView`: InPost A/B/C, Orlen, DPD, 10 linii lotniczych |
 | 5 | **🎓 Szkoła Ładunku i Fizyka Zderzeń** (`catalog.tsx`) | BR-EDU-001…003, RD-17 | **WDROŻONE** ✅ | 100% | `SafetyEducationView`: 7 kart wiedzy, Euro NCAP 25g, Quiz art. 61 PoRD |
 | 6 | **📏 Miarka Ekranowa i Pomiary** (`catalog.tsx`) | BR-POM-001…003 | **WDROŻONE** ✅ | 100% | `ScreenRuler`: kalibracja fizyczna 1:1 przez PPI ekranu i monety/karty |
@@ -46,7 +46,7 @@ Poniższa macierz przedstawia bieżący status implementacji wszystkich modułó
 | 9 | **📐 Wnęki Ścienne, AGD i Skosy** (`relocation.tsx`) | Z-170…176, RD-36…38, RD-48 | **WDROŻONE** ✅ | 100% | `NicheVisualizer` (listwy -4cm), `ApplianceClearanceView`, `AtticSlopeVisualizer` (RD-48) |
 | 10 | **🏢 Garaże i Skrajnie Wjazdowe** (`garage.tsx`) | Z-178…181, RD-39…43 | **WDROŻONE** ✅ | 100% | `GarageVisualizer` (lusterka rozłożone/złożone, strefa 65cm, klapa SUV-a, znaki B-16) |
 | 11 | **🚲 Hak Holowniczy, Belki i Zwisy** (`garage.tsx`) | Z-182…183, Z-187, RD-44, 45, 52 | **WDROŻONE** ✅ | 100% | `TowbarVisualizer` (nacisk S, e-bike), `RoofRackVisualizer` (nośność dachu, zwisy art. 61 PoRD) |
-| 12 | **⌚ Apple Watch & Kopia SQLite** (`settings.tsx`) | Z-121…123, Z-131…135 | **WDROŻONE** ✅ | 100% | `WatchSyncService`, haptyka, eksport/import JSON za 0 zł, StoreKit 2 simulator |
+| 12 | **⌚ Apple Watch & Kopia SQLite** (`settings.tsx`) | Z-121…123, Z-131…135 | **WDROŻONE** ✅ | 100% | `WatchSyncService`, haptyka, autoBackup 10 kopii w `Documents/Backup/`, i18n PL/EN, jednostki imperialne |
 
 ---
 
