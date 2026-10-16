@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { evaluateGarageFit, evaluateRoofSetupHeight } from '../../src/domain/garage/garageClearance';
 import { evaluateTowbarLoad, Bicycle } from '../../src/domain/garage/towbarPhysics';
+import { GarageVisualizer } from '../../src/components/GarageVisualizer';
 
 export default function GarageScreen() {
   // Garaż: wymiary pojazdu i bramy
@@ -261,6 +262,19 @@ export default function GarageScreen() {
               Margines nad klapą: {Math.round(garageFit.tailgateCeilingMarginMm / 10)} cm
             </Text>
           </View>
+
+          {/* Rzut frontowy wjazdu i skrajni */}
+          <GarageVisualizer
+            gateWidthCm={parseFloat(gateWidth) || 240}
+            carWidthMirrorsCm={parseFloat(carWidthMirrors) || 208}
+            carWidthFoldedCm={parseFloat(carWidthFolded) || 188}
+            garageCeilingCm={parseFloat(garageCeiling) || 220}
+            tailgateHeightCm={parseFloat(tailgateHeight) || 205}
+            canEnterOpenMirrors={garageFit.canEnterWithOpenMirrors}
+            canEnterFoldedMirrors={garageFit.canEnterWithFoldedMirrors}
+            willTailgateHitCeiling={garageFit.willTailgateHitCeiling}
+            entryMarginOpenMirrorsCm={garageFit.entryMarginOpenMirrorsMm / 10}
+          />
         </View>
 
         {/* Sekcja 2: Box dachowy & Parking podziemny B-16 */}

@@ -22,6 +22,7 @@ import { SafetyEducationView } from '../SafetyEducationView';
 import { MultiCheckerMatrixView } from '../MultiCheckerMatrixView';
 import { ApplianceClearanceView } from '../ApplianceClearanceView';
 import { ScreenRuler } from '../ScreenRuler';
+import { GarageVisualizer } from '../GarageVisualizer';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -212,6 +213,56 @@ describe('2D Visualizers Component Contracts', () => {
         maxRigidLengthCm: 244,
         fitsThroughDoor: true,
         fitsInsideCabin: false,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('GarageVisualizer', () => {
+    it('renders free entry state with open mirrors (canEnterOpenMirrors=true)', () => {
+      const element = GarageVisualizer({
+        gateWidthCm: 250,
+        carWidthMirrorsCm: 208,
+        carWidthFoldedCm: 183,
+        garageCeilingCm: 230,
+        tailgateHeightCm: 205,
+        canEnterOpenMirrors: true,
+        canEnterFoldedMirrors: true,
+        willTailgateHitCeiling: false,
+        entryMarginOpenMirrorsCm: 42,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders warning state when folding mirrors is required', () => {
+      const element = GarageVisualizer({
+        gateWidthCm: 200,
+        carWidthMirrorsCm: 208,
+        carWidthFoldedCm: 183,
+        garageCeilingCm: 230,
+        tailgateHeightCm: 205,
+        canEnterOpenMirrors: false,
+        canEnterFoldedMirrors: true,
+        willTailgateHitCeiling: false,
+        entryMarginOpenMirrorsCm: -8,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders collision alert when car body is wider than gate', () => {
+      const element = GarageVisualizer({
+        gateWidthCm: 180,
+        carWidthMirrorsCm: 208,
+        carWidthFoldedCm: 185,
+        garageCeilingCm: 210,
+        tailgateHeightCm: 215,
+        canEnterOpenMirrors: false,
+        canEnterFoldedMirrors: false,
+        willTailgateHitCeiling: true,
+        entryMarginOpenMirrorsCm: -28,
       });
 
       expect(React.isValidElement(element)).toBe(true);
