@@ -26,6 +26,7 @@ import {
   MeasurementTool,
 } from '../../src/domain/measuring/tapeMeasureAssistant';
 import { SafetyEducationView } from '../../src/components/SafetyEducationView';
+import { MultiCheckerMatrixView } from '../../src/components/MultiCheckerMatrixView';
 
 export default function CatalogScreen() {
   // Stan dla Paczkomatu
@@ -108,6 +109,11 @@ export default function CatalogScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Katalog Standardów & Baza</Text>
           <Text style={styles.subtitle}>Paczkomaty, linie lotnicze, 350+ aut, fizyka ładunku i miarka</Text>
+        </View>
+
+        {/* Sekcja 0: Szybki Multi-Checker (BR-LOT-001) */}
+        <View style={styles.card}>
+          <MultiCheckerMatrixView />
         </View>
 
         {/* Sekcja 1: Paczkomaty InPost */}
