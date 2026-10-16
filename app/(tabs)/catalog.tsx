@@ -25,6 +25,7 @@ import {
   STANDARD_REFERENCE_OBJECTS,
   MeasurementTool,
 } from '../../src/domain/measuring/tapeMeasureAssistant';
+import { SafetyEducationView } from '../../src/components/SafetyEducationView';
 
 export default function CatalogScreen() {
   // Stan dla Paczkomatu
@@ -404,6 +405,15 @@ export default function CatalogScreen() {
               </Text>
             ))}
           </View>
+        </View>
+
+        {/* Sekcja Edukacji: Szkoła Bezpiecznego Ładunku & Quiz (BR-EDU-001, BR-EDU-003) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🎓 Szkoła Ładunku & Quiz Prawny (BR-EDU)</Text>
+          <Text style={styles.infoText}>
+            Normy PN-EN 12195, Kodeks Drogowy (art. 61 PoRD) oraz zasady ryglowania Form-Fit:
+          </Text>
+          <SafetyEducationView />
         </View>
 
         {/* Sekcja 4: Asystent Miarki & Kalibrator Ekranowy (BR-POM) */}
