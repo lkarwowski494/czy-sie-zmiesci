@@ -14,6 +14,7 @@ import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorway
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
+import { StaircaseVisualizer } from '../../src/components/StaircaseVisualizer';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -399,6 +400,20 @@ export default function RelocationScreen() {
               </Text>
             ))}
           </View>
+
+          {/* Schemat rzutu spocznika i obrotu mebla */}
+          <StaircaseVisualizer
+            flightWidthCm={parseFloat(flightWidth) || 110}
+            landingDepthCm={parseFloat(landingDepth) || 120}
+            turnAngleDeg={turnAngle}
+            itemLengthCm={parseFloat(sofaLength) || 200}
+            itemWidthCm={parseFloat(sofaWidth) || 85}
+            canTurnHorizontally={stairsResult.canTurnHorizontally}
+            canTurnWithVerticalTilt={stairsResult.canTurnWithVerticalTilt}
+            requiredTiltAngleDeg={stairsResult.requiredTiltAngleDeg}
+            canPass={stairsResult.canPass}
+            bottleneckDescription={stairsResult.bottleneckDescription}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
