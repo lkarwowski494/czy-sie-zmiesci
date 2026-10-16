@@ -215,13 +215,108 @@ describe('DatabaseService & SQLite Transactions (Warstwa 5: Baza danych i JSON r
     expect(res.error).toContain('Nieprawidłowy format');
   });
 
-  it('provides initialized singleton through getDatabaseService()', () => {
-    // Dynamic import to test factory
-    const { getDatabaseService } = require('../index');
+  it('provides initialized singleton through getDatabaseService() and supports reset', () => {
+    const { getDatabaseService, resetDefaultDatabaseInstance } = require('../index');
     const instance1 = getDatabaseService();
     const instance2 = getDatabaseService();
     expect(instance1).toBe(instance2);
     expect(instance1.getAllVehicles().length).toBeGreaterThan(0);
+
+    resetDefaultDatabaseInstance();
+    const instance3 = getDatabaseService();
+    expect(instance3).toBeDefined();
+    resetDefaultDatabaseInstance();
+  });
+
+  describe('Apps4Brew SEC-09 dbDirectory Path Protection', () => {
+    it('redirects default Documents/SQLite to private /Library/SQLite', () => {
+      const { dbDirectory } = require('../../../lib/db-path');
+      expect(dbDirectory('/var/mobile/Containers/Data/Application/123/Documents/SQLite/')).toBe(
+        '/var/mobile/Containers/Data/Application/123/Library/SQLite'
+      );
+      expect(dbDirectory('/var/mobile/Containers/Data/Application/123/Documents/SQLite')).toBe(
+        '/var/mobile/Containers/Data/Application/123/Library/SQLite'
+      );
+    });
+
+    it('returns undefined when directory is already custom or undefined', () => {
+      const { dbDirectory } = require('../../../lib/db-path');
+      expect(dbDirectory(null)).toBeUndefined();
+      expect(dbDirectory(undefined)).toBeUndefined();
+      expect(dbDirectory('/some/custom/path')).toBeUndefined();
+    });
+  });
+
+  describe('ExpoSQLiteDriver wrapper contract', () => {
+    it('wraps native expo-sqlite methods correctly', () => {
+      const { ExpoSQLiteDriver } = require('../driver');
+      let executedSql = '';
+      let closed = false;
+
+      const mockNativeDb = {
+        execSync: (sql: string) => {
+          executedSql = sql;
+        },
+        runSync: (sql: string, ...params: any[]) => ({
+          lastInsertRowId: 42,
+          changes: 1,
+        }),
+        getFirstSync: (sql: string, ...params: any[]) => ({ id: 'row1' }),
+        getAllSync: (sql: string, ...params: any[]) => [{ id: 'row1' }, { id: 'row2' }],
+        withTransactionSync: (cb: () => any) => cb(),
+        closeSync: () => {
+          closed = true;
+        },
+      };
+
+      const driver = new ExpoSQLiteDriver(mockNativeDb);
+      driver.execSync('PRAGMA foreign_keys = ON;');
+      expect(executedSql).toBe('PRAGMA foreign_keys = ON;');
+
+      const runRes = driver.runSync('INSERT INTO test VALUES (?)', ['val']);
+      expect(runRes.lastInsertRowId).toBe(42);
+      expect(runRes.changes).toBe(1);
+
+      const first = driver.getFirstSync('SELECT * FROM test');
+      expect(first).toEqual({ id: 'row1' });
+
+      const all = driver.getAllSync('SELECT * FROM test');
+      expect(all.length).toBe(2);
+
+      const txRes = driver.withTransactionSync(() => 'tx_success');
+      expect(txRes).toBe('tx_success');
+
+      driver.closeSync();
+      expect(closed).toBe(true);
+    });
+
+    it('handles fallback transaction execution when native withTransactionSync is missing', () => {
+      const { ExpoSQLiteDriver } = require('../driver');
+      const sqlLog: string[] = [];
+
+      const mockNativeDb = {
+        execSync: (sql: string) => {
+          sqlLog.push(sql);
+        },
+        runSync: () => ({ lastInsertRowId: 1, changes: 1 }),
+        getFirstSync: () => null,
+        getAllSync: () => [],
+      };
+
+      const driver = new ExpoSQLiteDriver(mockNativeDb);
+      const res = driver.withTransactionSync(() => 'fallback_ok');
+      expect(res).toBe('fallback_ok');
+      expect(sqlLog).toContain('BEGIN IMMEDIATE TRANSACTION;');
+      expect(sqlLog).toContain('COMMIT;');
+
+      expect(() => {
+        driver.withTransactionSync(() => {
+          throw new Error('tx_fail');
+        });
+      }).toThrow('tx_fail');
+      expect(sqlLog).toContain('ROLLBACK;');
+    });
   });
 });
+
 

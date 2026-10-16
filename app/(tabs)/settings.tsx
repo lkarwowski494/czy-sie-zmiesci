@@ -10,10 +10,15 @@ import {
 } from 'react-native';
 import { getDatabaseService, BackupExportPayload } from '../../src/data/db';
 import { WatchSyncService, WatchHapticType } from '../../src/services/WatchSyncService';
+import { useLang, setLang } from '../../src/lib/i18n';
+import { useUnitSystem, setUnitSystem } from '../../src/lib/unit-converter';
+import { exportBackup, safetyBackup } from '../../src/lib/backup';
 
 export default function SettingsScreen() {
   const db = getDatabaseService();
   const watchSync = new WatchSyncService(db);
+  const lang = useLang();
+  const unitSystem = useUnitSystem();
 
   // Stany bazy i kopii zapasowej
   const [backupJson, setBackupJson] = useState<string | null>(null);
@@ -83,7 +88,7 @@ export default function SettingsScreen() {
   const vehiclesCount = db.getAllVehicles().length;
   const cargoCount = db.getCargoItems().length;
 
-  const handleExportBackup = () => {
+  const handleExportBackup = async () => {
     try {
       const backup: BackupExportPayload = db.exportBackupJson();
       const jsonStr = JSON.stringify(backup, null, 2);
@@ -102,6 +107,7 @@ export default function SettingsScreen() {
         totalRecords: totalItems,
       });
 
+      await exportBackup(backup.data);
       setStatusMessage(`✅ Wyeksportowano kopię zapasową JSON (Schema v${backup.schema_version})`);
       Alert.alert(
         'Eksport Kopia Zapasowa (ZP-06)',
@@ -127,15 +133,21 @@ export default function SettingsScreen() {
   const handleResetToPresets = () => {
     Alert.alert(
       'Przywracanie Danych Domyślnych',
-      'Czy na pewno chcesz przywrócić domyślne katalogi pojazdów i ładunków Apps4Brew?',
+      'Czy na pewno chcesz przywrócić domyślne katalogi pojazdów i ładunków Apps4Brew? Zostanie utworzona kopia bezpieczeństwa.',
       [
         { text: 'Anuluj', style: 'cancel' },
         {
           text: 'Przywróć',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            try {
+              const currentData = db.exportBackupJson().data;
+              await safetyBackup('reset', currentData);
+            } catch {
+              // Safety snapshot attempted
+            }
             db.initialize();
-            setStatusMessage('🔄 Baza danych zsynchronizowana z biblioteką wzorcową.');
+            setStatusMessage('🔄 Baza danych zsynchronizowana z biblioteką wzorcową (zapisano kopię bezpieczeństwa).');
           },
         },
       ]
@@ -291,6 +303,54 @@ export default function SettingsScreen() {
           >
             <Text style={styles.testHapticBtnText}>📳 Przetestuj Haptykę dla Bieżącego Kroku</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Język i Jednostki Miary (i18n & Imperial) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>🌐 Język i Jednostki Miary</Text>
+          <Text style={styles.infoText}>
+            Dostosuj język aplikacji oraz preferowany system pomiaru wymiarów, objętości i masy ładunków.
+          </Text>
+
+          <Text style={styles.settingLabel}>Język interfejsu (Language):</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, lang === 'pl' && styles.toggleBtnActive]}
+              onPress={() => setLang('pl')}
+            >
+              <Text style={[styles.toggleBtnText, lang === 'pl' && styles.toggleBtnTextActive]}>
+                🇵🇱 Polski
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, lang === 'en' && styles.toggleBtnActive]}
+              onPress={() => setLang('en')}
+            >
+              <Text style={[styles.toggleBtnText, lang === 'en' && styles.toggleBtnTextActive]}>
+                🇬🇧 English
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[styles.settingLabel, { marginTop: 14 }]}>System jednostek (Unit System):</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, unitSystem === 'metric' && styles.toggleBtnActive]}
+              onPress={() => setUnitSystem('metric')}
+            >
+              <Text style={[styles.toggleBtnText, unitSystem === 'metric' && styles.toggleBtnTextActive]}>
+                📏 Metryczny (cm, mm, kg, L)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleBtn, unitSystem === 'imperial' && styles.toggleBtnActive]}
+              onPress={() => setUnitSystem('imperial')}
+            >
+              <Text style={[styles.toggleBtnText, unitSystem === 'imperial' && styles.toggleBtnTextActive]}>
+                📐 Imperialny (in, ft, lbs, cu ft)
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Kopia Zapasowa JSON v2 (ZP-06) */}
@@ -837,5 +897,39 @@ const styles = StyleSheet.create({
   aboutVal: {
     color: '#F8FAFC',
     fontWeight: '600',
+  },
+  settingLabel: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  toggleBtn: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleBtnActive: {
+    backgroundColor: '#0369A1',
+    borderColor: '#38BDF8',
+  },
+  toggleBtnText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  toggleBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
 });

@@ -298,3 +298,56 @@ export class MemorySQLiteDriver implements ISQLiteDriver {
     }
   }
 }
+
+/**
+ * Sterownik SQLite dla środowiska wykonawczego Expo (iOS / Android / macOS).
+ * Opakowuje natywny, synchroniczny interfejs expo-sqlite (SQLiteDatabase).
+ * Zapewnia lokalizację bazy w prywatnym katalogu /Library/SQLite (SEC-09).
+ */
+export class ExpoSQLiteDriver implements ISQLiteDriver {
+  constructor(private readonly db: any) {}
+
+  execSync(sql: string): void {
+    this.db.execSync(sql);
+  }
+
+  runSync(sql: string, params: unknown[] = []): { lastInsertRowId: number; changes: number } {
+    const res = this.db.runSync(sql, ...(params as any[]));
+    return {
+      lastInsertRowId: Number(res?.lastInsertRowId ?? 0),
+      changes: Number(res?.changes ?? 0),
+    };
+  }
+
+  getFirstSync<T>(sql: string, params: unknown[] = []): T | null {
+    const res = this.db.getFirstSync(sql, ...(params as any[]));
+    return (res as T) ?? null;
+  }
+
+  getAllSync<T>(sql: string, params: unknown[] = []): T[] {
+    const res = this.db.getAllSync(sql, ...(params as any[]));
+    return (res as T[]) ?? [];
+  }
+
+  withTransactionSync<T>(callback: () => T): T {
+    if (typeof this.db.withTransactionSync === 'function') {
+      return this.db.withTransactionSync(callback);
+    }
+    this.execSync('BEGIN IMMEDIATE TRANSACTION;');
+    try {
+      const result = callback();
+      this.execSync('COMMIT;');
+      return result;
+    } catch (error) {
+      this.execSync('ROLLBACK;');
+      throw error;
+    }
+  }
+
+  closeSync(): void {
+    if (typeof this.db.closeSync === 'function') {
+      this.db.closeSync();
+    }
+  }
+}
+

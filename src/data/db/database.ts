@@ -441,4 +441,9 @@ export class DatabaseService {
       return { success: false, restoredRecordsCount: 0, error: e.message };
     }
   }
+
+  public close(): void {
+    this.driver.closeSync();
+  }
 }
+
