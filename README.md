@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-277_passed_(36_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-286_passed_(37_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -192,7 +192,7 @@ npm install
 # Pełna weryfikacja projektu (TypeScript strict mode + 100% domain coverage)
 npm run verify
 
-# Uruchomienie wszystkich 36 zestawów testów (277 testów, 100% domain coverage)
+# Uruchomienie wszystkich 37 zestawów testów (286 testów, 100% domain coverage)
 npm test
 
 # Szybkie testy jednostkowe tylko dla zmienionych plików

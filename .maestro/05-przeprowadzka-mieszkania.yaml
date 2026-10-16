@@ -1,0 +1,12 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 5: Utworzenie projektu przeprowadzki, dobór floty, manifest 4 fazy i Share Sheet (Z-161..Z-165, Z-186)
+- launchApp
+- tapOn: "Wnętrza"
+- assertVisible: "Kalkulator Floty Przeprowadzkowej"
+- assertVisible: "Szacowana kubatura"
+- assertVisible: "Rekomendowany pojazd"
+- tapOn: "▼ Zobacz Manifest Załadunku (Zasada 4 Fazy)"
+- assertVisible: "Karton „Pierwsza Noc”"
+- assertVisible: "Porównanie: Osobówka vs Wynajem Busa"
+- tapOn: "📤 Udostępnij Raport Przeprowadzki (Z-186)"

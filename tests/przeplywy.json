@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "description": "Czy się zmieści? (FitCheck) — Scenariusze E2E Maestro na iOS Simulator (Warstwa 7)",
+  "appId": "com.apps4brew.czy.sie.zmiesci",
+  "flows": [
+    {
+      "id": "FLOW-01",
+      "file": ".maestro/01-pelny-przeplyw-auto-meble.yaml",
+      "title": "Pełny przepływ auto i meble",
+      "description": "Wybór kombi z bazy (Škoda Octavia IV), dodanie szafy IKEA, weryfikacja 3D i animacji pakowania.",
+      "requirements": ["Z-001", "Z-010", "Z-041", "Z-081", "Z-095"]
+    },
+    {
+      "id": "FLOW-02",
+      "file": ".maestro/02-szybki-test-paczkomat.yaml",
+      "title": "Szybki test paczkomatu InPost",
+      "description": "Wpisanie wymiarów paczki, sprawdzenie Gabarytu B InPost z luzem zamka 10 mm.",
+      "requirements": ["Z-023", "RD-09"]
+    },
+    {
+      "id": "FLOW-03",
+      "file": ".maestro/03-alarm-dmc-przeladowanie.yaml",
+      "title": "Alarm DMC i przeciążenie osi",
+      "description": "Dodanie ciężkiego ładunku, weryfikacja czerwonego alertu DMC, środka ciężkości i bilansu pasażerów.",
+      "requirements": ["Z-090", "Z-091", "Z-092", "Z-093"]
+    },
+    {
+      "id": "FLOW-04",
+      "file": ".maestro/04-kopia-i-przywrocenie.yaml",
+      "title": "Kopia i przywrócenie bazy SQLite",
+      "description": "Eksport bazy do JSON, weryfikacja integralności i import kopii bezpieczeństwa (0 zł).",
+      "requirements": ["Z-131", "Z-132", "DEC-02"]
+    },
+    {
+      "id": "FLOW-05",
+      "file": ".maestro/05-przeprowadzka-mieszkania.yaml",
+      "title": "Przeprowadzka lokalu i dobór floty",
+      "description": "Utworzenie projektu przeprowadzki M3, dobór busa, manifest Zasada 4 Fazy i Share Sheet.",
+      "requirements": ["Z-161", "Z-162", "Z-164", "Z-186", "RD-49"]
+    },
+    {
+      "id": "FLOW-06",
+      "file": ".maestro/06-wneka-scienna-listwy.yaml",
+      "title": "Wnęka ścienna z odliczeniem listew",
+      "description": "Zdefiniowanie wnęki 152 cm, dodanie szafy 150 cm, detekcja kolizji z listwami 20 mm i ergonomia.",
+      "requirements": ["Z-170", "Z-172", "RD-36", "RD-51"]
+    },
+    {
+      "id": "FLOW-07",
+      "file": ".maestro/07-garaz-box-dachowy.yaml",
+      "title": "Garaż, box dachowy i hak rowerowy",
+      "description": "Zestawienie auta z boxem dachowym, sprawdzenie wysokości wjazdu B-16 oraz nacisku pionowego haka S.",
+      "requirements": ["Z-178", "Z-180", "Z-181", "Z-182", "RD-44"]
+    }
+  ]
+}

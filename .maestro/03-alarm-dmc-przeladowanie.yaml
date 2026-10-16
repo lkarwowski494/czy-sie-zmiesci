@@ -1,0 +1,11 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 3: Kontrola DMC, sumator masy ładunku i alarm przeciążenia osi (Z-090..Z-093)
+- launchApp
+- tapOn: "Symulator 3D"
+- assertVisible: "Symulator Załadunku 3D"
+- tapOn: "📦 AGD + Kartony"
+- assertVisible: "Masa ładunku"
+- assertVisible: "Status DMC"
+- assertVisible: "Balans i Środek Ciężkości"
+- assertVisible: "Symetria poprzeczna"

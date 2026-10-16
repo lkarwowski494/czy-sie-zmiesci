@@ -1,0 +1,12 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ 6: Wnęka ścienna z odliczeniem listew przypodłogowych i ergonomia mebli (Z-170, Z-172)
+- launchApp
+- tapOn: "Wnętrza"
+- assertVisible: "Wnęka Ścienna & Listwy Przypodłogowe"
+- assertVisible: "Wnęka (Szer. × Głęb. w cm)"
+- assertVisible: "Mebel / Szafa (Szer. × Głęb. w cm)"
+- assertVisible: "Rzut wnęki ściennej z góry"
+- assertVisible: "Ergonomia Stref Mebli i Przejść"
+- tapOn: "🚪 Szafa (70 cm)"
+- assertVisible: "Strefa ergonomiczna"
