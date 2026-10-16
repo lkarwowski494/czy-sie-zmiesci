@@ -15,6 +15,10 @@ import { calculateCenterOfGravity } from '../../src/domain/physics/centerOfGravi
 import { TrunkVisualizer } from '../../src/components/TrunkVisualizer';
 import { PocketProofQuickCheck } from '../../src/components/PocketProofQuickCheck';
 import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import { CraftOnboardingModal } from '../../src/components/CraftOnboardingModal';
+import { ActiveFocusModeModal, FocusStep } from '../../src/components/ActiveFocusModeModal';
+import { useRitualProfile } from '../../src/services/ritual-profile';
+import { sharedCraftTokens } from '../../src/core/craft-suite-theme';
 import { POPULAR_VEHICLES_PRESETS, VehiclePreset } from '../../src/data/presets/vehicles';
 import { CARGO_ITEMS_PRESETS } from '../../src/data/presets/cargoItems';
 import { useAppAccess } from '../../src/services/app-access';
@@ -31,10 +35,13 @@ import { t } from '../../src/lib/i18n';
 export default function SimulatorScreen() {
   const access = useAppAccess();
   const unitSystem = useUnitSystem();
+  const { profile, profileInfo, onboardingDone, finishOnboarding } = useRitualProfile();
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [isFocusModeOpen, setIsFocusModeOpen] = useState(false);
 
   // Progressive Disclosure: domyślnie tryb Pocket-Proof dla natychmiastowej decyzji
   const [viewMode, setViewMode] = useState<'simulator' | 'pocket_proof'>('pocket_proof');
+
 
   // Akordeon zaawansowanej fizyki załadunku
   const [showPhysicsDetails, setShowPhysicsDetails] = useState(false);
@@ -97,6 +104,32 @@ export default function SimulatorScreen() {
     });
     return calculateCenterOfGravity(packingResult.placements, weightMap, vehicle.trunk);
   }, [packingResult.placements, activeItems, vehicle.trunk]);
+
+  const focusSteps: FocusStep[] = useMemo(() => {
+    if (packingResult.placements.length === 0) return [];
+    return packingResult.placements.map((p, idx) => {
+      const itm = activeItems.find((i) => i.id === p.itemId);
+      return {
+        id: `step-${p.itemId}-${idx}`,
+        sequence: p.sequenceOrder,
+        title: itm?.name ?? p.itemId,
+        dimensions: formatDimensions3D(
+          p.orientedDimensionsMm.lengthMm / 10,
+          p.orientedDimensionsMm.widthMm / 10,
+          p.orientedDimensionsMm.heightMm / 10,
+          unitSystem
+        ),
+        weightKg: itm?.weightKg ?? 10,
+        targetLocation: `Bagażnik (${Math.round(p.positionMm.xMm / 10)} / ${Math.round(p.positionMm.yMm / 10)} / ${Math.round(p.positionMm.zMm / 10)} cm)`,
+        isHeavy: (itm?.weightKg ?? 0) >= 20,
+        isFragile: !!itm?.isFragile,
+        advice: itm?.isFragile
+          ? t('Unieruchom pasem lub zablokuj miękkim ładunkiem.')
+          : t('Dosuń ściśle do krawędzi lub oparcia kanapy.'),
+      };
+    });
+  }, [packingResult.placements, activeItems, unitSystem]);
+
 
   // Bezpieczny zapis sesji załadunku do bazy SQLite z automatyczną rotacją 10 kopii zapasowych
   const persistSession = (
@@ -254,6 +287,22 @@ export default function SimulatorScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Nagłówek */}
         <View style={styles.header}>
+          <View style={styles.craftHeaderBar}>
+            <View style={styles.profileIndicator} testID="ritual-profile-indicator">
+              <Text style={styles.profileIndicatorText}>
+                {profileInfo.icon} {t(profileInfo.title)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              testID="open-active-focus-btn"
+              style={styles.focusModeLaunchBtn}
+              onPress={() => setIsFocusModeOpen(true)}
+              hitSlop={sharedCraftTokens.hitSlopStandard}
+              activeOpacity={0.75}
+            >
+              <Text style={styles.focusModeLaunchBtnText}>🔍 {t('Tryb Skupienia (Active Focus)')}</Text>
+            </TouchableOpacity>
+          </View>
           <Text style={styles.title}>{t('Symulator Załadunku 3D')}</Text>
           <Text style={styles.subtitle}>
             {t('Deterministyczny algorytm Extreme Points & Rzuty 2.5D (RD-02)')}
@@ -677,6 +726,23 @@ export default function SimulatorScreen() {
         onClose={() => setIsPaywallOpen(false)}
         onPurchaseSuccess={() => access.refresh()}
       />
+
+      {/* Modal Onboardingu Rytuału Apps4Craft (1-ekranowy) */}
+      <CraftOnboardingModal
+        visible={!onboardingDone}
+        onSelectProfile={finishOnboarding}
+      />
+
+      {/* Modal Aktywnego Skupienia Warsztatowego (Active Focus) */}
+      <ActiveFocusModeModal
+        visible={isFocusModeOpen}
+        onClose={() => setIsFocusModeOpen(false)}
+        steps={focusSteps}
+        clearanceMm={45}
+        payloadPct={payloadResult.payloadUtilizationPct}
+        totalWeightKg={packingResult.totalWeightKg}
+      />
+
     </SafeAreaView>
   );
 }
@@ -684,7 +750,41 @@ export default function SimulatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
+  },
+  craftHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    gap: 8,
+  },
+  profileIndicator: {
+    backgroundColor: sharedCraftTokens.colors.bgCard,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: sharedCraftTokens.colors.border,
+    flex: 1,
+  },
+  profileIndicatorText: {
+    color: '#38BDF8',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  focusModeLaunchBtn: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  focusModeLaunchBtnText: {
+    color: '#38BDF8',
+    fontSize: 12,
+    fontWeight: '700',
   },
   readOnlyBanner: {
     backgroundColor: 'rgba(239, 68, 68, 0.15)',
@@ -694,6 +794,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 14,
   },
+
   readOnlyBannerTitle: {
     color: '#F87171',
     fontWeight: '800',

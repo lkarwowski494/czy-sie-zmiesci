@@ -23,7 +23,8 @@ import {
   evaluatePorterManualHandling,
   FurnitureClearanceType,
 } from '../../src/domain/room-fitting/atticAndErgonomics';
-import { compareCarVsVanRelocation } from '../../src/domain/relocation/vanVsCarEconomics';
+import { sharedCraftTokens } from '../../src/core/craft-suite-theme';
+
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
 import { StaircaseVisualizer } from '../../src/components/StaircaseVisualizer';
@@ -79,10 +80,6 @@ export default function RelocationScreen() {
   const [atticFurnDepthCm, setAtticFurnDepthCm] = useState('60');
   const [atticFurnHeightCm, setAtticFurnHeightCm] = useState('140');
   const [atticFurnDistCm, setAtticFurnDistCm] = useState('50');
-
-  // Porównanie osobówka vs van (Z-164)
-  const [distanceKm, setDistanceKm] = useState('25');
-  const [vanRentalFee, setVanRentalFee] = useState('180');
 
   // Boks self-storage (RD-50, Z-166)
   const [storageLenM, setStorageLenM] = useState('3.0');
@@ -215,13 +212,6 @@ export default function RelocationScreen() {
     parsedAtticFurnDistMm
   );
 
-  // Porównanie ekonomiczne: osobówka vs van (Z-164)
-  const tripComparison = compareCarVsVanRelocation({
-    totalVolumeM3: Math.max(0.5, relocResult.estimatedVolumeM3),
-    distanceOneWayKm: Math.max(1, parseFloat(distanceKm) || 25),
-    vanDailyRentalFeePln: Math.max(50, parseFloat(vanRentalFee) || 180),
-  });
-
   // Boks self-storage (RD-50, Z-166)
   const parsedStorageLen = Math.max(0.5, parseFloat(storageLenM) || 3.0);
   const parsedStorageWidth = Math.max(0.5, parseFloat(storageWidthM) || 2.0);
@@ -292,13 +282,6 @@ export default function RelocationScreen() {
       `2. ${t('Faza 2: Meble skrzyniowe, komody, stoły i standardowe kartony bazowe')}`,
       `3. ${t('Faza 3: Wypełniacze, miękkie torby, pościel (blokowanie luzów w furgonie)')}`,
       `4. ${t('Faza 4: Karton „Pierwsza Noc” (przy drzwiach tylnych / wyjmowany jako 1.)')}`,
-      '',
-      `--- ${t('RACHUNEK EKONOMICZNY: OSOBÓWKA VS VAN (Z-164)')} ---`,
-      `${t('Odległość:')} ${distanceKm} km (${t('w jedną stronę')})`,
-      `${t('Rekomendacja:')} ${tripComparison.isVanRecommended ? t('Wynajem Busa') : t('Kursy Osobówką')}`,
-      `${t('Osobówka:')} ${tripComparison.carTripsCount} ${t('kursów')}, ${t('koszt łączny:')} ${tripComparison.carTotalCostPln} zł`,
-      `${t('Van:')} ${tripComparison.vanTripsCount} ${t('kurs')}, ${t('koszt łączny:')} ${tripComparison.vanTotalCostPln} zł`,
-      '',
       `--- ${t('ZALECENIA BEZPIECZEŃSTWA LOGISTYCZNEGO')} ---`,
       `• ${t('AGD chłodnicze przewoź w pionie lub odczekaj 12-24h przed włączeniem zasilania (Z-189)')}`,
       `• ${t('Używaj pasów transportowych o wytrzymałości min. 500 daN')}`,
@@ -338,6 +321,62 @@ export default function RelocationScreen() {
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Sacred Numbers Panel (Przestrzenie Architektoniczne) */}
+        <View style={styles.sacredPanel} testID="relocation-sacred-panel">
+          <View style={styles.sacredItem}>
+            <Text style={styles.sacredLabel}>{t('LUZ DRZWI')}</Text>
+            <Text
+              style={[
+                styles.sacredValue,
+                doorResult.canPass ? styles.sacredValueSuccess : styles.sacredValueDanger,
+              ]}
+            >
+              {doorResult.canPass ? '+' : ''}{Math.round(doorResult.netClearanceWithHandsMm / 10)} cm
+            </Text>
+            <Text style={styles.sacredSub}>
+              {doorResult.canPass ? t('Przejdzie') : t('Zablokowanie')}
+            </Text>
+          </View>
+          <View style={styles.sacredDivider} />
+          <View style={styles.sacredItem}>
+            <Text style={styles.sacredLabel}>{t('OBRÓT SCHODY')}</Text>
+            <Text
+              style={[
+                styles.sacredValue,
+                stairsResult.canPass ? styles.sacredValueSuccess : styles.sacredValueDanger,
+              ]}
+            >
+              {stairsResult.canTurnHorizontally
+                ? '0°'
+                : stairsResult.canTurnWithVerticalTilt
+                ? `${stairsResult.requiredTiltAngleDeg}°`
+                : 'KOLIZJA'}
+            </Text>
+            <Text style={styles.sacredSub}>
+              {stairsResult.canTurnHorizontally
+                ? t('Płaski')
+                : stairsResult.canTurnWithVerticalTilt
+                ? t('Pionizacja')
+                : t('Brak przejścia')}
+            </Text>
+          </View>
+          <View style={styles.sacredDivider} />
+          <View style={styles.sacredItem}>
+            <Text style={styles.sacredLabel}>{t('NORMA BHP')}</Text>
+            <Text
+              style={[
+                styles.sacredValue,
+                porterBhpResult.isCompliant ? styles.sacredValueSuccess : styles.sacredValueDanger,
+              ]}
+            >
+              {Math.round(porterBhpResult.weightPerPorterKg)} kg/os.
+            </Text>
+            <Text style={styles.sacredSub}>
+              {porterBhpResult.isCompliant ? t('Dozwolone') : t('Zakaz!')}
+            </Text>
+          </View>
+        </View>
 
         {/* Sekcja 1: Kalkulator Przeprowadzki */}
         <View style={styles.card}>
@@ -413,58 +452,6 @@ export default function RelocationScreen() {
               <Text style={styles.manifestPhaseHighlight}>4. {t('Karton „Pierwsza Noc” (Przy drzwiach kontenera / Wyjmowany jako 1.)')}</Text>
             </View>
           )}
-
-          {/* Rachunek Ekonomiczny: Osobówka vs Van (Z-164) */}
-          <View style={[styles.resultBox, { marginTop: 12, backgroundColor: '#0F172A' }]}>
-            <Text style={[styles.cardTitle, { fontSize: 14, color: '#38BDF8', marginBottom: 8 }]}>
-              💰 {t('Porównanie: Osobówka vs Wynajem Busa (Z-164)')}
-            </Text>
-
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>{t('Odległość w 1 stronę (km):')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={distanceKm}
-                  onChangeText={(val) => checkAccessAndSet(setDistanceKm, val)}
-                  keyboardType="numeric"
-                  placeholder="25"
-                />
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.label}>{t('Koszt vana (zł/doba):')}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={vanRentalFee}
-                  onChangeText={(val) => checkAccessAndSet(setVanRentalFee, val)}
-                  keyboardType="numeric"
-                  placeholder="180"
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>{t('Kombi ({count} kursy):', { count: tripComparison.carTripsCount })}</Text>
-                <Text style={[styles.resultHighlight, { fontSize: 15, color: '#F8FAFC' }]}>
-                  {tripComparison.carTotalCostPln} zł • {tripComparison.carTotalTimeHours}h
-                </Text>
-              </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.label}>{t('Bus van ({count} kurs):', { count: tripComparison.vanTripsCount })}</Text>
-                <Text style={[styles.resultHighlight, { fontSize: 15, color: '#34D399' }]}>
-                  {tripComparison.vanTotalCostPln} zł • {tripComparison.vanTotalTimeHours}h
-                </Text>
-              </View>
-            </View>
-
-            <Text style={[styles.subtext, { fontWeight: '700', color: tripComparison.isVanRecommended ? '#34D399' : '#F59E0B' }]}>
-              {tripComparison.economicVerdict}
-            </Text>
-            <Text style={[styles.subtext, { marginTop: 2, color: '#94A3B8' }]}>
-              💡 {tripComparison.recommendation}
-            </Text>
-          </View>
 
           {/* Przycisk Zapisania w SQLite */}
           <TouchableOpacity
@@ -1216,8 +1203,56 @@ export default function RelocationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
   },
+  sacredPanel: {
+    flexDirection: 'row',
+    backgroundColor: sharedCraftTokens.colors.bgCard,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: sharedCraftTokens.colors.border,
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  sacredItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  sacredDivider: {
+    width: 1,
+    height: '70%',
+    backgroundColor: sharedCraftTokens.colors.border,
+  },
+  sacredLabel: {
+    color: sharedCraftTokens.colors.textMuted,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  sacredValue: {
+    color: '#38BDF8',
+    fontSize: 18,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  sacredValueSuccess: {
+    color: '#10B981',
+  },
+  sacredValueDanger: {
+    color: '#EF4444',
+  },
+  sacredSub: {
+    color: sharedCraftTokens.colors.textSecondary,
+    fontSize: 10,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+
   scrollContent: {
     padding: 16,
     paddingBottom: 40,

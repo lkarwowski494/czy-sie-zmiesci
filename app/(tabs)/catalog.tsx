@@ -37,7 +37,7 @@ import {
   STANDARD_REFERENCE_OBJECTS,
   MeasurementTool,
 } from '../../src/domain/measuring/tapeMeasureAssistant';
-import { SafetyEducationView } from '../../src/components/SafetyEducationView';
+import { sharedCraftTokens } from '../../src/core/craft-suite-theme';
 import { MultiCheckerMatrixView } from '../../src/components/MultiCheckerMatrixView';
 import { ScreenRuler } from '../../src/components/ScreenRuler';
 import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
@@ -582,9 +582,6 @@ export default function CatalogScreen() {
               </Text>
             ))}
           </View>
-
-          {/* Poradnik Eksperta */}
-          <SafetyEducationView />
         </View>
 
         {/* Sekcja 4: Asystent Miarki & Tolerancja Pomiaru */}
@@ -1033,7 +1030,7 @@ export default function CatalogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
   },
   scrollContent: {
     padding: 16,

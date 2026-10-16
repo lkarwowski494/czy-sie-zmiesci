@@ -15,6 +15,8 @@ import { useUnitSystem, setUnitSystem } from '../../src/lib/unit-converter';
 import { exportBackup, safetyBackup } from '../../src/lib/backup';
 import { useAppAccess } from '../../src/services/app-access';
 import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
+import { sharedCraftTokens, CRAFT_APPS } from '../../src/core/craft-suite-theme';
+import { useRitualProfile, RITUAL_PROFILES, RitualProfileId } from '../../src/services/ritual-profile';
 
 export default function SettingsScreen() {
   const db = getDatabaseService();
@@ -22,7 +24,9 @@ export default function SettingsScreen() {
   const lang = useLang();
   const unitSystem = useUnitSystem();
   const access = useAppAccess();
+  const { profile, changeProfile } = useRitualProfile();
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
+
 
   // Stany bazy i kopii zapasowej
   const [backupJson, setBackupJson] = useState<string | null>(null);
@@ -207,107 +211,102 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Symulator Apple Watch Companion */}
-        <View style={styles.watchContainer}>
-          <View style={styles.watchHeaderRow}>
-            <Text style={styles.watchSectionTitle}>⌚ Apple Watch Companion (DEC-03, DEC-31)</Text>
-            <View style={styles.watchBadge}>
-              <Text style={styles.watchBadgeText}>watchOS 11+</Text>
+        {/* 1. Profil Rytuału Rzemieślniczego (FAZA 3) */}
+        <View style={styles.card} testID="settings-ritual-profile-card">
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.cardTitle}>🎯 {t('Profil Rytuału')}</Text>
+            <View style={styles.profileActiveBadge}>
+              <Text style={styles.profileActiveBadgeText}>{t('Aktywny')}</Text>
             </View>
           </View>
-          <Text style={styles.watchSectionDesc}>
-            Tryb &quot;Wolne Ręce&quot; — załadunek krok po kroku z haptyką Taptic Engine bez wyjmowania iPhone&apos;a z kieszeni.
+          <Text style={styles.infoText}>
+            {t('Wybierz profil, aby dostosować układ narzędzi w aplikacji:')}
           </Text>
 
-          {/* Ramka Apple Watch */}
-          <View style={styles.watchCase}>
-            <View style={styles.watchScreen}>
-              <View style={styles.watchStatusBar}>
-                <Text style={styles.watchTime}>10:09</Text>
-                <Text style={styles.watchProgressLabel}>{progressPct}% SPAKOWANE</Text>
-              </View>
+          <View style={styles.ritualProfilesGrid}>
+            {(Object.keys(RITUAL_PROFILES) as RitualProfileId[]).map((id) => {
+              const p = RITUAL_PROFILES[id];
+              const isSelected = profile === id;
 
-              {/* Pasek postępu */}
-              <View style={styles.watchProgressBar}>
-                <View style={[styles.watchProgressFill, { width: `${progressPct}%` }]} />
-              </View>
-
-              {/* Karta bieżącego przedmiotu na zegarku */}
-              <View style={styles.watchItemCard}>
-                <Text style={styles.watchPhaseBadge}>{currentStep.phase}</Text>
-                <Text style={styles.watchItemName} numberOfLines={1}>
-                  {currentStep.title}
-                </Text>
-                <Text style={styles.watchItemDims}>📏 {currentStep.dim} • ⚖️ {currentStep.weight} kg</Text>
-                <Text style={styles.watchItemPos}>📍 {currentStep.location}</Text>
-
-                {currentStep.isHeavy && (
-                  <View style={styles.watchWarningPill}>
-                    <Text style={styles.watchWarningText}>⚠️ Ciężkie (≥20kg) • 2 osoby</Text>
-                  </View>
-                )}
-                {currentStep.isFragile && (
-                  <View style={[styles.watchWarningPill, { backgroundColor: '#EF4444' }]}>
-                    <Text style={styles.watchWarningText}>🛑 Kruche • Nie dociskać</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Przyciski zegarka */}
-              <View style={styles.watchButtonsRow}>
+              return (
                 <TouchableOpacity
-                  style={[styles.watchActionBtn, isCurrentPacked && styles.watchActionBtnDone]}
-                  onPress={toggleCurrentStepPacked}
-                  accessibilityLabel="Zatwierdź krok załadunku na zegarku"
-                >
-                  <Text style={styles.watchActionBtnText}>
-                    {isCurrentPacked ? '✓ ZAŁADOWANY' : '📦 OZNACZ ZAŁADUNEK'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Nawigacja kroków Digital Crown */}
-              <View style={styles.watchCrownControls}>
-                <TouchableOpacity
-                  disabled={watchStepIndex === 0}
-                  onPress={() => setWatchStepIndex((i) => Math.max(0, i - 1))}
-                  style={[styles.crownBtn, watchStepIndex === 0 && styles.crownBtnDisabled]}
-                >
-                  <Text style={styles.crownBtnText}>◀ Poprzedni</Text>
-                </TouchableOpacity>
-
-                <Text style={styles.crownStepText}>
-                  {watchStepIndex + 1} z {sampleWatchSteps.length}
-                </Text>
-
-                <TouchableOpacity
-                  disabled={watchStepIndex === sampleWatchSteps.length - 1}
-                  onPress={() => setWatchStepIndex((i) => Math.min(sampleWatchSteps.length - 1, i + 1))}
+                  key={id}
+                  testID={`settings-profile-btn-${id}`}
                   style={[
-                    styles.crownBtn,
-                    watchStepIndex === sampleWatchSteps.length - 1 && styles.crownBtnDisabled,
+                    styles.profileSettingCard,
+                    isSelected && styles.profileSettingCardSelected,
                   ]}
+                  onPress={() => changeProfile(id)}
+                  hitSlop={sharedCraftTokens.hitSlopStandard}
+                  activeOpacity={0.8}
                 >
-                  <Text style={styles.crownBtnText}>Następny ▶</Text>
+                  <View style={styles.profileSettingHeader}>
+                    <Text style={styles.profileSettingIcon}>{p.icon}</Text>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.profileTitleRow}>
+                        <Text
+                          style={[
+                            styles.profileSettingTitle,
+                            isSelected && styles.profileSettingTitleSelected,
+                          ]}
+                        >
+                          {t(p.title)}
+                        </Text>
+                        {isSelected && <Text style={styles.checkmarkIcon}>✓</Text>}
+                      </View>
+                      <Text style={styles.profileSettingSubtitle}>{t(p.subtitle)}</Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
-              </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 2. Rodzina Apps4Craft Studio (FAZA 4) */}
+        <View style={styles.card} testID="settings-apps4craft-family-card">
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.cardTitle}>⚒️ {t('Rodzina Apps4Craft Studio')}</Text>
+            <View style={styles.studioEcosystemBadge}>
+              <Text style={styles.studioEcosystemBadgeText}>EKOSYSTEM</Text>
             </View>
           </View>
+          <Text style={styles.infoText}>
+            {t('Rzemieślniczy ekosystem 100% offline-first. Żadnych chmur, żadnej telemetrii.')}
+          </Text>
 
-          {/* Powiadomienie Taptic */}
-          {watchHapticNotice && (
-            <View style={styles.hapticToast}>
-              <Text style={styles.hapticToastText}>{watchHapticNotice}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={styles.testHapticBtn}
-            onPress={() => triggerWatchHaptic(currentStep.haptic)}
-          >
-            <Text style={styles.testHapticBtnText}>📳 Przetestuj Haptykę dla Bieżącego Kroku</Text>
-          </TouchableOpacity>
+          <View style={styles.craftAppsList}>
+            {Object.values(CRAFT_APPS).map((app) => (
+              <View
+                key={app.id}
+                style={[
+                  styles.craftAppItem,
+                  app.id === 'fitcheck' && styles.craftAppItemCurrent,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.craftAppAccentIndicator,
+                    { backgroundColor: app.accent },
+                  ]}
+                />
+                <View style={styles.craftAppDetails}>
+                  <View style={styles.craftAppNameRow}>
+                    <Text style={styles.craftAppName}>{app.name}</Text>
+                    {app.id === 'fitcheck' && (
+                      <View style={styles.currentAppPill}>
+                        <Text style={styles.currentAppPillText}>{t('Ta aplikacja')}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.craftAppDomain}>{app.domain}</Text>
+                  <Text style={styles.craftAppHero}>{app.heroDescriptor}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
+
 
         {/* Język i Jednostki Miary (i18n & Imperial) */}
         <View style={styles.card}>
@@ -555,7 +554,144 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  profileActiveBadge: {
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+  },
+  profileActiveBadgeText: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  ritualProfilesGrid: {
+    gap: 10,
+    marginTop: 8,
+  },
+  profileSettingCard: {
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: sharedCraftTokens.colors.border,
+  },
+  profileSettingCardSelected: {
+    borderColor: '#38BDF8',
+    backgroundColor: '#1E293B',
+  },
+  profileSettingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  profileSettingIcon: {
+    fontSize: 24,
+  },
+  profileTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  profileSettingTitle: {
+    color: sharedCraftTokens.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  profileSettingTitleSelected: {
+    color: '#38BDF8',
+  },
+  checkmarkIcon: {
+    color: '#38BDF8',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  profileSettingSubtitle: {
+    color: sharedCraftTokens.colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  studioEcosystemBadge: {
+    backgroundColor: 'rgba(200, 106, 40, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#C86A28',
+  },
+  studioEcosystemBadgeText: {
+    color: '#E5A96A',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  craftAppsList: {
+    gap: 8,
+    marginTop: 8,
+  },
+  craftAppItem: {
+    flexDirection: 'row',
+    backgroundColor: sharedCraftTokens.colors.bgBasalt,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: sharedCraftTokens.colors.border,
+  },
+  craftAppItemCurrent: {
+    borderColor: '#38BDF8',
+    backgroundColor: 'rgba(56, 189, 248, 0.05)',
+  },
+  craftAppAccentIndicator: {
+    width: 5,
+  },
+  craftAppDetails: {
+    flex: 1,
+    padding: 10,
+  },
+  craftAppNameRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  craftAppName: {
+    color: sharedCraftTokens.colors.textPrimary,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  currentAppPill: {
+    backgroundColor: '#38BDF8',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  currentAppPillText: {
+    color: '#0F172A',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  craftAppDomain: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  craftAppHero: {
+    color: sharedCraftTokens.colors.textMuted,
+    fontSize: 10,
+    lineHeight: 14,
   },
   cardHeaderRow: {
     flexDirection: 'row',
@@ -636,197 +772,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  watchContainer: {
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#374151',
-  },
-  watchHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  watchSectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#F8FAFC',
-  },
-  watchBadge: {
-    backgroundColor: '#374151',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  watchBadgeText: {
-    color: '#9CA3AF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  watchSectionDesc: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    lineHeight: 16,
-    marginBottom: 14,
-  },
-  watchCase: {
-    backgroundColor: '#030712',
-    borderRadius: 36,
-    padding: 12,
-    borderWidth: 3,
-    borderColor: '#4B5563',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
-    marginVertical: 8,
-  },
-  watchScreen: {
-    backgroundColor: '#000000',
-    borderRadius: 24,
-    padding: 12,
-  },
-  watchStatusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  watchTime: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  watchProgressLabel: {
-    color: '#34D399',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  watchProgressBar: {
-    height: 4,
-    backgroundColor: '#1F2937',
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  watchProgressFill: {
-    height: '100%',
-    backgroundColor: '#10B981',
-  },
-  watchItemCard: {
-    backgroundColor: '#111827',
-    borderRadius: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#1F2937',
-    marginBottom: 10,
-  },
-  watchPhaseBadge: {
-    color: '#60A5FA',
-    fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  watchItemName: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  watchItemDims: {
-    color: '#9CA3AF',
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  watchItemPos: {
-    color: '#CBD5E1',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  watchWarningPill: {
-    backgroundColor: '#D97706',
-    borderRadius: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 6,
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
-  watchWarningText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  watchButtonsRow: {
-    marginBottom: 10,
-  },
-  watchActionBtn: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  watchActionBtnDone: {
-    backgroundColor: '#059669',
-  },
-  watchActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  watchCrownControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  crownBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  crownBtnDisabled: {
-    opacity: 0.3,
-  },
-  crownBtnText: {
-    color: '#60A5FA',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  crownStepText: {
-    color: '#6B7280',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  hapticToast: {
-    backgroundColor: '#1E1B4B',
-    borderColor: '#6366F1',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginTop: 10,
-  },
-  hapticToastText: {
-    color: '#C7D2FE',
-    fontSize: 12,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  testHapticBtn: {
-    backgroundColor: '#1F2937',
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  testHapticBtnText: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    fontWeight: '600',
   },
   card: {
     backgroundColor: '#1E293B',
