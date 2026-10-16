@@ -36,4 +36,12 @@ describe('i18n module (Apps4Brew Core T-040)', () => {
     setLang('en');
     expect(t('Nietłumaczone unikalne zdanie XYZ')).toBe('Nietłumaczone unikalne zdanie XYZ');
   });
+
+  it('persists selected language to SQLite app_settings', () => {
+    const { getAppSetting } = require('../../data/db');
+    setLang('en');
+    expect(getAppSetting('app_lang')).toBe('en');
+    setLang('pl');
+    expect(getAppSetting('app_lang')).toBe('pl');
+  });
 });

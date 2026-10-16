@@ -98,5 +98,13 @@ describe('unit-converter', () => {
       expect(formatWeight(75, 'metric')).toBe('75 kg');
       expect(formatWeight(75, 'imperial')).toBe('165.3 lbs');
     });
+
+    it('persists selected unit system to SQLite app_settings', () => {
+      const { getAppSetting } = require('../../data/db');
+      setUnitSystem('imperial');
+      expect(getAppSetting('unit_system')).toBe('imperial');
+      setUnitSystem('metric');
+      expect(getAppSetting('unit_system')).toBe('metric');
+    });
   });
 });

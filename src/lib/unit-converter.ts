@@ -4,24 +4,42 @@
  */
 
 import { useState, useEffect } from 'react';
+import { getAppSetting, setAppSetting } from '../data/db';
 
 export type UnitSystem = 'metric' | 'imperial';
 
-let currentUnitSystem: UnitSystem = 'metric';
+let currentUnitSystem: UnitSystem | null = null;
 type UnitListener = (sys: UnitSystem) => void;
 const listeners = new Set<UnitListener>();
 
+function getCurrentUnitSystem(): UnitSystem {
+  if (!currentUnitSystem) {
+    try {
+      const saved = getAppSetting('unit_system', 'metric') as UnitSystem;
+      currentUnitSystem = saved === 'imperial' ? 'imperial' : 'metric';
+    } catch {
+      currentUnitSystem = 'metric';
+    }
+  }
+  return currentUnitSystem;
+}
+
 export function setUnitSystem(system: UnitSystem): void {
   currentUnitSystem = system;
+  try {
+    setAppSetting('unit_system', system);
+  } catch {
+    // Graceful fallback
+  }
   listeners.forEach((fn) => fn(system));
 }
 
 export function getUnitSystem(): UnitSystem {
-  return currentUnitSystem;
+  return getCurrentUnitSystem();
 }
 
 export function useUnitSystem(): UnitSystem {
-  const [sys, setSys] = useState<UnitSystem>(currentUnitSystem);
+  const [sys, setSys] = useState<UnitSystem>(getCurrentUnitSystem());
   useEffect(() => {
     listeners.add(setSys);
     return () => {
@@ -59,7 +77,7 @@ export function feetToCm(feet: number): number {
   return parseFloat((feet * 30.48).toFixed(1));
 }
 
-export function formatDimension(cm: number, unitSystem: UnitSystem = currentUnitSystem): string {
+export function formatDimension(cm: number, unitSystem: UnitSystem = getCurrentUnitSystem()): string {
   if (unitSystem === 'imperial') {
     return `${cmToInches(cm)} in`;
   }
@@ -70,7 +88,7 @@ export function formatDimensions3D(
   lengthCm: number,
   widthCm: number,
   heightCm: number,
-  unitSystem: UnitSystem = currentUnitSystem
+  unitSystem: UnitSystem = getCurrentUnitSystem()
 ): string {
   if (unitSystem === 'imperial') {
     return `${cmToInches(lengthCm)} × ${cmToInches(widthCm)} × ${cmToInches(heightCm)} in`;
@@ -98,14 +116,14 @@ export function cubicFeetToM3(cuFt: number): number {
   return parseFloat((cuFt / 35.3146667).toFixed(2));
 }
 
-export function formatVolume(liters: number, unitSystem: UnitSystem = currentUnitSystem): string {
+export function formatVolume(liters: number, unitSystem: UnitSystem = getCurrentUnitSystem()): string {
   if (unitSystem === 'imperial') {
     return `${litersToCubicFeet(liters)} cu ft`;
   }
   return `${Math.round(liters)} L`;
 }
 
-export function formatM3(m3: number, unitSystem: UnitSystem = currentUnitSystem): string {
+export function formatM3(m3: number, unitSystem: UnitSystem = getCurrentUnitSystem()): string {
   if (unitSystem === 'imperial') {
     return `${m3ToCubicFeet(m3)} cu ft`;
   }
@@ -124,7 +142,7 @@ export function poundsToKg(lbs: number): number {
   return parseFloat((lbs / 2.2046226218).toFixed(1));
 }
 
-export function formatWeight(kg: number, unitSystem: UnitSystem = currentUnitSystem): string {
+export function formatWeight(kg: number, unitSystem: UnitSystem = getCurrentUnitSystem()): string {
   if (unitSystem === 'imperial') {
     return `${kgToPounds(kg)} lbs`;
   }
