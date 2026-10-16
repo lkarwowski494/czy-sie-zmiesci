@@ -50,6 +50,14 @@ export function resetDefaultDatabaseInstance(): void {
   }
 }
 
+export function getAppSetting(key: string, defaultValue: string = ''): string {
+  return getDatabaseService().getAppSetting(key, defaultValue);
+}
+
+export function setAppSetting(key: string, value: string): void {
+  getDatabaseService().setAppSetting(key, value);
+}
+
 export { DatabaseService, BackupExportPayload, BackupImportResult } from './database';
 export * from './schema';
 export * from './driver';

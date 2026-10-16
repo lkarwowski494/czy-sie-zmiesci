@@ -99,7 +99,7 @@ export class MemorySQLiteDriver implements ISQLiteDriver {
         record[col] = params[idx];
       });
 
-      const id = String(record['id'] ?? Math.random().toString());
+      const id = String(record['id'] ?? record['key'] ?? Math.random().toString());
 
       // Foreign Key Validation
       if (this.foreignKeysEnabled && this.foreignKeys.has(tableName)) {

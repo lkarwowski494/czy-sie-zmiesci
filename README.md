@@ -8,7 +8,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-100%25_Offline--First-003B57?style=flat&logo=sqlite)](https://sqlite.org/)
 [![Engine](https://img.shields.io/badge/3D_Engine-SceneKit_%2F_Metal-orange?style=flat&logo=apple)](https://developer.apple.com/scenekit/)
 [![Coverage](https://img.shields.io/badge/Coverage-100%25_Domain-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
-[![Tests](https://img.shields.io/badge/Tests-11018_passed_(47_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
+[![Tests](https://img.shields.io/badge/Tests-11035_passed_(50_suites)-brightgreen?style=flat)](czy_sie_zmiesci_brd/Czy%20sie%20zmiesci%20BRD%200.1%20·%20D4%20·%20rozdz.%2017%20wielowarstwowa%20strategia%20testów%20(9%20warstw%20jakości).md)
 [![CI](https://github.com/lkarwowski494/czy-sie-zmiesci/actions/workflows/ci.yml/badge.svg)](https://github.com/lkarwowski494/czy-sie-zmiesci/actions)
 
 > **„Nigdy więcej zgadywania przed zakupem, przeprowadzką i podróżą — uniwersalny asystent przestrzenny 3D rozwiązujący każdy dylemat gabarytowy: od bagażnika, boxa dachowego i haka z rowerami, przez paczkomaty i linie lotnicze, aż po wnoszenie kanapy po schodach, wnęki ścienne i wjazd do ciasnego garażu. Zawsze pod ręką offline, na iPhone i Apple Watch.”**
@@ -305,8 +305,33 @@ Kompletna specyfikacja wymagań biznesowych (27 plików, **118,72 strony znormal
 
 ---
 
+## ☕ Model Monetyzacji Impulsowej — „Cheaper than Espresso”
+
+Aplikacja wdraża zunifikowany model monetyzacji ekosystemu Apps4Brew Studio:
+- **Cennik impulsowy:**
+  - **\$0.99 USD / miesiąc** (~4,49 zł) — mikro-subskrypcja impulsowa, tańsza od pojedynczego espresso.
+  - **\$4.99 USD / rok** (~22,99 zł, oferta główna) — mniej niż 2 zł na miesiąc.
+  - **\$14.99 USD Lifetime** (~69,99 zł) — jednorazowy zakup na zawsze bez abonamentów.
+- **100% Funkcji w Okresie Próbnym (Zero podziału Free / Pro):** Użytkownik w okresie próbnym (7 dni lub pierwsze 3 pełne projekty) ma dostęp do 100% możliwości aplikacji (symulator 3D, silnik kinematyczny, asystent schodów, miarka AR, eksporty, Apple Watch).
+- **Gwarancja Czytelnej Historii (Read-Only History Guarantee):** Po wygaśnięciu okresu próbnego blokowane jest wyłącznie tworzenie nowych projektów (wyświetlając elegancki Paywall modalny z przyciskiem zamknięcia wg Apple HIG). **Cała dotychczasowa historia pomiarów, konfiguracje bagażników, meble i notatki pozostają zawsze w pełni czytelne** (ochrona ocen 4.9★ w App Store i Google Play).
+
+---
+
+## ⚡ Tryb Pocket-Proof (Store-to-Trunk Quick Verdict)
+
+Dedykowany widok błyskawicznej weryfikacji w sklepie meblowym (np. IKEA) lub na parkingu:
+- **Czas decyzji:** 3–5 sekund na wyjęcie telefonu i uzyskanie natychmiastowego werdyktu.
+- **3 jednoznaczne stany:**
+  - 🟢 **TAK, ZAPAKUJESZ BEZ PROBLEMU!** — mebel mieści się w bagażniku bez ruszania foteli, z podanym marginesem w cm do klapy.
+  - 🟡 **ZŁÓŻ TYLNĄ KANAPĘ!** — mebel jest za długi na standardowy bagażnik, ale wejdzie na płasko po złożeniu oparcia kanapy.
+  - 🔴 **NIE ZMIEŚCI SIĘ!** — paczka wystaje poza auto lub blokuje się na świetle otworu bagażnika, z podaniem krytycznego wymiaru i brakujących centymetrów.
+- Przełącznik jednym tapnięciem między szybkim werdyktem Pocket-Proof a pełnym symulatorem 3D.
+
+---
+
 ## 📄 Status & Dystrybucja
 
 - **Dystrybucja:** Wersja przygotowywana do Apple TestFlight & App Store (iOS 18+, watchOS 11+).
 - **Zasady interakcji:** Pełna zgodność z Apple Human Interface Guidelines (HIG), wsparcie VoiceOver, Dynamic Type XXL, Dark Mode.
 - **Prywatność:** Architektura 100% Offline-First — dane przechowywane lokalnie w SQLite, zerowe logowanie i zero zewnętrznych serwerów.
+

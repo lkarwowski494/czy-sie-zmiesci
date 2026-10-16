@@ -442,6 +442,29 @@ export class DatabaseService {
     }
   }
 
+  public getAppSetting(key: string, defaultValue: string = ''): string {
+    try {
+      const row = this.driver.getFirstSync<Record<string, unknown>>(
+        'SELECT value FROM app_settings WHERE key = ?',
+        [key]
+      );
+      return row && row.value !== undefined ? String(row.value) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  }
+
+  public setAppSetting(key: string, value: string): void {
+    try {
+      this.driver.runSync(
+        'INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at',
+        [key, value, Date.now()]
+      );
+    } catch {
+      // Fallback
+    }
+  }
+
   public close(): void {
     this.driver.closeSync();
   }

@@ -218,6 +218,13 @@ CREATE TABLE IF NOT EXISTS towbar_roof_configs (
     FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
 );
 
+-- 14. Tabela ustawień aplikacji i stanu licencji (Key-Value)
+CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
 -- Indeksy wydajnościowe
 CREATE INDEX IF NOT EXISTS idx_vehicles_make_model ON vehicles(make, model);
 CREATE INDEX IF NOT EXISTS idx_cargo_category ON cargo_items(category);

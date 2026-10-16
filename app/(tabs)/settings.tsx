@@ -10,15 +10,19 @@ import {
 } from 'react-native';
 import { getDatabaseService, BackupExportPayload } from '../../src/data/db';
 import { WatchSyncService, WatchHapticType } from '../../src/services/WatchSyncService';
-import { useLang, setLang } from '../../src/lib/i18n';
+import { useLang, setLang, t } from '../../src/lib/i18n';
 import { useUnitSystem, setUnitSystem } from '../../src/lib/unit-converter';
 import { exportBackup, safetyBackup } from '../../src/lib/backup';
+import { useAppAccess } from '../../src/services/app-access';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
 
 export default function SettingsScreen() {
   const db = getDatabaseService();
   const watchSync = new WatchSyncService(db);
   const lang = useLang();
   const unitSystem = useUnitSystem();
+  const access = useAppAccess();
+  const [isPassModalOpen, setIsPassModalOpen] = useState(false);
 
   // Stany bazy i kopii zapasowej
   const [backupJson, setBackupJson] = useState<string | null>(null);
@@ -353,6 +357,48 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Apps4Brew Studio Pass ("Cheaper than Espresso") */}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardTitle}>☕ Apps4Brew Studio Pass</Text>
+            <View style={styles.passBadge}>
+              <Text style={styles.passBadgeText}>
+                {access.isSubscribed
+                  ? access.subscriptionTier.toUpperCase()
+                  : access.status === 'trial_active'
+                  ? 'TRIAL'
+                  : 'READ-ONLY'}
+              </Text>
+            </View>
+          </View>
+          <Text style={styles.infoText}>
+            Model „Cheaper than Espresso” ($0.99/msc · $4.99/rok · $14.99 Lifetime). Pełny dostęp bez limitów i gwarancja zachowania historii pomiarów.
+          </Text>
+
+          <View style={styles.passStatusRow}>
+            <Text style={styles.passStatusLabel}>Bieżący status:</Text>
+            <Text style={styles.passStatusVal}>
+              {access.isSubscribed
+                ? 'Aktywny Dostęp Pełny'
+                : access.status === 'trial_active'
+                ? `Aktywny Okres Próbny (${access.projectsRemaining} wolnych projektów / ${access.daysRemaining} dni)`
+                : 'Archiwum Read-Only (Zapisane pomiary bezpieczne)'}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            testID="open-pass-modal-btn"
+            style={styles.passCtaButton}
+            onPress={() => setIsPassModalOpen(true)}
+          >
+            <Text style={styles.passCtaButtonText}>
+              {access.isSubscribed
+                ? 'Zarządzaj Subskrypcją / Przywróć'
+                : 'Odblokuj Pełny Dostęp ($0.99 / $4.99 / $14.99) →'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Kopia Zapasowa JSON v2 (ZP-06) */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>💾 Kopia Zapasowa i Przenośność Bazy (ZP-06)</Text>
@@ -496,6 +542,12 @@ export default function SettingsScreen() {
           <Text style={styles.aboutRow}>Licencja: <Text style={styles.aboutVal}>Apps4Brew Proprietary</Text></Text>
         </View>
       </ScrollView>
+
+      {/* Modal Apps4Brew Pass ("Cheaper than Espresso") */}
+      <Apps4BrewPassModal
+        visible={isPassModalOpen}
+        onClose={() => setIsPassModalOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -504,6 +556,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  passBadge: {
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  passBadgeText: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  passStatusRow: {
+    backgroundColor: '#0F172A',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  passStatusLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  passStatusVal: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  passCtaButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  passCtaButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 16,

@@ -12,10 +12,18 @@ import { packItemsInTrunk } from '../../src/domain/geometry/extremePoints';
 import { calculatePayloadDMC } from '../../src/domain/physics/payloadDMC';
 import { calculateCenterOfGravity } from '../../src/domain/physics/centerOfGravity';
 import { TrunkVisualizer } from '../../src/components/TrunkVisualizer';
+import { PocketProofQuickCheck } from '../../src/components/PocketProofQuickCheck';
+import { Apps4BrewPassModal } from '../../src/components/Apps4BrewPassModal';
 import { POPULAR_VEHICLES_PRESETS, VehiclePreset } from '../../src/data/presets/vehicles';
 import { CARGO_ITEMS_PRESETS, ExtendedCargoItemPreset } from '../../src/data/presets/cargoItems';
+import { useAppAccess } from '../../src/services/app-access';
+import { t } from '../../src/lib/i18n';
 
 export default function SimulatorScreen() {
+  const access = useAppAccess();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'simulator' | 'pocket_proof'>('simulator');
+
   const [selectedVehicleId, setSelectedVehicleId] = useState<string>(POPULAR_VEHICLES_PRESETS[0].id);
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([
     'luggage-medium-checkin',
@@ -127,14 +135,86 @@ export default function SimulatorScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Nagłówek */}
         <View style={styles.header}>
-          <Text style={styles.title}>Symulator Załadunku 3D</Text>
-          <Text style={styles.subtitle}>Deterministyczny algorytm Extreme Points & Rzuty 2.5D (RD-02)</Text>
+          <Text style={styles.title}>{t('Symulator Załadunku 3D')}</Text>
+          <Text style={styles.subtitle}>
+            {t('Deterministyczny algorytm Extreme Points & Rzuty 2.5D (RD-02)')}
+          </Text>
         </View>
 
-        {/* Szybkie Szablony */}
-        <View style={styles.quickPresetsCard}>
-          <Text style={styles.quickPresetsLabel}>⚡ Szybki Scenariusz:</Text>
-          <View style={styles.quickPresetsRow}>
+        {/* Baner Trialu / Read-Only */}
+        {access.status === 'trial_expired' && (
+          <TouchableOpacity
+            testID="read-only-expired-banner"
+            style={styles.readOnlyBanner}
+            onPress={() => setIsPaywallOpen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.readOnlyBannerTitle}>
+              {t('Tryb Archiwalny (Read-Only) — Dotknij, aby odblokować pełną wersję')}
+            </Text>
+            <Text style={styles.readOnlyBannerDesc}>
+              {t('Twoja historia i pomiary są bezpieczne. Wybierz plan od $0.99/msc, aby tworzyć nowe załadunki.')}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {access.status === 'trial_active' && (
+          <View style={styles.trialBadgeRow}>
+            <Text style={styles.trialBadgeText}>
+              {t('Trial: {count} wolnych projektów ({days} dni)', {
+                count: access.projectsRemaining,
+                days: access.daysRemaining,
+              })}
+            </Text>
+            <TouchableOpacity onPress={() => setIsPaywallOpen(true)}>
+              <Text style={styles.trialUpgradeLink}>{t('Apps4Brew Pass ($0.99) →')}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Przełącznik Widoku: Pełny Symulator vs Pocket-Proof Store-to-Trunk */}
+        <View style={styles.tabSwitchContainer}>
+          <TouchableOpacity
+            testID="tab-simulator-btn"
+            style={[styles.tabSwitchBtn, viewMode === 'simulator' && styles.tabSwitchBtnActive]}
+            onPress={() => setViewMode('simulator')}
+          >
+            <Text style={[styles.tabSwitchText, viewMode === 'simulator' && styles.tabSwitchTextActive]}>
+              {t('📦 Symulator 3D')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="tab-pocket-proof-btn"
+            style={[styles.tabSwitchBtn, viewMode === 'pocket_proof' && styles.tabSwitchBtnActive]}
+            onPress={() => setViewMode('pocket_proof')}
+          >
+            <Text
+              style={[
+                styles.tabSwitchText,
+                viewMode === 'pocket_proof' && styles.tabSwitchTextActive,
+              ]}
+            >
+              {t('⚡ Szybki Werdykt (Pocket-Proof)')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Widok Pocket-Proof w sklepie */}
+        {viewMode === 'pocket_proof' ? (
+          <PocketProofQuickCheck
+            onOpenFullSimulator={(vId, itemId) => {
+              setSelectedVehicleId(vId);
+              setSelectedItemIds([itemId]);
+              setViewMode('simulator');
+            }}
+            onRequestPaywall={() => setIsPaywallOpen(true)}
+          />
+        ) : (
+          <>
+            {/* Szybkie Szablony */}
+            <View style={styles.quickPresetsCard}>
+              <Text style={styles.quickPresetsLabel}>{t('⚡ Szybki Scenariusz:')}</Text>
+              <View style={styles.quickPresetsRow}>
             <TouchableOpacity
               style={styles.quickBtn}
               onPress={() => handleSelectQuickPreset('wakacje')}
@@ -390,7 +470,15 @@ export default function SimulatorScreen() {
             <Text style={styles.shareBtnText}>📲 Udostępnij / Kopiuj Manifest Załadunku</Text>
           </TouchableOpacity>
         </View>
+          </>
+        )}
       </ScrollView>
+
+      {/* Modal Apps4Brew Pass ("Cheaper than Espresso") */}
+      <Apps4BrewPassModal
+        visible={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -399,6 +487,75 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
+  },
+  readOnlyBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 14,
+  },
+  readOnlyBannerTitle: {
+    color: '#F87171',
+    fontWeight: '800',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  readOnlyBannerDesc: {
+    color: '#E2E8F0',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  trialBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginBottom: 14,
+  },
+  trialBadgeText: {
+    color: '#60A5FA',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  trialUpgradeLink: {
+    color: '#93C5FD',
+    fontSize: 11,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  tabSwitchContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  tabSwitchBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabSwitchBtnActive: {
+    backgroundColor: '#0284C7',
+  },
+  tabSwitchText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tabSwitchTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 16,
