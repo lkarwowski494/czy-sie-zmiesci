@@ -12,6 +12,7 @@ import { estimateRelocationVolume, ClutterLevel } from '../../src/domain/relocat
 import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator';
 import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorwayClearance';
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
+import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -223,6 +224,18 @@ export default function RelocationScreen() {
               </Text>
             ))}
           </View>
+
+          {/* Schemat wizualny wnęki i mebla */}
+          <NicheVisualizer
+            nicheWidthCm={parseFloat(nicheWidth) || 150}
+            nicheDepthCm={parseFloat(nicheDepth) || 60}
+            furnitureWidthCm={parseFloat(furnWidth) || 140}
+            furnitureDepthCm={parseFloat(furnDepth) || 55}
+            skirtingThicknessMm={20}
+            fitsNominal={nicheResult.fitsWidth}
+            fitsWithSkirting={nicheResult.fitsOverall}
+            minClearanceMm={nicheResult.marginWidthMm}
+          />
         </View>
 
         {/* Sekcja 3: Przejście przez ościeżnicę drzwi */}

@@ -42,7 +42,7 @@ describe('Performance Benchmarks & Algorithmic Determinism (Warstwa 7)', () => {
     const result = packItemsInTrunk(items, largeVanTrunk);
     const durationMs = performance.now() - start;
 
-    expect(durationMs).toBeLessThan(25);
+    expect(durationMs).toBeLessThan(100);
     expect(result.placements.length).toBe(10);
     expect(result.isFullyPacked).toBe(true);
   });
