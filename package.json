@@ -1,6 +1,6 @@
 {
   "name": "czy-sie-zmiesci",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "expo-router/entry",
   "private": true,
   "description": "Czy się zmieści? (FitCheck) — Apps4Brew",
@@ -16,9 +16,12 @@
     "test:contracts": "jest src/tests/contracts",
     "test:resilience": "jest src/tests/resilience",
     "test:guards": "jest src/tests/guards",
+    "generate:assets": "node scripts/generate-assets.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
     "test:coverage": "jest --coverage",
-    "verify": "npm run check:i18n && npm run typecheck && npm run test:coverage"
+    "verify": "npm run check:i18n && npm run typecheck && npm run test:coverage",
+    "build:ios": "eas-cli build --platform ios --profile production",
+    "deploy:testflight": "eas-cli build --platform ios --profile production --auto-submit"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
