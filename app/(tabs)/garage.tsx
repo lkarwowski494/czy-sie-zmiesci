@@ -10,8 +10,10 @@ import {
 } from 'react-native';
 import { evaluateGarageFit, evaluateRoofSetupHeight } from '../../src/domain/garage/garageClearance';
 import { evaluateTowbarLoad, Bicycle } from '../../src/domain/garage/towbarPhysics';
+import { calculateRoofRackLoad, validateCargoOverhang } from '../../src/domain/garage/roofAndOverhang';
 import { GarageVisualizer } from '../../src/components/GarageVisualizer';
 import { TowbarVisualizer } from '../../src/components/TowbarVisualizer';
+import { RoofRackVisualizer } from '../../src/components/RoofRackVisualizer';
 
 export default function GarageScreen() {
   // Garaż: wymiary pojazdu i bramy
@@ -25,6 +27,14 @@ export default function GarageScreen() {
   const [carHeight, setCarHeight] = useState('155'); // cm
   const [roofBarsHeight, setRoofBarsHeight] = useState('8'); // cm
   const [roofCargoHeight, setRoofCargoHeight] = useState('42'); // cm (np. Thule Motion 3)
+
+  // Obciążenie dachu i zwisy (RD-45, RD-52)
+  const [roofRailLimit, setRoofRailLimit] = useState<'50' | '75' | '100'>('75');
+  const [crossbarsWeightKg, setCrossbarsWeightKg] = useState('5');
+  const [roofBoxWeightKg, setRoofBoxWeightKg] = useState('18');
+  const [roofCargoWeightKg, setRoofCargoWeightKg] = useState('35');
+  const [frontOverhangCm, setFrontOverhangCm] = useState('20');
+  const [rearOverhangCm, setRearOverhangCm] = useState('45');
 
   // Hak holowniczy i rowery
   const [hookLimit, setHookLimit] = useState<'50' | '75' | '100'>('75');
@@ -103,6 +113,23 @@ export default function GarageScreen() {
     vehicleHeightMm: (parseFloat(carHeight) || 0) * 10,
     roofBarsHeightMm: (parseFloat(roofBarsHeight) || 0) * 10,
     roofCargoHeightMm: (parseFloat(roofCargoHeight) || 0) * 10,
+  });
+
+  // Kalkulacja nośności dachu i zwisów (RD-45, RD-52)
+  const roofRackLoad = calculateRoofRackLoad({
+    roofRailLimitKg: parseInt(roofRailLimit, 10),
+    crossbarsWeightKg: parseFloat(crossbarsWeightKg) || 0,
+    roofBoxWeightKg: parseFloat(roofBoxWeightKg) || 0,
+    cargoItemsWeightKg: parseFloat(roofCargoWeightKg) || 0,
+  });
+
+  const overhangResult = validateCargoOverhang({
+    vehicleLengthMm: 4500,
+    vehicleWidthMm: (parseFloat(carWidthFolded) || 185) * 10,
+    frontOverhangMm: (parseFloat(frontOverhangCm) || 0) * 10,
+    rearOverhangMm: (parseFloat(rearOverhangCm) || 0) * 10,
+    sideProtrusionLeftMm: 0,
+    sideProtrusionRightMm: 0,
   });
 
   // Kalkulacja obciążenia haka
@@ -356,6 +383,78 @@ export default function GarageScreen() {
                   {roofFit.canEnterSign190m ? 'WJAZD OK' : 'ZAKAZ'}
                 </Text>
               </View>
+            </View>
+
+            {/* Kontrola Nośności Dachu i Zwisów */}
+            <View style={{ marginTop: 14 }}>
+              <Text style={styles.label}>Limit nośności relingów dachowych:</Text>
+              <View style={styles.buttonRow}>
+                {(['50', '75', '100'] as const).map((lim) => (
+                  <TouchableOpacity
+                    key={lim}
+                    style={[styles.pill, roofRailLimit === lim && styles.pillActive]}
+                    onPress={() => setRoofRailLimit(lim)}
+                  >
+                    <Text style={[styles.pillText, roofRailLimit === lim && styles.pillTextActive]}>
+                      {lim} kg
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.row}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Pusty box + belki (kg):</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={roofBoxWeightKg}
+                    onChangeText={setRoofBoxWeightKg}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.label}>Bagaż w boxie (kg):</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={roofCargoWeightKg}
+                    onChangeText={setRoofCargoWeightKg}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={[styles.row, { marginTop: 8 }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Zwis przód (cm, max 50):</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={frontOverhangCm}
+                    onChangeText={setFrontOverhangCm}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.label}>Zwis tył (cm, max 200):</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={rearOverhangCm}
+                    onChangeText={setRearOverhangCm}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <RoofRackVisualizer
+                effectiveLimitKg={roofRackLoad.effectiveLimitKg}
+                totalMountedWeightKg={roofRackLoad.totalMountedWeightKg}
+                remainingCapacityKg={roofRackLoad.remainingCapacityKg}
+                isOverloaded={roofRackLoad.isOverloaded}
+                capacityUtilizationPct={roofRackLoad.capacityUtilizationPct}
+                frontOverhangMm={overhangResult.frontOverhangMm}
+                rearOverhangMm={overhangResult.rearOverhangMm}
+                isOverhangLegal={overhangResult.isLegal}
+                requiredMarkings={overhangResult.requiredMarkings}
+              />
             </View>
           </View>
         </View>

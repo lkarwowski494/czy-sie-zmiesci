@@ -13,11 +13,13 @@ import { evaluateNicheFit } from '../../src/domain/room-fitting/nicheCalculator'
 import { calculateDoorwayClearance } from '../../src/domain/doors-stairs/doorwayClearance';
 import { evaluateStaircaseLandingTurn } from '../../src/domain/doors-stairs/staircaseRotation';
 import { calculateElevatorFit } from '../../src/domain/doors-stairs/elevatorDiagonal';
+import { analyzeAtticSlope, evaluateFurnitureUnderSlope } from '../../src/domain/room-fitting/atticAndErgonomics';
 import { NicheVisualizer } from '../../src/components/NicheVisualizer';
 import { DoorwayVisualizer } from '../../src/components/DoorwayVisualizer';
 import { StaircaseVisualizer } from '../../src/components/StaircaseVisualizer';
 import { ElevatorVisualizer } from '../../src/components/ElevatorVisualizer';
 import { ApplianceClearanceView } from '../../src/components/ApplianceClearanceView';
+import { AtticSlopeVisualizer } from '../../src/components/AtticSlopeVisualizer';
 
 export default function RelocationScreen() {
   // Stan kalkulatora przeprowadzki
@@ -44,6 +46,13 @@ export default function RelocationScreen() {
   const [sofaLength, setSofaLength] = useState('200'); // cm
   const [sofaWidth, setSofaWidth] = useState('85'); // cm
   const [sofaHeight, setSofaHeight] = useState('80'); // cm
+
+  // Stan poddasza i skosów (RD-48)
+  const [kneeWallCm, setKneeWallCm] = useState('80');
+  const [roofPitchDeg, setRoofPitchDeg] = useState('40');
+  const [atticFurnDepthCm, setAtticFurnDepthCm] = useState('60');
+  const [atticFurnHeightCm, setAtticFurnHeightCm] = useState('140');
+  const [atticFurnDistCm, setAtticFurnDistCm] = useState('50');
 
   const relocResult = estimateRelocationVolume({
     floorAreaM2: parseFloat(areaM2) || 0,
@@ -121,6 +130,30 @@ export default function RelocationScreen() {
       doorWidthMm: (parseFloat(elevDoorWidth) || 0) * 10,
       doorHeightMm: 2000,
     }
+  );
+
+  const parsedKneeWallMm = Math.max(0, (parseFloat(kneeWallCm) || 80) * 10);
+  const parsedRoofPitch = Math.min(89, Math.max(1, parseFloat(roofPitchDeg) || 40));
+  const parsedAtticFurnDepthMm = Math.max(10, (parseFloat(atticFurnDepthCm) || 60) * 10);
+  const parsedAtticFurnHeightMm = Math.max(10, (parseFloat(atticFurnHeightCm) || 140) * 10);
+  const parsedAtticFurnDistMm = Math.max(0, (parseFloat(atticFurnDistCm) || 50) * 10);
+
+  const atticSlopeAnalysis = analyzeAtticSlope({
+    kneeWallHeightMm: parsedKneeWallMm,
+    roofPitchDeg: parsedRoofPitch,
+  });
+
+  const atticFurnCheck = evaluateFurnitureUnderSlope(
+    {
+      widthMm: 1000,
+      depthMm: parsedAtticFurnDepthMm,
+      heightMm: parsedAtticFurnHeightMm,
+    },
+    {
+      kneeWallHeightMm: parsedKneeWallMm,
+      roofPitchDeg: parsedRoofPitch,
+    },
+    parsedAtticFurnDistMm
   );
 
   return (
@@ -264,6 +297,76 @@ export default function RelocationScreen() {
             fitsNominal={nicheResult.fitsWidth}
             fitsWithSkirting={nicheResult.fitsOverall}
             minClearanceMm={nicheResult.marginWidthMm}
+          />
+        </View>
+
+        {/* Sekcja 2b: Skosy Poddasza i Wstawienie Mebla (RD-48, DEC-57) */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>📐 Skosy Poddasza & Wysokość Użytkowa (RD-48)</Text>
+          <Text style={styles.label}>
+            Wysokość ścianki kolankowej i kąt połaci dachu:
+          </Text>
+
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.label}>Ścianka kolankowa (cm):</Text>
+              <TextInput
+                style={styles.input}
+                value={kneeWallCm}
+                onChangeText={setKneeWallCm}
+                keyboardType="numeric"
+                placeholder="np. 80"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.label}>Kąt dachu (stopnie):</Text>
+              <TextInput
+                style={styles.input}
+                value={roofPitchDeg}
+                onChangeText={setRoofPitchDeg}
+                keyboardType="numeric"
+                placeholder="np. 40"
+              />
+            </View>
+          </View>
+
+          <Text style={[styles.label, { marginTop: 10 }]}>Mebel pod skosem (Głęb. × Wys. | Od ściany w cm):</Text>
+          <View style={styles.row}>
+            <TextInput
+              style={styles.input}
+              value={atticFurnDepthCm}
+              onChangeText={setAtticFurnDepthCm}
+              keyboardType="numeric"
+              placeholder="Głęb. cm"
+            />
+            <Text style={styles.vsText}>×</Text>
+            <TextInput
+              style={styles.input}
+              value={atticFurnHeightCm}
+              onChangeText={setAtticFurnHeightCm}
+              keyboardType="numeric"
+              placeholder="Wys. cm"
+            />
+            <Text style={styles.vsText}>|</Text>
+            <TextInput
+              style={styles.input}
+              value={atticFurnDistCm}
+              onChangeText={setAtticFurnDistCm}
+              keyboardType="numeric"
+              placeholder="Od ściany cm"
+            />
+          </View>
+
+          <AtticSlopeVisualizer
+            kneeWallHeightMm={parsedKneeWallMm}
+            roofPitchDeg={parsedRoofPitch}
+            furnitureDepthMm={parsedAtticFurnDepthMm}
+            furnitureHeightMm={parsedAtticFurnHeightMm}
+            distanceFromKneeWallMm={parsedAtticFurnDistMm}
+            fitsUnderSlope={atticFurnCheck.fitsUnderSlope}
+            minRequiredDistanceFromWallMm={atticFurnCheck.minRequiredDistanceFromWallMm}
+            distanceToStandingHeight190Mm={atticSlopeAnalysis.distanceToStandingHeight190Mm}
+            distanceToLowZone140Mm={atticSlopeAnalysis.distanceToLowZone140Mm}
           />
         </View>
 

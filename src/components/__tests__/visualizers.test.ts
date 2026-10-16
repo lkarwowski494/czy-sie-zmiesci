@@ -24,6 +24,8 @@ import { ApplianceClearanceView } from '../ApplianceClearanceView';
 import { ScreenRuler } from '../ScreenRuler';
 import { GarageVisualizer } from '../GarageVisualizer';
 import { TowbarVisualizer } from '../TowbarVisualizer';
+import { AtticSlopeVisualizer } from '../AtticSlopeVisualizer';
+import { RoofRackVisualizer } from '../RoofRackVisualizer';
 
 describe('2D Visualizers Component Contracts', () => {
   describe('NicheVisualizer', () => {
@@ -314,6 +316,90 @@ describe('2D Visualizers Component Contracts', () => {
         batterySavingsPotentialKg: 7.0,
         loadWithBatteriesRemovedKg: 73.0,
         canBeResolvedByRemovingBatteries: true,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('AtticSlopeVisualizer', () => {
+    it('renders fitting furniture under roof slope', () => {
+      const element = AtticSlopeVisualizer({
+        kneeWallHeightMm: 1000,
+        roofPitchDeg: 45,
+        furnitureDepthMm: 600,
+        furnitureHeightMm: 1400,
+        distanceFromKneeWallMm: 500,
+        fitsUnderSlope: true,
+        minRequiredDistanceFromWallMm: 400,
+        distanceToStandingHeight190Mm: 900,
+        distanceToLowZone140Mm: 400,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders collision alert with slope', () => {
+      const element = AtticSlopeVisualizer({
+        kneeWallHeightMm: 800,
+        roofPitchDeg: 40,
+        furnitureDepthMm: 800,
+        furnitureHeightMm: 1700,
+        distanceFromKneeWallMm: 200,
+        fitsUnderSlope: false,
+        minRequiredDistanceFromWallMm: 1072,
+        distanceToStandingHeight190Mm: 1311,
+        distanceToLowZone140Mm: 715,
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+  });
+
+  describe('RoofRackVisualizer', () => {
+    it('renders compliant roof load and overhang', () => {
+      const element = RoofRackVisualizer({
+        effectiveLimitKg: 75,
+        totalMountedWeightKg: 55,
+        remainingCapacityKg: 20,
+        isOverloaded: false,
+        capacityUtilizationPct: 73,
+        frontOverhangMm: 200,
+        rearOverhangMm: 400,
+        isOverhangLegal: true,
+        requiredMarkings: [],
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders roof overload and rear overhang flag notice (>500 mm)', () => {
+      const element = RoofRackVisualizer({
+        effectiveLimitKg: 75,
+        totalMountedWeightKg: 83,
+        remainingCapacityKg: 0,
+        isOverloaded: true,
+        capacityUtilizationPct: 111,
+        frontOverhangMm: 0,
+        rearOverhangMm: 1200,
+        isOverhangLegal: true,
+        requiredMarkings: ['Czerwona chorągiewka (min. 50×50 cm)'],
+      });
+
+      expect(React.isValidElement(element)).toBe(true);
+    });
+
+    it('renders illegal overhang banner', () => {
+      const element = RoofRackVisualizer({
+        effectiveLimitKg: 75,
+        totalMountedWeightKg: 60,
+        remainingCapacityKg: 15,
+        isOverloaded: false,
+        capacityUtilizationPct: 80,
+        frontOverhangMm: 700,
+        rearOverhangMm: 2200,
+        isOverhangLegal: false,
+        requiredMarkings: [],
       });
 
       expect(React.isValidElement(element)).toBe(true);
