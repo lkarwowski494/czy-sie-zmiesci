@@ -64,3 +64,30 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+// Mock for react-native in Jest
+jest.mock('react-native', () => {
+  const React = require('react');
+  return {
+    View: (props) => React.createElement('View', props, props?.children),
+    Text: (props) => React.createElement('Text', props, props?.children),
+    TouchableOpacity: (props) => React.createElement('TouchableOpacity', props, props?.children),
+    ScrollView: (props) => React.createElement('ScrollView', props, props?.children),
+    Modal: (props) => React.createElement('Modal', props, props?.children),
+    KeyboardAvoidingView: (props) => React.createElement('KeyboardAvoidingView', props, props?.children),
+    ActivityIndicator: (props) => React.createElement('ActivityIndicator', props),
+    Platform: { OS: 'ios', select: (obj) => obj.ios || obj.default },
+    StyleSheet: {
+      create: (styles) => styles,
+      flatten: (styles) => styles,
+    },
+    Dimensions: {
+      get: () => ({ width: 390, height: 844 }),
+      addEventListener: () => ({ remove: () => {} }),
+    },
+    PixelRatio: {
+      get: () => 3,
+      getFontScale: () => 1,
+    },
+  };
+});
+
