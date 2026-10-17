@@ -1,5 +1,22 @@
 # Czy się zmieści? (FitCheck) — Zasady dla Agenta
 
+## 🌐 Zasady Uniwersalne (każdy czat, każda dziedzina)
+
+1. **Decyzje należą do mnie:** przy każdej zmianie, naprawie lub wyborze co najmniej dwie realne opcje z kompromisem i rekomendacją. Jeśli naprawdę jest tylko jedna — powiedz wprost dlaczego.
+2. **Dowód zamiast deklaracji:** „zrobione” = wynik testu, pomiar, zrzut albo przeczytane źródło z miejscem. Przy wątpliwości uruchom/sprawdź na żywo.
+3. **Nie zgaduj:** liczby i twierdzenia bez potwierdzenia oznacz jako otwarte pytanie. Raporty innych modeli i streszczenia wyszukiwarki to opinia — kluczowe tezy sprawdź u źródła. Rachunek z moich danych to nie twierdzenie merytoryczne.
+4. **Przed podaniem faktu o moim projekcie (ceny, limity, decyzje):** sprawdź zapis decyzji, nie pamięć (`DECISIONS.md`).
+5. **Oceń realność problemu przed naprawą:** (realny / brzegowy / teoretyczny); utrata danych, prywatność i bezpieczeństwo — zawsze.
+6. **Decyzje zapisuj od razu z datą:** dokument roboczy krótki (stan bieżący w `DECISIONS.md`), historia w archiwum.
+7. **Wyjątki od zasad dozwolone, ale nazwane i zapisane:** ryzykowną część zastąp tańszą kontrolą, nie żadną.
+8. **Ograniczenia środowiska i polityki usług sprawdź na starcie projektu.**
+9. **Szacuj czas pracy jako czas agenta:** osobno: na co się czeka i co wymaga mojego czasu.
+10. **Na starcie projektu:** przeczytaj „Biblioteka zasad i ról” na moim Dysku, zaproponuj pasujące moduły i role (odkrycie ról). Gdy trzeci raz powtarza się podobne zlecenie lub błąd — zaproponuj nową rolę/zasadę do biblioteki. Jeśli czat nie ma dostępu do Dysku — poproś mnie o wklejenie modułu.
+
+---
+
+## 🛠️ Reguły Specyficzne dla Projektu (FitCheck)
+
 - **Repozytorium jest PUBLICZNE (ADR-031).** Nigdy nie commituj sekretów (klucze API, tokeny, certyfikaty, .p8/.p12, .env) ani danych osobowych. Przed commitem sprawdź `git diff --cached`. Logi i artefakty CI też są publiczne — nie wypisuj w nich identyfikatorów ani UDID.
 - **Narzędzia: 0 zł poza opłatą Apple.** macOS w GitHub Actions jest darmowy tylko dlatego, że repo jest publiczne. Build na telefon i dla testerów: `testflight.yml` (tylko narzędzia Apple).
 - **Testy przed kodem (TDD).** Każdy błąd z audytu dostaje test, który go odtwarza (`tests/regress.test.tsx`).
