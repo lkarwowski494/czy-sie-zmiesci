@@ -132,7 +132,7 @@ export default function CatalogScreen() {
       return;
     }
     if (!newItemName.trim()) {
-      Alert.alert(t('Błąd'), t('Podaj nazwę przedmiotu'));
+      Alert.alert(t('Nie udało się zapisać przedmiotu'), t('Podaj nazwę przedmiotu'));
       return;
     }
     const length_cm = parseFloat(newItemLength) || 50;
@@ -191,7 +191,7 @@ export default function CatalogScreen() {
         wheelArches: true,
         passThroughHole: false,
         maxWeightKg: v.specs.grossVehicleWeightKg - v.specs.curbWeightKg,
-        notes: `${v.bodyType}, próg załadunku: ${v.trunk.thresholdHeightMm} mm, dach: ${v.specs.maxRoofLoadKg} kg, hak: ${v.specs.maxTowbarLoadKg} kg`,
+        notes: `${v.bodyType}, próg załadunku: ${v.trunk.thresholdHeightMm} mm, dach: ${formatWeight(v.specs.maxRoofLoadKg, unitSystem)}, hak: ${formatWeight(v.specs.maxTowbarLoadKg, unitSystem)}`,
       },
       createdAt: new Date().toISOString(),
     };
@@ -260,7 +260,7 @@ export default function CatalogScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>{t('Katalog Standardów & Baza')}</Text>
           <Text style={styles.subtitle}>

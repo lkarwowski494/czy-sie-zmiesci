@@ -158,7 +158,7 @@ export default function SettingsScreen() {
     Alert.alert(
       'Weryfikacja Odporności Schematu (Warstwa 5)',
       `Przetestowano walidację niepoprawnego pliku kopii zapasowej:\n\nWynik: ${
-        result.success ? 'Błąd' : 'ODRZUCONO (Prawidłowo)'
+        result.success ? 'Nieoczekiwany sukces' : 'ODRZUCONO (Prawidłowo)'
       }\nKomunikat bazy: "${result.error}"\n\nBaza danych zachowała 100% integralności dzięki transakcji SQLite z rollbackiem.`
     );
   };
@@ -222,7 +222,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Ustawienia i Diagnostyka</Text>

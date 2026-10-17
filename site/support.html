@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wsparcie Techniczne (Support) — Czy się zmieści? (FitCheck)</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card-bg: #181b22;
+      --text: #f0f3f6;
+      --text-muted: #8b949e;
+      --accent: #f59e0b;
+      --border: #30363d;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --accent: #d97706;
+        --border: #e2e8f0;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 760px;
+      width: 100%;
+    }
+    header {
+      margin: 40px 0 24px 0;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 20px 0 8px 0;
+      color: var(--text);
+    }
+    h2:first-child { margin-top: 0; }
+    p { margin-bottom: 14px; }
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Wsparcie Techniczne (Support)</h1>
+      <p style="color: var(--text-muted);">Aplikacja: Czy się zmieści? (FitCheck) · Pomoc i odpowiedzi na częste pytania</p>
+    </header>
+
+    <div class="card">
+      <h2>Najczęściej Zadawane Pytania (FAQ)</h2>
+
+      <h2 style="font-size: 1.05rem; color: var(--accent);">Jak dodać własny samochód do garażu?</h2>
+      <p>Przejdź do zakładki „Garaż”, kliknij „+ Dodaj pojazd” i wprowadź wymiary przestrzeni bagażowej (długość, szerokość między nadkolami, wysokość do rolety lub dachu) oraz masę własną i DMC z dowodu rejestracyjnego.</p>
+
+      <h2 style="font-size: 1.05rem; color: var(--accent);">Jak działa weryfikacja paczkomatów i linii lotniczych?</h2>
+      <p>Wprowadź wymiary przedmiotu (długość, szerokość, wysokość). Aplikacja automatycznie sprawdzi zgodność ze skrytkami A, B, C automatów paczkowych (InPost, Orlen, DPD, Pocztex) oraz wymogami bagażu podręcznego 10 linii lotniczych (m.in. Ryanair, Wizzair, LOT, Lufthansa).</p>
+
+      <h2 style="font-size: 1.05rem; color: var(--accent);">Jak wykonać kopię zapasową danych?</h2>
+      <p>W zakładce „Ustawienia” wybierz „Kopia zapasowa”. Aplikacja wygeneruje plik JSON z całą bazą modeli i przedmiotów, który możesz zapisać na dysku urządzenia lub w usłudze chmurowej.</p>
+
+      <h2 style="font-size: 1.05rem; color: var(--accent);">Co oznacza ostrzeżenie o przeciążeniu DMC?</h2>
+      <p>Zgodnie z art. 61 ustawy Prawo o Ruchu Drogowym, suma mas pasażerów i przewożonego ładunku nie może przekraczać dopuszczalnej ładowności pojazdu. Kolor bursztynowy oznacza zbliżanie się do limitu (powyżej 90%), a czerwony niebezpieczne przekroczenie DMC.</p>
+
+      <h2>Kontakt i zgłaszanie uwag</h2>
+      <p>Jeśli masz pytania, sugestie nowych funkcji lub zauważyłeś błąd w wyliczeniach, napisz do nas:</p>
+      <p>E-mail: <strong>kontakt@apps4brew.pl</strong></p>
+      <p>Odpowiadamy zazwyczaj w ciągu 24–48 godzin w dni robocze.</p>
+    </div>
+
+    <footer>
+      <p>
+        <a href="index.html">Strona Główna</a> |
+        <a href="privacy.html">Polityka Prywatności</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

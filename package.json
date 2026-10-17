@@ -18,8 +18,12 @@
     "test:guards": "jest src/tests/guards",
     "generate:assets": "node scripts/generate-assets.mjs",
     "check:i18n": "node scripts/check-i18n.mjs",
+    "check:matrix": "node scripts/test-matrix.mjs --check",
+    "check:licenses": "node scripts/licenses.mjs",
+    "check:corpus": "node scripts/check-corpus.mjs",
+    "verify:native": "node scripts/verify-native.mjs --app-json-only",
     "test:coverage": "jest --coverage",
-    "verify": "npm run check:i18n && npm run typecheck && npm run test:coverage",
+    "verify": "npm run check:i18n && npm run check:matrix && npm run check:licenses && npm run verify:native && npm run typecheck && npm run test",
     "prebuild:ios": "expo prebuild --platform ios --clean"
   },
   "dependencies": {

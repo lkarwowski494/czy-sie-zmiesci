@@ -190,6 +190,7 @@ export function ActiveFocusModeModal({
         <ScrollView
           contentContainerStyle={styles.stepContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.stepCard}>
             <View style={styles.stepHeaderRow}>

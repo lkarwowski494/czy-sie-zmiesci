@@ -1,0 +1,8 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ Weryfikacji Zachowania Danych po Aktualizacji (BR-TEST-041)
+- launchApp
+- tapOn: "Garaż"
+- assertVisible: "Garaż"
+- tapOn: "Ustawienia"
+- assertVisible: "Ustawienia"

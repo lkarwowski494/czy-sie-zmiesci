@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polityka Prywatności — Czy się zmieści? (FitCheck)</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card-bg: #181b22;
+      --text: #f0f3f6;
+      --text-muted: #8b949e;
+      --accent: #f59e0b;
+      --border: #30363d;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --accent: #d97706;
+        --border: #e2e8f0;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 760px;
+      width: 100%;
+    }
+    header {
+      margin: 40px 0 24px 0;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 20px 0 8px 0;
+      color: var(--text);
+    }
+    h2:first-child { margin-top: 0; }
+    p { margin-bottom: 14px; }
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Polityka Prywatności</h1>
+      <p style="color: var(--text-muted);">Aplikacja: Czy się zmieści? (FitCheck) · Ostatnia aktualizacja: 17 października 2026</p>
+    </header>
+
+    <div class="card">
+      <h2>1. Prywatność od podstaw (Offline-First)</h2>
+      <p>Aplikacja „Czy się zmieści?” została zaprojektowana według zasady pełnej prywatności i suwerenności danych użytkownika. Działa w 100% lokalnie na Twoim urządzeniu (Offline-First) i nie łączy się z żadnym zewnętrznym serwerem w celu przesyłania Twoich danych.</p>
+
+      <h2>2. Gromadzone i przetwarzane dane</h2>
+      <p>Wszystkie wprowadzane informacje (wymiary bagażników, dodane przedmioty, waga ładunku, parametry pojazdu, preferencje jednostek i języka) są zapisywane wyłącznie w lokalnej bazie danych na Twoim telefonie. Żadne dane telemetryczne, identyfikatory użytkownika ani współrzędne lokalizacyjne nie są zbierane ani wysyłane poza urządzenie.</p>
+
+      <h2>3. Brak zewnętrznych bibliotek śledzących</h2>
+      <p>Aplikacja nie zawiera żadnych pakietów SDK firm trzecich służących do śledzenia zachowań użytkowników, analizy zachowań (np. Firebase Analytics, Google Analytics, Amplitude) ani modułów reklamowych (np. Google AdMob). Zgodnie z etykietą prywatności Apple: „Dane nie są zbierane” (Data Not Collected).</p>
+
+      <h2>4. Uprawnienia systemowe</h2>
+      <p>Aplikacja nie wymaga i nie żąda uprawnień do mikrofonu, lokalizacji GPS, kontaktów, Bluetooth ani identyfikatora reklamowego (IDFA). Ewentualne użycie aparatu fotograficznego do modułu miarki AR służy wyłącznie lokalnemu przetwarzaniu obrazu na procesorze urządzenia i żaden kadr nie jest zapisywany ani wysyłany do sieci.</p>
+
+      <h2>5. Kopie zapasowe i eksport</h2>
+      <p>Eksport bazy danych i kopie zapasowe (pliki JSON oraz CSV) są generowane wyłącznie na Twoje żądanie i zapisywane w lokalnym systemie plików. Masz pełną kontrolę nad ich udostępnieniem lub usunięciem.</p>
+
+      <h2>6. Kontakt</h2>
+      <p>W sprawach dotyczących prywatności lub działania aplikacji możesz skontaktować się z twórcą pod adresem: <strong>kontakt@apps4brew.pl</strong>.</p>
+    </div>
+
+    <footer>
+      <p>
+        <a href="index.html">Strona Główna</a> |
+        <a href="support.html">Wsparcie Techniczne</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

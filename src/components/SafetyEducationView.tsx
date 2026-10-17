@@ -68,7 +68,7 @@ export function SafetyEducationView() {
         /* WIDOK LEKCJI (BR-EDU-001) */
         <View style={styles.contentBox}>
           {/* Pozioma lista lekcji */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lessonScroll}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.lessonScroll} keyboardShouldPersistTaps="handled">
             {CARGO_SCHOOL_LESSONS.map((lesson) => {
               const isSelected = lesson.id === selectedLessonId;
               return (

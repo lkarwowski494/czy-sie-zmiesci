@@ -18,7 +18,7 @@ export const EN: Record<string, string> = {
   'Kopiuj': 'Copy',
   'Udostępnij': 'Share',
   'Sukces': 'Success',
-  'Błąd': 'Error',
+  'Nie udało się zapisać przedmiotu': 'Could not save item',
   'Ostrzeżenie': 'Warning',
   'Kopia zapasowa': 'Backup',
 
@@ -587,6 +587,19 @@ export const EN: Record<string, string> = {
   'Ta aplikacja': 'This app',
   'Zamknij tryb skupienia': 'Close focus mode',
   'Poprzedni krok': 'Previous step',
+
+  // Role-model & interaction guards
+  'Nie znaleziono rekordu': 'Record not found',
+  'Ten element mógł zostać wcześniej usunięty.': 'This item may have been deleted earlier.',
+  'Wróć do ekranu głównego': 'Back to home screen',
+  'Wykryto uszkodzony stan danych': 'Corrupted data state detected',
+  'Oryginalne dane zostały zabezpieczone. Możesz przywrócić ostatnią kopię ratunkową.': 'Original data has been secured. You can restore the latest backup.',
+  'Przywróć kopię': 'Restore backup',
+  'Przywróć': 'Restore',
+  'Zamknij powiadomienie': 'Dismiss notification',
+  'Szukaj...': 'Search...',
+  'Wyczyść wyszukiwanie': 'Clear search',
+  'Eksport CSV': 'Export CSV',
 };
 
 

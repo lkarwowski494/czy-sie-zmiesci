@@ -102,7 +102,7 @@ export function Apps4BrewPassModal({
           <View style={styles.headerSpacer} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Badge i Tytuł */}
           <View style={styles.badgeRow}>
             <View style={styles.badge}>

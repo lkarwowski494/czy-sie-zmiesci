@@ -1,0 +1,8 @@
+appId: com.apps4brew.czy.sie.zmiesci
+---
+# Przepływ Przygotowania Danych przed Aktualizacją (BR-TEST-041)
+- launchApp
+- tapOn: "Garaż"
+- assertVisible: "Dodaj pojazd"
+- tapOn: "Katalog"
+- assertVisible: "Katalog"

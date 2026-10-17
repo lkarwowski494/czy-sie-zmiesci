@@ -274,7 +274,7 @@ export default function RelocationScreen() {
       `${t('Metraż lokalu:')} ${areaM2} m² (${residents} os., umeblowanie: ${clutter})`,
       `${t('Szacowana kubatura:')} ${relocResult.estimatedVolumeM3} m³ (${t('masa mienia:')} ~${formatWeight(relocResult.estimatedWeightKg, unitSystem)})`,
       `${t('Rekomendowana flota:')} ${relocResult.fleetDescription}`,
-      `${t('Boks self-storage:')} min. ${relocResult.recommendedSelfStorageAreaM2} m² (wys. 2.7m)`,
+      `${t('Boks self-storage:')} >= ${relocResult.recommendedSelfStorageAreaM2} m² (wys. 2.7m)`,
       `${t('Szacowane kartony:')} ~${relocResult.recommendedBoxesCount} szt.`,
       '',
       `--- ${t('ZASADA 4 FAZY ZAŁADUNKU FURGONU')} ---`,
@@ -302,7 +302,7 @@ export default function RelocationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>{t('Wnętrza & Przeprowadzki')}</Text>
           <Text style={styles.subtitle}>
@@ -370,7 +370,7 @@ export default function RelocationScreen() {
                 porterBhpResult.isCompliant ? styles.sacredValueSuccess : styles.sacredValueDanger,
               ]}
             >
-              {Math.round(porterBhpResult.weightPerPorterKg)} kg/os.
+              {formatWeight(Math.round(porterBhpResult.weightPerPorterKg), unitSystem)}/os.
             </Text>
             <Text style={styles.sacredSub}>
               {porterBhpResult.isCompliant ? t('Dozwolone') : t('Zakaz!')}
@@ -1177,7 +1177,7 @@ export default function RelocationScreen() {
                 : t('❌ ZAKAZ WNOSZENIA RĘCZNEGO!')}
             </Text>
             <Text style={styles.subtext}>
-              {t('Obciążenie:')} <Text style={{ fontWeight: '800' }}>{formatWeight(porterBhpResult.weightPerPorterKg, unitSystem)}/osobę</Text> (limit: {porterBhpResult.isOccasionalHandling ? 50 : 30} kg/os.)
+              {t('Obciążenie:')} <Text style={{ fontWeight: '800' }}>{formatWeight(porterBhpResult.weightPerPorterKg, unitSystem)}/osobę</Text> (limit: {formatWeight(porterBhpResult.isOccasionalHandling ? 50 : 30, unitSystem)}/os.)
             </Text>
             <Text style={[styles.subtext, { marginTop: 4, color: '#F8FAFC' }]}>
               {porterBhpResult.legalAdvisory}

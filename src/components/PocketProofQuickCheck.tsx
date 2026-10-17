@@ -262,7 +262,7 @@ export function PocketProofQuickCheck({
 
       {/* Szybki wybór samochodu */}
       <Text style={styles.sectionLabel}>{t('Twój samochód:')}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} keyboardShouldPersistTaps="handled">
         {POPULAR_VEHICLES_PRESETS.map((v) => {
           const isSelected = v.id === selectedCarId;
           return (
@@ -305,7 +305,7 @@ export function PocketProofQuickCheck({
 
       {/* Lista mebli z bazy */}
       {!isCustomMode ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll} keyboardShouldPersistTaps="handled">
           {CARGO_ITEMS_PRESETS.map((item) => {
             const isSelected = item.id === selectedItemId;
             return (

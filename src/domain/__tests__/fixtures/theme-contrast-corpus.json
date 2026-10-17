@@ -1,0 +1,139 @@
+{
+  "version": "1.0.0",
+  "generated_by": "gen-theme-contrast-corpus.py",
+  "algorithm": "WCAG 2.1 relative luminance (0.2126*R + 0.7152*G + 0.0722*B)",
+  "evaluations": [
+    {
+      "foreground": "textPrimary",
+      "foregroundHex": "#F4EFEA",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "primary_body_text",
+      "requiredLevel": "AAA",
+      "minRequiredRatio": 7.0,
+      "calculatedRatio": 16.38,
+      "passes": true
+    },
+    {
+      "foreground": "textPrimary",
+      "foregroundHex": "#F4EFEA",
+      "background": "bgCard",
+      "backgroundHex": "#1C1C1F",
+      "role": "card_headline_text",
+      "requiredLevel": "AAA",
+      "minRequiredRatio": 7.0,
+      "calculatedRatio": 14.88,
+      "passes": true
+    },
+    {
+      "foreground": "textPrimary",
+      "foregroundHex": "#F4EFEA",
+      "background": "bgCardSecondary",
+      "backgroundHex": "#242428",
+      "role": "subcard_text",
+      "requiredLevel": "AAA",
+      "minRequiredRatio": 7.0,
+      "calculatedRatio": 13.54,
+      "passes": true
+    },
+    {
+      "foreground": "textSecondary",
+      "foregroundHex": "#A09C96",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "secondary_body_text",
+      "requiredLevel": "AA",
+      "minRequiredRatio": 4.5,
+      "calculatedRatio": 6.85,
+      "passes": true
+    },
+    {
+      "foreground": "textSecondary",
+      "foregroundHex": "#A09C96",
+      "background": "bgCard",
+      "backgroundHex": "#1C1C1F",
+      "role": "card_secondary_text",
+      "requiredLevel": "AA",
+      "minRequiredRatio": 4.5,
+      "calculatedRatio": 6.23,
+      "passes": true
+    },
+    {
+      "foreground": "textSecondary",
+      "foregroundHex": "#A09C96",
+      "background": "bgCardSecondary",
+      "backgroundHex": "#242428",
+      "role": "subcard_secondary_text",
+      "requiredLevel": "AA",
+      "minRequiredRatio": 4.5,
+      "calculatedRatio": 5.66,
+      "passes": true
+    },
+    {
+      "foreground": "fitcheck_accent",
+      "foregroundHex": "#38BDF8",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "primary_brand_accent",
+      "requiredLevel": "AA_large_ui",
+      "minRequiredRatio": 3.0,
+      "calculatedRatio": 8.73,
+      "passes": true
+    },
+    {
+      "foreground": "fitcheck_accentLight",
+      "foregroundHex": "#BAE6FD",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "highlight_accent_text",
+      "requiredLevel": "AAA",
+      "minRequiredRatio": 7.0,
+      "calculatedRatio": 14.1,
+      "passes": true
+    },
+    {
+      "foreground": "fitcheck_accentLight",
+      "foregroundHex": "#BAE6FD",
+      "background": "bgCard",
+      "backgroundHex": "#1C1C1F",
+      "role": "card_highlight_text",
+      "requiredLevel": "AAA",
+      "minRequiredRatio": 7.0,
+      "calculatedRatio": 12.81,
+      "passes": true
+    },
+    {
+      "foreground": "fitcheck_secondaryAccent",
+      "foregroundHex": "#0284C7",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "secondary_accent_ui",
+      "requiredLevel": "AA_large_ui",
+      "minRequiredRatio": 3.0,
+      "calculatedRatio": 4.57,
+      "passes": true
+    },
+    {
+      "foreground": "danger",
+      "foregroundHex": "#D9534F",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "danger_destructive_text",
+      "requiredLevel": "AA_large_ui",
+      "minRequiredRatio": 3.0,
+      "calculatedRatio": 4.72,
+      "passes": true
+    },
+    {
+      "foreground": "statusSuccess",
+      "foregroundHex": "#4E9F3D",
+      "background": "bgBasalt",
+      "backgroundHex": "#121214",
+      "role": "success_validation_badge",
+      "requiredLevel": "AA_large_ui",
+      "minRequiredRatio": 3.0,
+      "calculatedRatio": 5.66,
+      "passes": true
+    }
+  ]
+}

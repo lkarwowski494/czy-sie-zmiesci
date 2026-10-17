@@ -284,7 +284,7 @@ export default function SimulatorScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Nagłówek */}
         <View style={styles.header}>
           <View style={styles.craftHeaderBar}>

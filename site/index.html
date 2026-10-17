@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Czy się zmieści? (FitCheck) — Asystent Pakowania i Przestrzeni</title>
+  <meta name="description" content="Kalkulator pakowania bagażnika, skrytek paczkomatowych, bagażu lotniczego i kubatury przeprowadzkowej. 100% offline i prywatnie.">
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card-bg: #181b22;
+      --text: #f0f3f6;
+      --text-muted: #8b949e;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --border: #30363d;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --text: #0f172a;
+        --text-muted: #64748b;
+        --accent: #d97706;
+        --accent-hover: #b45309;
+        --border: #e2e8f0;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 760px;
+      width: 100%;
+    }
+    header {
+      text-align: center;
+      margin: 40px 0 32px 0;
+    }
+    h1 {
+      font-size: 2.25rem;
+      margin-bottom: 12px;
+      color: var(--accent);
+      font-weight: 800;
+    }
+    p.lead {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      font-size: 1.35rem;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+    li {
+      margin-bottom: 12px;
+      padding-left: 28px;
+      position: relative;
+    }
+    li::before {
+      content: "✓";
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Czy się zmieści? (FitCheck)</h1>
+      <p class="lead">Sprawdź natychmiast, czy paczka, mebel lub zakupy zmieszczą się do Twojego auta, paczkomatu lub bagażu podręcznego.</p>
+    </header>
+
+    <div class="card">
+      <h2>Główne funkcje</h2>
+      <ul>
+        <li><strong>Baza modeli bagażników:</strong> Gotowe geometrie popularnych samochodów oraz możliwość dodania własnego pojazdu.</li>
+        <li><strong>Macierz paczkomatów i linii lotniczych:</strong> Błyskawiczna weryfikacja gabarytów A/B/C InPost, Orlen Paczka, DPD oraz 10 linii lotniczych.</li>
+        <li><strong>Fizyka zderzeń i kontrola DMC:</strong> Obliczanie sił bezwładności (25g), dobór pasów mocujących i ochrona przed przeciążeniem pojazdu.</li>
+        <li><strong>Kalkulator przeprowadzek:</strong> Szacowanie kubatury mienia i dobór odpowiedniego pojazdu z floty.</li>
+        <li><strong>Pomiary i kalibracja:</strong> Asystent miarki taśmowej, kart płatniczych i dalmierza z uwzględnieniem tolerancji błędu.</li>
+        <li><strong>100% Offline:</strong> Wszystkie dane i obliczenia pozostają wyłącznie na Twoim urządzeniu.</li>
+      </ul>
+    </div>
+
+    <footer>
+      <p>© 2026 Apps4Brew. Wszelkie prawa zastrzeżone.</p>
+      <p style="margin-top: 8px;">
+        <a href="privacy.html">Polityka Prywatności</a> |
+        <a href="support.html">Wsparcie Techniczne (Support)</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

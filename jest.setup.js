@@ -15,6 +15,47 @@ jest.mock('expo-haptics', () => ({
   },
 }));
 
+// Mock for expo-file-system/legacy in Jest
+jest.mock('expo-file-system/legacy', () => ({
+  documentDirectory: '/var/mobile/Documents/',
+  cacheDirectory: '/var/mobile/Caches/',
+  getInfoAsync: jest.fn().mockResolvedValue({ exists: true }),
+  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
+  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
+  readDirectoryAsync: jest.fn().mockResolvedValue([]),
+}));
+
+// Mock for expo-sharing in Jest
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  shareAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
+// Mock for expo-router in Jest
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: () => true,
+  }),
+  useLocalSearchParams: () => ({}),
+  usePathname: () => '/',
+  router: {
+    push: jest.fn(),
+    replace: jest.fn(),
+    back: jest.fn(),
+    canGoBack: () => true,
+  },
+  Tabs: Object.assign(({ children }) => children, {
+    Screen: ({ children }) => children || null,
+  }),
+  Stack: Object.assign(({ children }) => children, {
+    Screen: ({ children }) => children || null,
+  }),
+}));
+
 // Mock for react-native-svg in Jest
 jest.mock('react-native-svg', () => {
   const React = require('react');
@@ -70,12 +111,20 @@ jest.mock('react-native', () => {
   return {
     View: (props) => React.createElement('View', props, props?.children),
     Text: (props) => React.createElement('Text', props, props?.children),
+    TextInput: (props) => React.createElement('TextInput', props, props?.children),
     TouchableOpacity: (props) => React.createElement('TouchableOpacity', props, props?.children),
     ScrollView: (props) => React.createElement('ScrollView', props, props?.children),
     Modal: (props) => React.createElement('Modal', props, props?.children),
     KeyboardAvoidingView: (props) => React.createElement('KeyboardAvoidingView', props, props?.children),
     ActivityIndicator: (props) => React.createElement('ActivityIndicator', props),
     Platform: { OS: 'ios', select: (obj) => obj.ios || obj.default },
+    Alert: {
+      alert: jest.fn(),
+    },
+    AppState: {
+      currentState: 'active',
+      addEventListener: jest.fn().mockReturnValue({ remove: jest.fn() }),
+    },
     StyleSheet: {
       create: (styles) => styles,
       flatten: (styles) => styles,
@@ -90,4 +139,3 @@ jest.mock('react-native', () => {
     },
   };
 });
-

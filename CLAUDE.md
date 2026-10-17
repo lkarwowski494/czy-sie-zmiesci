@@ -1,113 +1,62 @@
-# Czy się zmieści? (FitCheck) — Zasady dla Agenta
+# CLAUDE.md — Wytyczne Inżynieryjne dla Czy się zmieści? (FitCheck)
 
-## 🌐 Zasady Uniwersalne (każdy czat, każda dziedzina)
-
-1. **Decyzje należą do mnie:** przy każdej zmianie, naprawie lub wyborze co najmniej dwie realne opcje z kompromisem i rekomendacją. Jeśli naprawdę jest tylko jedna — powiedz wprost dlaczego.
-2. **Dowód zamiast deklaracji:** „zrobione” = wynik testu, pomiar, zrzut albo przeczytane źródło z miejscem. Przy wątpliwości uruchom/sprawdź na żywo.
-3. **Nie zgaduj:** liczby i twierdzenia bez potwierdzenia oznacz jako otwarte pytanie. Raporty innych modeli i streszczenia wyszukiwarki to opinia — kluczowe tezy sprawdź u źródła. Rachunek z moich danych to nie twierdzenie merytoryczne.
-4. **Przed podaniem faktu o moim projekcie (ceny, limity, decyzje):** sprawdź zapis decyzji, nie pamięć (`DECISIONS.md`).
-5. **Oceń realność problemu przed naprawą:** (realny / brzegowy / teoretyczny); utrata danych, prywatność i bezpieczeństwo — zawsze.
-6. **Decyzje zapisuj od razu z datą:** dokument roboczy krótki (stan bieżący w `DECISIONS.md`), historia w archiwum.
-7. **Wyjątki od zasad dozwolone, ale nazwane i zapisane:** ryzykowną część zastąp tańszą kontrolą, nie żadną.
-8. **Ograniczenia środowiska i polityki usług sprawdź na starcie projektu.**
-9. **Szacuj czas pracy jako czas agenta:** osobno: na co się czeka i co wymaga mojego czasu.
-10. **Na starcie projektu:** przeczytaj „Biblioteka zasad i ról” na moim Dysku, zaproponuj pasujące moduły i role (odkrycie ról). Gdy trzeci raz powtarza się podobne zlecenie lub błąd — zaproponuj nową rolę/zasadę do biblioteki. Jeśli czat nie ma dostępu do Dysku — poproś mnie o wklejenie modułu.
+## 📌 Kontrakt Obowiązkowy
+Przed uznaniem jakiegokolwiek zadania lub wydania za ukończone, **musisz wczytać i spełnić wszystkie kryteria z [docs/20-definicja-ukonczenia.md](file:///c:/Users/lukas/Documents/antigravity/joyful-oppenheimer/docs/20-definicja-ukonczenia.md)**.
+Nigdy nie deklaruj ukończenia zadania bez uruchomienia i przejścia polecenia `npm run verify` na zielono.
 
 ---
 
-## 🛠️ Reguły Specyficzne dla Projektu (FitCheck)
+## 🚀 Główne Polecenia Projektu
 
-- **Repozytorium jest PUBLICZNE (ADR-031).** Nigdy nie commituj sekretów (klucze API, tokeny, certyfikaty, .p8/.p12, .env) ani danych osobowych. Przed commitem sprawdź `git diff --cached`. Logi i artefakty CI też są publiczne — nie wypisuj w nich identyfikatorów ani UDID.
-- **Narzędzia: 0 zł poza opłatą Apple.** macOS w GitHub Actions jest darmowy tylko dlatego, że repo jest publiczne. Build na telefon i dla testerów: `testflight.yml` (tylko narzędzia Apple).
-- **Testy przed kodem (TDD).** Każdy błąd z audytu dostaje test, który go odtwarza (`tests/regress.test.tsx`).
-- **Macierz testów:** każdy ekran, element UI, komunikat, funkcja `lib/` i wartość wymiaru ma test; `npm run check:matrix` blokuje braki.
-- **Katalog przepływów użytkownika:** każdy realny przepływ ma scenariusz Maestro w `.maestro/` albo wyjątek z powodem w `tests/przeplywy.json`.
-- **Definicja ukończenia (DoD):** każda funkcjonalność przy wdrażaniu ma pełen zakres testów automatycznych — w standardzie 9 warstw jakości z projektu Organizer (`docs/brd/D4` i `docs/20-definicja-ukonczenia.md`).
-- **W trakcie pracy:** `npm run test:fast`. Przed wypchnięciem: pełne `npm run verify` / `npm run check` (typecheck, check:i18n, jest, mutation, expo export, verify:native). Nowe teksty w UI przez `t()` i słownik `lib/i18n.en.ts`.
-- **Zasada projektowa:** akcje i elementy tego samego typu działają w całej aplikacji tak samo — zamykanie okien: każde okno modalne ma widoczny, spójny przycisk „Anuluj” po lewej w nagłówku (`headerLeft`). Pilnowane testami-strażnikami (`close-button-guard.test.tsx`).
-- **Liczby (progi, limity, czasy) w jednym miejscu;** dokumenty generowane z kodu, nie przepisywane ręcznie.
-- **Decyzje produktowe należą do właściciela:** przedstaw co najmniej dwie opcje z kompromisami i rekomendację.
-- **Szacowanie czasu:** estymacje zakładają czas pracy agenta (z pracą równoległą). Osobno czas realnego czekania (CI, Apple review). Nakład pracy agenta nie jest argumentem przeciw lepszej opcji.
+```bash
+# Główna bramka weryfikacyjna (wszystkie testy i audyty)
+npm run verify
 
----
+# Uruchomienie pełnego zestawu testów
+npm test
 
-## 🎭 Aktywne Moduły i Role (z „Biblioteki zasad i ról”, stan: 11.10.2026)
+# Skaner macierzy testów AST (wymagane 100% pokrycia)
+node scripts/test-matrix.mjs --check
 
-### Aktywne Moduły Dziedzinowe:
-1. **Moduł: aplikacje (oprogramowanie):**
-   - Testy przed kodem (TDD); każdy błąd dostaje test, który go odtwarza.
-   - Test błędu najpierw uruchom na kodzie sprzed poprawki (np. git stash) i potwierdź, że jest czerwony z właściwego powodu.
-   - Narzędzia czytające dane z zewnątrz testowane także na wycinkach prawdziwych plików w repozytorium.
-   - Małe moduły z jasnymi granicami (orientacyjnie ≤ 20 KB), bez cykli zależności.
-   - Praca odporna na przerwy (małe commity, stan bieżący w `DECISIONS.md`).
-   - Zielone lokalnie ≠ zielone w CI (kontrole lokalne uruchamiaj tak jak w CI).
-   - Funkcja wizualna: najpierw podgląd/szkic do akceptacji, pełna implementacja z testami po akceptacji.
-   - Meldunki statusu: przy braku zmian jedna linia; po 3 takich odstęp rośnie do 2 h.
-2. **Moduł: research i treści merytoryczne:**
-   - Każde twierdzenie ma przeczytane źródło (adres + miejsce); streszczenie z wyszukiwarki nie jest źródłem.
-   - Hierarchia 5 szczebli źródeł dziedziny ustalona na starcie projektu.
-   - Rachunek z danych użytkownika to nie twierdzenie merytoryczne — nie blokuj go wymogiem źródeł.
-   - Raporty z zewnątrz (deep research innych modeli) to opinia — kluczowe tezy sprawdź u źródła.
-   - Fakty o cenach, limitach, licencjach i przepisach sprawdzaj u źródła w dniu pracy z datą odczytu.
-3. **Zasady ogólne z modułu gier:**
-   - Jedno źródło prawdy + generatory zamiast ręcznego kopiowania liczb.
-   - „Udokumentowane” ≠ „zaimplementowane”; „ma dzisiejszą datę” ≠ „zweryfikowane” — przy wątpliwości uruchom na żywo.
-   - Warianty i archiwalne wersje modelu jako jawnie oznaczone kopie obok kanonu.
+# Weryfikacja kompletności i higieny i18n
+npm run check:i18n
 
-### Aktywne Role Projektowe:
-1. **Koordynator / Główny Architekt (model mocny):** Prowadzi sesję główną, koordynuje zmiany, pilnuje bramki `npm run verify` przed jakimkolwiek commitem, jedyny commit i push na wspólnej gałęzi po przejściu kontroli.
-2. **Badacz merytoryczny (model mocny):** Wymiary, fizyka (CoG, przeciążenia 25g Euro NCAP, PN-EN 12195-1), normy prawne (art. 61 PoRD), regulacje IATA i sizerów — każde twierdzenie poparte źródłem.
-3. **Programista (model tańszy / wykonanie):** Wdrożenie zatwierdzonej specyfikacji: test najpierw, potwierdzenie czerwonego testu na kodzie przed poprawką, minimalny zakres, bez osłabiania testów.
-4. **Projektant UX / Architekt Front-Endu (model mocny):** Ergonomia warsztatowa, Sacred Numbers czytelne z blatu roboczego, brak kolizji ze Safe Area (min. 44x44 pt), standaryzacja `@apps4craft/ui`.
-5. **Audytor / Tester E2E (model mocny/tańszy):** Niezależny przegląd pod kątem standardów, 9 warstw weryfikacji jakości, testy brzegowe i regresyjne.
-6. **Tłumacz (model tańszy):** 100% symetria słownika `i18n.en.ts`, typografia rzemieślnicza, brak brakujących kluczy.
-7. **Sekretarz dokumentacji (model tańszy):** Prowadzenie `DECISIONS.md` z datami, opcjami i powodami, synchronizacja `CLAUDE.md`.
+# Weryfikacja licencji zależności produkcyjnych
+npm run check:licenses
+
+# Weryfikacja niezmienników projektu iOS
+npm run verify:native
+
+# Weryfikacja wyroczni domenowych Pythona
+node scripts/check-corpus.mjs
+```
 
 ---
 
-## 🧪 9 Warstw Weryfikacji Jakości (Standard z projektu Organizer)
+## 🛡️ Twarde Niezmienniki Architektoniczne
 
-Zgodnie z procedurami z projektu `lkarwowski494/organizer`, w projekcie **Czy się zmieści? (FitCheck)** obowiązuje bezwzględny reżim testowy z 9 perspektyw:
+1. **100% Offline-First:**
+   - Zakaz używania `fetch`, `axios`, telemetrii (Firebase, Sentry, Amplitude, AdMob).
+   - Wszystkie obliczenia i bazy danych działają wyłącznie lokalnie.
 
-1. **Czysta logika domenowa (100% Line & Branch Coverage):**
-   * Moduły `src/domain/` (algorytmy 3D Extreme Points, Guillotine, CoG, aperture check, przelicznik VDA) podlegają wymogowi 100% pokrycia linii i gałęzi.
-2. **Testy mutacyjne (Stryker Mutation Testing $\ge 90\%$):**
-   * Weryfikacja jakości testów za pomocą mutacji kodu (`stryker.config.json`). Żaden mutant w stereometrii, tolerancjach czy limitach DMC nie może przetrwać.
-3. **Testy własnościowe (Property-Based z `fast-check`):**
-   * Generowanie losowych zestawów paczek i weryfikacja niezmienników matematycznych: brak kolizji $V_i \cap V_j = \emptyset$, $\sum V_i \le V_{\text{usable}}$, stabilność CoG.
-4. **Niezależne korpusy referencyjne (Ground-Truth Corpora):**
-   * Porównanie wyliczeń z niezależnym solverem referencyjnym (Python 3D-BPP), danymi pomiarowymi ADAC dla 60 aut oraz oficjalnymi macierzami sizerów (InPost, Ryanair, Wizz Air).
-5. **Testy bazy danych i SQLite WAL:**
-   * Atomowość transakcji załadunku, odporność na nagłe ubicie procesu, migracje schematu up/down, roundtrip eksportu i importu kopii zapasowej JSON.
-6. **Macierz komponentów i scenariusze UI (RNTL):**
-   * Każdy ekran, modal, suwak i jednostka (cm $\leftrightarrow$ in, kg $\leftrightarrow$ lb) przetestowane w stanach: pusty, wprowadzanie, sukces, kolizja, przeładowanie.
-7. **E2E i regresja wizualna (Maestro na symulatorze iOS):**
-   * Scenariusze w `.maestro/` symulujące realne ścieżki użytkownika (pakowanie auta, dobór paczkomatu, alarm DMC, przywrócenie kopii) z weryfikacją `pixelmatch`.
-8. **Dostępność i kontrakty Apple HIG (WCAG AAA & VoiceOver):**
-   * Minimalne pole dotyku $44 \times 44\,\text{pt}$, pełna audiodeskrypcja sceny 3D dla VoiceOver, Dynamic Type do rozmiarów XXL.
-9. **Strażnicy architektury i wzorców interakcji:**
-   * Zautomatyzowane testy statyczne: `close-button-guard.test.tsx` (przycisk Anuluj w nagłówku), `brands-contract-guard.test.ts` (zakaz znaków towarowych marek w kodzie i UI), `safety-disclaimer-guard.test.ts` (ostrzeżenia prawne).
+2. **Czystość Konsoli i Testów:**
+   - 0 ostrzeżeń `act()` w testach.
+   - 0 nieprzechwyconych wywołań `console.error` i `console.warn` (`jest.setup.after-env.js`).
 
----
+3. **Strażnicy Interakcji S1–S16:**
+   - Zakaz podwójnego tapnięcia (`S1`).
+   - Potwierdzenia przy destrukcyjnych akcjach i porzucaniu formularzy (`S2`, `S3`, `lib/confirm.ts`).
+   - Jawny krzyżyk `×` zamknięcia każdego modalu (`S4`).
+   - Zakaz generycznych przycisków „Tak” / „Nie” (`S5`).
+   - Obsługa `keyboardShouldPersistTaps="handled"` we wszystkich `ScrollView` (`S6`).
+   - Komponent `NumInput` dla liczb z przecinkiem i kropką (`S15`).
 
-## Audyty i wydania
+4. **Trwałość i Bezpieczeństwo Danych:**
+   - Dwie niezależne pule po 10 kopii zapasowych (`fitcheck-` vs `fitcheck-przed-importem-` / `-czyszczeniem-`).
+   - Envelope `state_corrupt_*` z zachowaniem surowego stanu w `recovery`.
+   - Ochrona przed dryfem zaokrągleń `wInKeep` (`RD-ENG-01`).
 
-1. **Próg wydania:** wydanie blokują tylko znaleziska KRYTYCZNE i WYSOKIE: utrata lub zepsucie danych (także migracja, import, kopia), awaria albo funkcja nie do użycia, błędne liczby lub twierdzenia merytoryczne, prywatność/bezpieczeństwo/sekrety/prawa autorskie, bariera dostępności, ryzyko odrzucenia przez Apple. ŚREDNIE i NISKIE → backlog.
-2. **Jeden audyt na wydanie, bez pętli:** naprawy znalezisk sprawdza test odtwarzający + verify + E2E.
-3. **Zamrożenie zakresu:** od startu audytu do wydania żadnych nowych funkcji.
-4. **Ocena realności znaleziska:** realny → naprawa wg progu; brzegowy → naprawa jeśli tania lub dotyczy danych; teoretyczny → notatka.
-
----
-
-## Merytoryczne podstawy (Hierarchia 5 Szczebli)
-
-Wszystko, czego aplikacja uczy albo co twierdzi (wymiary, algorytmy, kąty, masy, dopuszczalność załadunku), musi mieć merytoryczne podstawy.
-
-1. **Rachunek matematyczny i stereometria:** czyste wzory, algorytmy Extreme Points 3D, sprawdzone niezależnie wektorami testowymi.
-2. **Normy techniczne i przepisy prawa:** ISO 3832:2002 (VDA), DIN 70020, PN-EN 12195-1, Prawo o Ruchu Drogowym (art. 61), regulacje IATA i operatorów paczkowych.
-3. **Publikacje naukowe i recenzowane podręczniki:** inżynieria transportu, algorytmy kombinatoryczne 3D-BPP (Crainic, Martello, Vigo).
-4. **Dokumentacja fabryczna:** oficjalne instrukcje producentów pojazdów i mebli, świadectwa homologacji.
-5. **Praktyka i doświadczenie kierowców:** wyłącznie jako wskazówka, zawsze wyraźnie oznaczona.
-
-Właściciel nie rozstrzyga kwestii merytorycznych: rozstrzyga je ta hierarchia. Właściciel decyduje o sprawach produktowych i biznesowych.
-Treści cudze i znaki towarowe: w kodzie i opisach neutralne oznaczenia faktograficzne; brak zastrzeżonych logotypów graficznych.
+5. **Dostępność i Skrajne Ekrany:**
+   - Minimalne pole dotyku $\ge 44 \times 44\text{ pt}$.
+   - Kontrast WCAG AA $\ge 4.5:1$ (mały tekst) i $\ge 3:1$ (duży tekst).
+   - Obsługa skalowania Apple Dynamic Type `AX5` i ekranu `320 pt`.

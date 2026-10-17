@@ -1,0 +1,697 @@
+{
+  "version": "1.0.0",
+  "generated_by": "gen-geometry3d-corpus.py",
+  "elevator_evaluations": [
+    {
+      "cabin": "4_person_prefab",
+      "item": "mattress_160x200",
+      "dimensions": {
+        "id": "mattress_160x200",
+        "lengthMm": 2000,
+        "widthMm": 1600,
+        "heightMm": 250
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 443
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "sofa_3seater",
+      "dimensions": {
+        "id": "sofa_3seater",
+        "lengthMm": 2200,
+        "widthMm": 950,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": false,
+        "fitsInsideCabin": false,
+        "marginMm": 243
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "fridge_tall",
+      "dimensions": {
+        "id": "fridge_tall",
+        "lengthMm": 2010,
+        "widthMm": 600,
+        "heightMm": 650
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 433
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "wardrobe_pax_236",
+      "dimensions": {
+        "id": "wardrobe_pax_236",
+        "lengthMm": 2364,
+        "widthMm": 1000,
+        "heightMm": 580
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 79
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "bookcase_billy",
+      "dimensions": {
+        "id": "bookcase_billy",
+        "lengthMm": 2020,
+        "widthMm": 800,
+        "heightMm": 280
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 423
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "door_leaf_80",
+      "dimensions": {
+        "id": "door_leaf_80",
+        "lengthMm": 2030,
+        "widthMm": 844,
+        "heightMm": 40
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 413
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "table_dining",
+      "dimensions": {
+        "id": "table_dining",
+        "lengthMm": 1800,
+        "widthMm": 900,
+        "heightMm": 760
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": false,
+        "fitsInsideCabin": false,
+        "marginMm": 643
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "tv_oled_77",
+      "dimensions": {
+        "id": "tv_oled_77",
+        "lengthMm": 1720,
+        "widthMm": 990,
+        "heightMm": 60
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 723
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "washing_machine",
+      "dimensions": {
+        "id": "washing_machine",
+        "lengthMm": 600,
+        "widthMm": 600,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1593
+      }
+    },
+    {
+      "cabin": "4_person_prefab",
+      "item": "corner_sofa_heavy",
+      "dimensions": {
+        "id": "corner_sofa_heavy",
+        "lengthMm": 2600,
+        "widthMm": 1600,
+        "heightMm": 900
+      },
+      "result": {
+        "spatialDiagonalMm": 2494,
+        "maxRigidItemLengthMm": 2443,
+        "fitsThroughDoor": false,
+        "fitsInsideCabin": false,
+        "marginMm": -157
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "mattress_160x200",
+      "dimensions": {
+        "id": "mattress_160x200",
+        "lengthMm": 2000,
+        "widthMm": 1600,
+        "heightMm": 250
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 780
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "sofa_3seater",
+      "dimensions": {
+        "id": "sofa_3seater",
+        "lengthMm": 2200,
+        "widthMm": 950,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": false,
+        "fitsInsideCabin": false,
+        "marginMm": 580
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "fridge_tall",
+      "dimensions": {
+        "id": "fridge_tall",
+        "lengthMm": 2010,
+        "widthMm": 600,
+        "heightMm": 650
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 770
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "wardrobe_pax_236",
+      "dimensions": {
+        "id": "wardrobe_pax_236",
+        "lengthMm": 2364,
+        "widthMm": 1000,
+        "heightMm": 580
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 416
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "bookcase_billy",
+      "dimensions": {
+        "id": "bookcase_billy",
+        "lengthMm": 2020,
+        "widthMm": 800,
+        "heightMm": 280
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 760
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "door_leaf_80",
+      "dimensions": {
+        "id": "door_leaf_80",
+        "lengthMm": 2030,
+        "widthMm": 844,
+        "heightMm": 40
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 750
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "table_dining",
+      "dimensions": {
+        "id": "table_dining",
+        "lengthMm": 1800,
+        "widthMm": 900,
+        "heightMm": 760
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 980
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "tv_oled_77",
+      "dimensions": {
+        "id": "tv_oled_77",
+        "lengthMm": 1720,
+        "widthMm": 990,
+        "heightMm": 60
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1060
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "washing_machine",
+      "dimensions": {
+        "id": "washing_machine",
+        "lengthMm": 600,
+        "widthMm": 600,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1930
+      }
+    },
+    {
+      "cabin": "8_person_modern",
+      "item": "corner_sofa_heavy",
+      "dimensions": {
+        "id": "corner_sofa_heavy",
+        "lengthMm": 2600,
+        "widthMm": 1600,
+        "heightMm": 900
+      },
+      "result": {
+        "spatialDiagonalMm": 2830,
+        "maxRigidItemLengthMm": 2780,
+        "fitsThroughDoor": false,
+        "fitsInsideCabin": false,
+        "marginMm": 180
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "mattress_160x200",
+      "dimensions": {
+        "id": "mattress_160x200",
+        "lengthMm": 2000,
+        "widthMm": 1600,
+        "heightMm": 250
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1406
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "sofa_3seater",
+      "dimensions": {
+        "id": "sofa_3seater",
+        "lengthMm": 2200,
+        "widthMm": 950,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1206
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "fridge_tall",
+      "dimensions": {
+        "id": "fridge_tall",
+        "lengthMm": 2010,
+        "widthMm": 600,
+        "heightMm": 650
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1396
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "wardrobe_pax_236",
+      "dimensions": {
+        "id": "wardrobe_pax_236",
+        "lengthMm": 2364,
+        "widthMm": 1000,
+        "heightMm": 580
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1042
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "bookcase_billy",
+      "dimensions": {
+        "id": "bookcase_billy",
+        "lengthMm": 2020,
+        "widthMm": 800,
+        "heightMm": 280
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1386
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "door_leaf_80",
+      "dimensions": {
+        "id": "door_leaf_80",
+        "lengthMm": 2030,
+        "widthMm": 844,
+        "heightMm": 40
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1376
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "table_dining",
+      "dimensions": {
+        "id": "table_dining",
+        "lengthMm": 1800,
+        "widthMm": 900,
+        "heightMm": 760
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1606
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "tv_oled_77",
+      "dimensions": {
+        "id": "tv_oled_77",
+        "lengthMm": 1720,
+        "widthMm": 990,
+        "heightMm": 60
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 1686
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "washing_machine",
+      "dimensions": {
+        "id": "washing_machine",
+        "lengthMm": 600,
+        "widthMm": 600,
+        "heightMm": 850
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 2556
+      }
+    },
+    {
+      "cabin": "freight_hospital",
+      "item": "corner_sofa_heavy",
+      "dimensions": {
+        "id": "corner_sofa_heavy",
+        "lengthMm": 2600,
+        "widthMm": 1600,
+        "heightMm": 900
+      },
+      "result": {
+        "spatialDiagonalMm": 3457,
+        "maxRigidItemLengthMm": 3406,
+        "fitsThroughDoor": true,
+        "fitsInsideCabin": true,
+        "marginMm": 806
+      }
+    }
+  ],
+  "vda_evaluations": [
+    {
+      "space": "trunk_hatchback_compact",
+      "dimensions": {
+        "name": "trunk_hatchback_compact",
+        "lengthMm": 800,
+        "widthMm": 1000,
+        "heightMm": 500
+      },
+      "result": {
+        "vdaBlocksCount": 400,
+        "vdaLiters": 400.0,
+        "geometricGrossLiters": 400.0,
+        "packingEfficiencyPct": 100.0
+      }
+    },
+    {
+      "space": "trunk_station_wagon",
+      "dimensions": {
+        "name": "trunk_station_wagon",
+        "lengthMm": 1100,
+        "widthMm": 1050,
+        "heightMm": 600
+      },
+      "result": {
+        "vdaBlocksCount": 693,
+        "vdaLiters": 693.0,
+        "geometricGrossLiters": 693.0,
+        "packingEfficiencyPct": 100.0
+      }
+    },
+    {
+      "space": "trunk_van_cargo",
+      "dimensions": {
+        "name": "trunk_van_cargo",
+        "lengthMm": 2400,
+        "widthMm": 1600,
+        "heightMm": 1400
+      },
+      "result": {
+        "vdaBlocksCount": 5376,
+        "vdaLiters": 5376.0,
+        "geometricGrossLiters": 5376.0,
+        "packingEfficiencyPct": 100.0
+      }
+    },
+    {
+      "space": "roof_box_medium",
+      "dimensions": {
+        "name": "roof_box_medium",
+        "lengthMm": 1750,
+        "widthMm": 820,
+        "heightMm": 350
+      },
+      "result": {
+        "vdaBlocksCount": 476,
+        "vdaLiters": 476.0,
+        "geometricGrossLiters": 502.2,
+        "packingEfficiencyPct": 94.8
+      }
+    },
+    {
+      "space": "inpost_paczkomat_gabaryt_a",
+      "dimensions": {
+        "name": "inpost_paczkomat_gabaryt_a",
+        "lengthMm": 640,
+        "widthMm": 380,
+        "heightMm": 80
+      },
+      "result": {
+        "vdaBlocksCount": 9,
+        "vdaLiters": 9.0,
+        "geometricGrossLiters": 19.5,
+        "packingEfficiencyPct": 46.3
+      }
+    },
+    {
+      "space": "inpost_paczkomat_gabaryt_b",
+      "dimensions": {
+        "name": "inpost_paczkomat_gabaryt_b",
+        "lengthMm": 640,
+        "widthMm": 380,
+        "heightMm": 190
+      },
+      "result": {
+        "vdaBlocksCount": 27,
+        "vdaLiters": 27.0,
+        "geometricGrossLiters": 46.2,
+        "packingEfficiencyPct": 58.4
+      }
+    },
+    {
+      "space": "inpost_paczkomat_gabaryt_c",
+      "dimensions": {
+        "name": "inpost_paczkomat_gabaryt_c",
+        "lengthMm": 640,
+        "widthMm": 380,
+        "heightMm": 410
+      },
+      "result": {
+        "vdaBlocksCount": 84,
+        "vdaLiters": 84.0,
+        "geometricGrossLiters": 99.7,
+        "packingEfficiencyPct": 84.2
+      }
+    }
+  ],
+  "towbar_evaluations": [
+    {
+      "scenario": "light_utility_centered",
+      "inputs": {
+        "name": "light_utility_centered",
+        "trailer_mass_kg": 250,
+        "axle_distance_m": 2.5,
+        "drawbar_length_m": 3.0,
+        "payload_mass_kg": 350,
+        "payload_dist_from_coupler_m": 2.4
+      },
+      "result": {
+        "totalMassKg": 600,
+        "noseLoadKg": 24.2,
+        "minSafeNoseLoadKg": 24.0,
+        "maxSafeNoseLoadKg": 48.0,
+        "isWithinSafeOperatingWindow": true
+      }
+    },
+    {
+      "scenario": "light_utility_rear_heavy",
+      "inputs": {
+        "name": "light_utility_rear_heavy",
+        "trailer_mass_kg": 250,
+        "axle_distance_m": 2.5,
+        "drawbar_length_m": 3.0,
+        "payload_mass_kg": 400,
+        "payload_dist_from_coupler_m": 2.8
+      },
+      "result": {
+        "totalMassKg": 650,
+        "noseLoadKg": 0.0,
+        "minSafeNoseLoadKg": 26.0,
+        "maxSafeNoseLoadKg": 52.0,
+        "isWithinSafeOperatingWindow": false
+      }
+    },
+    {
+      "scenario": "caravan_balanced",
+      "inputs": {
+        "name": "caravan_balanced",
+        "trailer_mass_kg": 900,
+        "axle_distance_m": 3.8,
+        "drawbar_length_m": 4.5,
+        "payload_mass_kg": 250,
+        "payload_dist_from_coupler_m": 3.6
+      },
+      "result": {
+        "totalMassKg": 1150,
+        "noseLoadKg": 56.1,
+        "minSafeNoseLoadKg": 46.0,
+        "maxSafeNoseLoadKg": 92.0,
+        "isWithinSafeOperatingWindow": true
+      }
+    },
+    {
+      "scenario": "boat_trailer_front_heavy",
+      "inputs": {
+        "name": "boat_trailer_front_heavy",
+        "trailer_mass_kg": 350,
+        "axle_distance_m": 4.0,
+        "drawbar_length_m": 5.0,
+        "payload_mass_kg": 600,
+        "payload_dist_from_coupler_m": 2.5
+      },
+      "result": {
+        "totalMassKg": 950,
+        "noseLoadKg": 197.5,
+        "minSafeNoseLoadKg": 38.0,
+        "maxSafeNoseLoadKg": 76.0,
+        "isWithinSafeOperatingWindow": false
+      }
+    }
+  ]
+}

@@ -12,7 +12,7 @@ let currentUnitSystem: UnitSystem | null = null;
 type UnitListener = (sys: UnitSystem) => void;
 const listeners = new Set<UnitListener>();
 
-function getCurrentUnitSystem(): UnitSystem {
+export function getCurrentUnitSystem(): UnitSystem {
   if (!currentUnitSystem) {
     try {
       const saved = getAppSetting('unit_system', 'metric') as UnitSystem;
@@ -147,4 +147,52 @@ export function formatWeight(kg: number, unitSystem: UnitSystem = getCurrentUnit
     return `${kgToPounds(kg)} lbs`;
   }
   return `${Math.round(kg)} kg`;
+}
+
+// ==========================================
+// Inwariant braku dryfu zaokrągleń (RD-ENG-01, BR-TEST-005)
+// ==========================================
+
+export type UnitType = 'cm' | 'in' | 'kg' | 'lb' | 'lbs' | 'l' | 'cuft';
+
+/**
+ * Konwersja bez dryfu zaokrągleń (RD-ENG-01 / BR-TEST-005):
+ * Gdy wpisany tekst w bieżącej jednostce po zaokrągleniu zgadza się
+ * ze sformatowaną reprezentacją poprzedniej wartości bazowej,
+ * zachowuje dokładną wartość bazową (prevBase) zamiast ponownego przeliczania.
+ */
+export function wInKeep(
+  txt: string | number,
+  unit: UnitType,
+  prevBase?: number
+): number {
+  if (txt === '' || txt === null || txt === undefined) return prevBase ?? 0;
+  const clean = typeof txt === 'string' ? txt.replace(',', '.').trim() : String(txt);
+  const val = parseFloat(clean);
+  if (isNaN(val) || val <= 0) return 0;
+
+  if (prevBase !== undefined && prevBase > 0) {
+    let formattedPrev = 0;
+    if (unit === 'in') {
+      formattedPrev = parseFloat((prevBase / 2.54).toFixed(1));
+      if (Math.abs(val - formattedPrev) < 0.001) return prevBase;
+    } else if (unit === 'cm') {
+      formattedPrev = Math.round(prevBase);
+      if (Math.abs(val - formattedPrev) < 0.001) return prevBase;
+    } else if (unit === 'lb' || unit === 'lbs') {
+      formattedPrev = parseFloat((prevBase * 2.2046226218).toFixed(1));
+      if (Math.abs(val - formattedPrev) < 0.001) return prevBase;
+    } else if (unit === 'kg') {
+      formattedPrev = Math.round(prevBase);
+      if (Math.abs(val - formattedPrev) < 0.001) return prevBase;
+    }
+  }
+
+  // Oblicz nową wartość bazową
+  if (unit === 'in') {
+    return parseFloat((val * 2.54).toFixed(2));
+  } else if (unit === 'lb' || unit === 'lbs') {
+    return parseFloat((val / 2.2046226218).toFixed(2));
+  }
+  return val;
 }

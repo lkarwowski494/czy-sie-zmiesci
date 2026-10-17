@@ -304,7 +304,7 @@ export default function GarageScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.title}>{t('🏢 Garaż & Hak Holowniczy')}</Text>
           <Text style={styles.subtitle}>

@@ -18,11 +18,13 @@ import { t } from '../lib/i18n';
 interface CraftOnboardingModalProps {
   visible: boolean;
   onSelectProfile: (profile: RitualProfileId) => void;
+  onClose?: () => void;
 }
 
 export function CraftOnboardingModal({
   visible,
   onSelectProfile,
+  onClose,
 }: CraftOnboardingModalProps) {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<RitualProfileId>('daily');
@@ -51,6 +53,7 @@ export function CraftOnboardingModal({
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
           <View style={styles.header}>
@@ -82,6 +85,8 @@ export function CraftOnboardingModal({
                   ]}
                   onPress={() => setSelected(id)}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={t(p.title)}
                   hitSlop={sharedCraftTokens.hitSlopStandard}
                 >
                   <View style={styles.cardHeader}>
@@ -129,6 +134,8 @@ export function CraftOnboardingModal({
             style={styles.confirmButton}
             onPress={handleConfirm}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={t('Rozpocznij Rytuał')}
             hitSlop={sharedCraftTokens.hitSlopStandard}
           >
             <Text style={styles.confirmButtonText}>

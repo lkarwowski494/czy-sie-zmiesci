@@ -1,0 +1,16 @@
+# .gitleaks.toml — Konfiguracja skanowania sekretów w FitCheck (Czy się zmieści?)
+title = "FitCheck Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist for benign fixtures, synthetic corpora and test mocks"
+paths = [
+  '''src/domain/__tests__/fixtures/.*''',
+  '''tests/matrix-exceptions.json''',
+  '''package-lock.json''',
+]
+regexes = [
+  '''PROP_SEED''',
+]
