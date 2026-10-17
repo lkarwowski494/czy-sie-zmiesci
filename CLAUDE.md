@@ -31,6 +31,40 @@
 
 ---
 
+## 🎭 Aktywne Moduły i Role (z „Biblioteki zasad i ról”, stan: 11.10.2026)
+
+### Aktywne Moduły Dziedzinowe:
+1. **Moduł: aplikacje (oprogramowanie):**
+   - Testy przed kodem (TDD); każdy błąd dostaje test, który go odtwarza.
+   - Test błędu najpierw uruchom na kodzie sprzed poprawki (np. git stash) i potwierdź, że jest czerwony z właściwego powodu.
+   - Narzędzia czytające dane z zewnątrz testowane także na wycinkach prawdziwych plików w repozytorium.
+   - Małe moduły z jasnymi granicami (orientacyjnie ≤ 20 KB), bez cykli zależności.
+   - Praca odporna na przerwy (małe commity, stan bieżący w `DECISIONS.md`).
+   - Zielone lokalnie ≠ zielone w CI (kontrole lokalne uruchamiaj tak jak w CI).
+   - Funkcja wizualna: najpierw podgląd/szkic do akceptacji, pełna implementacja z testami po akceptacji.
+   - Meldunki statusu: przy braku zmian jedna linia; po 3 takich odstęp rośnie do 2 h.
+2. **Moduł: research i treści merytoryczne:**
+   - Każde twierdzenie ma przeczytane źródło (adres + miejsce); streszczenie z wyszukiwarki nie jest źródłem.
+   - Hierarchia 5 szczebli źródeł dziedziny ustalona na starcie projektu.
+   - Rachunek z danych użytkownika to nie twierdzenie merytoryczne — nie blokuj go wymogiem źródeł.
+   - Raporty z zewnątrz (deep research innych modeli) to opinia — kluczowe tezy sprawdź u źródła.
+   - Fakty o cenach, limitach, licencjach i przepisach sprawdzaj u źródła w dniu pracy z datą odczytu.
+3. **Zasady ogólne z modułu gier:**
+   - Jedno źródło prawdy + generatory zamiast ręcznego kopiowania liczb.
+   - „Udokumentowane” ≠ „zaimplementowane”; „ma dzisiejszą datę” ≠ „zweryfikowane” — przy wątpliwości uruchom na żywo.
+   - Warianty i archiwalne wersje modelu jako jawnie oznaczone kopie obok kanonu.
+
+### Aktywne Role Projektowe:
+1. **Koordynator / Główny Architekt (model mocny):** Prowadzi sesję główną, koordynuje zmiany, pilnuje bramki `npm run verify` przed jakimkolwiek commitem, jedyny commit i push na wspólnej gałęzi po przejściu kontroli.
+2. **Badacz merytoryczny (model mocny):** Wymiary, fizyka (CoG, przeciążenia 25g Euro NCAP, PN-EN 12195-1), normy prawne (art. 61 PoRD), regulacje IATA i sizerów — każde twierdzenie poparte źródłem.
+3. **Programista (model tańszy / wykonanie):** Wdrożenie zatwierdzonej specyfikacji: test najpierw, potwierdzenie czerwonego testu na kodzie przed poprawką, minimalny zakres, bez osłabiania testów.
+4. **Projektant UX / Architekt Front-Endu (model mocny):** Ergonomia warsztatowa, Sacred Numbers czytelne z blatu roboczego, brak kolizji ze Safe Area (min. 44x44 pt), standaryzacja `@apps4craft/ui`.
+5. **Audytor / Tester E2E (model mocny/tańszy):** Niezależny przegląd pod kątem standardów, 9 warstw weryfikacji jakości, testy brzegowe i regresyjne.
+6. **Tłumacz (model tańszy):** 100% symetria słownika `i18n.en.ts`, typografia rzemieślnicza, brak brakujących kluczy.
+7. **Sekretarz dokumentacji (model tańszy):** Prowadzenie `DECISIONS.md` z datami, opcjami i powodami, synchronizacja `CLAUDE.md`.
+
+---
+
 ## 🧪 9 Warstw Weryfikacji Jakości (Standard z projektu Organizer)
 
 Zgodnie z procedurami z projektu `lkarwowski494/organizer`, w projekcie **Czy się zmieści? (FitCheck)** obowiązuje bezwzględny reżim testowy z 9 perspektyw:
